@@ -38,6 +38,13 @@ def test_summary_has_campaign_experiment_metrics():
     assert summary["secondary_metrics"]["expected_donation_amount"] > 0
     assert summary["best_message_frame"]["label"]
     assert summary["best_segment"]["label"]
+    assert summary["best_channel"]["label"]
+    assert summary["recommended_next_allocation"]
+    assert summary["leadership_takeaway"]
+    assert summary["conversion_timeline"]
+    assert summary["allocation_shift"]
+    assert summary["latest_decision"]["assignment_probability"] > 0
+    assert "selection_reason" in summary["latest_decision"]
 
 
 def test_ai_synthesis_is_deterministic_and_human_reviewed():
@@ -48,3 +55,33 @@ def test_ai_synthesis_is_deterministic_and_human_reviewed():
     assert "not autonomous persuasion" in recommendation["warning"]
     assert "human-reviewed" in recommendation["generated_rationale"]
     assert recommendation["approved_message_templates"]
+    assert recommendation["recommended_outreach_strategy"]
+    assert recommendation["recommended_message_frame"]
+    assert recommendation["recommended_channel"]
+    assert recommendation["why_prioritized"]
+    assert recommendation["risk_note"]
+    assert recommendation["decision_explanation"]["expected_reward"] >= 0
+
+
+def test_events_include_batch_and_assignment_explanation_fields():
+    event = generate_experiment(seed=10, n=50)["events"][0]
+
+    for field in [
+        "date",
+        "batch",
+        "supporter_id",
+        "message_frame",
+        "channel",
+        "segment",
+        "converted",
+        "donation_amount",
+        "fatigue_risk",
+        "assignment_probability",
+        "allocation_share",
+        "expected_reward",
+        "uncertainty",
+        "exploration_need",
+        "fatigue_penalty",
+        "channel_fit",
+    ]:
+        assert field in event

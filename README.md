@@ -35,9 +35,10 @@ The prototype tests donation appeals across:
 - Donor fatigue risk
 - Expected donation value
 
-The app has only three tabs:
+The app has four focused tabs:
 
 - **Overview:** campaign experiment metrics, best message frame, best segment, channel performance, fatigue warning, and simple charts.
+- **Experiment Design:** practical setup notes for audience data, message arms, channels, outcomes, assignment logic, fatigue guardrails, and leadership questions.
 - **AI:** deterministic campaign research synthesis from approved templates and historical segment performance.
 - **About:** project purpose, inspiration, and boundaries.
 
@@ -80,11 +81,16 @@ Channels:
 
 The assignment engine is intentionally simple and explainable. It uses segment-level beta priors in a Thompson-sampling-inspired style, combined with issue affinity, channel preference, and donor fatigue penalties.
 
-It chooses:
+It chooses and explains:
 
 - Which message frame to send
 - Which channel to use
 - Which audience segment is highest priority
+- Expected reward
+- Uncertainty
+- Exploration need
+- Fatigue penalty
+- Channel fit
 
 It does **not** implement OPE, IPS, SNIPS, doubly robust estimation, or advanced causal claims.
 
@@ -98,6 +104,14 @@ It does **not** implement OPE, IPS, SNIPS, doubly robust estimation, or advanced
 - Campaign resource allocation
 - Donor fatigue monitoring
 - Human-reviewed AI-assisted recommendations
+
+## Dashboard Flow
+
+The Overview tab is designed to feel like a campaign experimentation control room. It leads with the donation conversion rate, expected donation value, best-performing frame, best segment, best channel, current exploration rate, donor fatigue warning, and recommended next allocation. A large cumulative conversion chart shows how message frames perform across experiment batches.
+
+The Experiment Design tab answers, "How would we actually run this?" It keeps the demo practical for campaign leadership: available channels, audience data, approved message arms, outcome definitions, sample-size caveats, fatigue guardrails, human approval, and what should not be automated.
+
+The AI tab is campaign messaging and research synthesis, not generic AI. It retrieves approved templates and prior segment performance, then produces a deterministic recommendation that requires human review.
 
 ## Run Locally
 

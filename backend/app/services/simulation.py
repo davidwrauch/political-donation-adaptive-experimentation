@@ -4,6 +4,7 @@ import math
 import random
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import date, timedelta
 from statistics import mean
 
 
@@ -107,28 +108,44 @@ def generate_supporters(n: int = 2500, seed: int = 42) -> list[dict]:
     return supporters
 
 
-def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float = 0.18) -> dict:
+def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float = 0.18, batches: int = 12) -> dict:
     rng = random.Random(seed)
     supporters = generate_supporters(n=n, seed=seed)
     priors = defaultdict(lambda: {"alpha": 2.0, "beta": 8.0})
     channel_stats = defaultdict(lambda: {"alpha": 2.0, "beta": 8.0})
     events = []
+    start_date = date(2026, 5, 1)
 
-    for supporter in supporters:
-        frame = choose_frame(supporter, priors, rng, exploration_rate)
-        channel = choose_channel(supporter, channel_stats, rng, exploration_rate)
+    for index, supporter in enumerate(supporters):
+        batch = min(batches, index // max(1, math.ceil(n / batches)) + 1)
+        frame, frame_reason = choose_frame(supporter, priors, rng, exploration_rate)
+        channel, channel_reason = choose_channel(supporter, channel_stats, rng, exploration_rate)
+        key = (supporter["segment"], frame["id"])
+        prior = priors[key]
+        estimated_reward = prior["alpha"] / (prior["alpha"] + prior["beta"])
+        uncertainty = 1 / math.sqrt(prior["alpha"] + prior["beta"])
+        assignment_probability = allocation_probability(supporter, frame, priors, exploration_rate)
         outcome = score_outcome(supporter, frame, channel, rng)
         events.append(
             {
+                "date": (start_date + timedelta(days=batch - 1)).isoformat(),
+                "batch": batch,
                 "supporter_id": supporter["supporter_id"],
                 "segment": supporter["segment"],
                 "message_frame": frame["id"],
                 "message_label": frame["label"],
                 "channel": channel,
+                "assignment_probability": round(assignment_probability, 4),
+                "allocation_share": round(assignment_probability, 4),
+                "expected_reward": round(estimated_reward, 4),
+                "uncertainty": round(uncertainty, 4),
+                "exploration_need": round(uncertainty + (exploration_rate * 0.2), 4),
+                "fatigue_penalty": round(fatigue_penalty_for(supporter, frame, channel), 4),
+                "channel_fit": round(1 if channel == supporter["channel_preference"] else 0.35, 2),
+                "selection_reason": build_selection_reason(frame_reason, channel_reason, supporter),
                 **outcome,
             }
         )
-        key = (supporter["segment"], frame["id"])
         priors[key]["alpha" if outcome["converted"] else "beta"] += 1
         channel_key = (supporter["segment"], channel)
         channel_stats[channel_key]["alpha" if outcome["converted"] else "beta"] += 1
@@ -139,6 +156,7 @@ def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float =
         "message_frames": MESSAGE_FRAMES,
         "channels": CHANNELS,
         "exploration_rate": exploration_rate,
+        "batches": batches,
     }
 
 
@@ -150,7 +168,11 @@ def summarize_experiment(experiment: dict) -> dict:
     channel_rows = grouped_metrics(events, "channel")
     best_frame = max(frame_rows, key=lambda row: row["conversion_rate"])
     best_segment = max(segment_rows, key=lambda row: row["net_expected_value"])
+    best_channel = max(channel_rows, key=lambda row: row["net_expected_value"])
     fatigue_risk = mean(event["fatigue_risk"] for event in events)
+    allocation = allocation_shift(events)
+    timeline = conversion_timeline(events)
+    latest_event = events[-1]
 
     return {
         "total_supporters": len(supporters),
@@ -170,10 +192,22 @@ def summarize_experiment(experiment: dict) -> dict:
         },
         "best_message_frame": best_frame,
         "best_segment": best_segment,
+        "best_channel": best_channel,
         "donor_fatigue_warning": fatigue_risk >= 0.34,
+        "recommended_next_allocation": (
+            f"Shift the next outreach batch toward {best_frame['label']} for {best_segment['label']} "
+            f"using {best_channel['label']}, while preserving {int(experiment['exploration_rate'] * 100)}% exploration."
+        ),
+        "leadership_takeaway": (
+            f"{best_frame['label']} is the strongest current fundraising frame, but leadership should "
+            f"keep some exploration active and monitor fatigue before scaling outreach to {best_segment['label']}."
+        ),
         "message_performance": frame_rows,
         "segment_performance": sorted(segment_rows, key=lambda row: row["net_expected_value"], reverse=True)[:8],
         "channel_performance": channel_rows,
+        "conversion_timeline": timeline,
+        "allocation_shift": allocation,
+        "latest_decision": latest_event,
         "plain_english": (
             "The system is optimizing scarce campaign outreach by learning which donation message "
             "frames and channels convert across supporter segments while watching expected value and fatigue risk."
@@ -181,9 +215,9 @@ def summarize_experiment(experiment: dict) -> dict:
     }
 
 
-def choose_frame(supporter: dict, priors: dict, rng: random.Random, exploration_rate: float) -> dict:
+def choose_frame(supporter: dict, priors: dict, rng: random.Random, exploration_rate: float) -> tuple[dict, str]:
     if rng.random() < exploration_rate:
-        return rng.choice(MESSAGE_FRAMES)
+        return rng.choice(MESSAGE_FRAMES), "exploration"
     scored = []
     for frame in MESSAGE_FRAMES:
         key = (supporter["segment"], frame["id"])
@@ -192,12 +226,12 @@ def choose_frame(supporter: dict, priors: dict, rng: random.Random, exploration_
         affinity_bonus = 0.08 if frame["issue"] == supporter["issue_affinity"] else 0
         fatigue_penalty = 0.04 if frame["id"] == "momentum" and supporter["donor_fatigue_score"] > 0.55 else 0
         scored.append((estimated_conversion + affinity_bonus - fatigue_penalty, frame))
-    return max(scored, key=lambda item: item[0])[1]
+    return max(scored, key=lambda item: item[0])[1], "highest expected reward after affinity and fatigue adjustment"
 
 
-def choose_channel(supporter: dict, channel_stats: dict, rng: random.Random, exploration_rate: float) -> str:
+def choose_channel(supporter: dict, channel_stats: dict, rng: random.Random, exploration_rate: float) -> tuple[str, str]:
     if rng.random() < exploration_rate:
-        return rng.choice(CHANNELS)
+        return rng.choice(CHANNELS), "channel exploration"
     scored = []
     for channel in CHANNELS:
         key = (supporter["segment"], channel)
@@ -206,7 +240,7 @@ def choose_channel(supporter: dict, channel_stats: dict, rng: random.Random, exp
         preference_bonus = 0.08 if channel == supporter["channel_preference"] else 0
         fatigue_penalty = 0.05 if channel in {"SMS", "phone"} and supporter["donor_fatigue_score"] > 0.58 else 0
         scored.append((estimated + preference_bonus - fatigue_penalty, channel))
-    return max(scored, key=lambda item: item[0])[1]
+    return max(scored, key=lambda item: item[0])[1], "best channel fit after response and fatigue adjustment"
 
 
 def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random) -> dict:
@@ -265,6 +299,83 @@ def grouped_metrics(events: list[dict], key: str, label_key: str | None = None) 
             }
         )
     return sorted(rows, key=lambda row: row["conversion_rate"], reverse=True)
+
+
+def conversion_timeline(events: list[dict]) -> list[dict]:
+    tracked_frames = [frame["id"] for frame in MESSAGE_FRAMES[:4]]
+    labels = {frame["id"]: frame["label"] for frame in MESSAGE_FRAMES}
+    by_batch = defaultdict(list)
+    for event in events:
+        if event["message_frame"] in tracked_frames:
+            by_batch[event["batch"]].append(event)
+    cumulative = defaultdict(int)
+    rows = []
+    for batch in sorted(by_batch):
+        batch_events = by_batch[batch]
+        for frame in tracked_frames:
+            cumulative[frame] += sum(1 for event in batch_events if event["message_frame"] == frame and event["converted"])
+        rows.append(
+            {
+                "batch": batch,
+                "date": batch_events[0]["date"],
+                "series": [
+                    {"id": frame, "label": labels[frame], "cumulative_conversions": cumulative[frame]}
+                    for frame in tracked_frames
+                ],
+            }
+        )
+    return rows
+
+
+def allocation_shift(events: list[dict]) -> list[dict]:
+    labels = {frame["id"]: frame["label"] for frame in MESSAGE_FRAMES}
+    by_batch = defaultdict(list)
+    for event in events:
+        by_batch[event["batch"]].append(event)
+    rows = []
+    for batch, batch_events in sorted(by_batch.items()):
+        total = len(batch_events)
+        rows.append(
+            {
+                "batch": batch,
+                "date": batch_events[0]["date"],
+                "frames": [
+                    {
+                        "id": frame["id"],
+                        "label": labels[frame["id"]],
+                        "allocation_share": round(sum(1 for event in batch_events if event["message_frame"] == frame["id"]) / total, 4),
+                    }
+                    for frame in MESSAGE_FRAMES[:4]
+                ],
+            }
+        )
+    return rows
+
+
+def allocation_probability(supporter: dict, selected_frame: dict, priors: dict, exploration_rate: float) -> float:
+    scored = []
+    for frame in MESSAGE_FRAMES:
+        prior = priors[(supporter["segment"], frame["id"])]
+        estimated_conversion = prior["alpha"] / (prior["alpha"] + prior["beta"])
+        affinity_bonus = 0.08 if frame["issue"] == supporter["issue_affinity"] else 0
+        scored.append((estimated_conversion + affinity_bonus, frame["id"]))
+    best_frame = max(scored, key=lambda item: item[0])[1]
+    if selected_frame["id"] == best_frame:
+        return 1 - exploration_rate + exploration_rate / len(MESSAGE_FRAMES)
+    return exploration_rate / len(MESSAGE_FRAMES)
+
+
+def fatigue_penalty_for(supporter: dict, frame: dict, channel: str) -> float:
+    frame_penalty = 0.04 if frame["id"] == "momentum" and supporter["donor_fatigue_score"] > 0.55 else 0
+    channel_penalty = 0.05 if channel in {"SMS", "phone"} and supporter["donor_fatigue_score"] > 0.58 else 0
+    return frame_penalty + channel_penalty
+
+
+def build_selection_reason(frame_reason: str, channel_reason: str, supporter: dict) -> str:
+    return (
+        f"Selected because of {frame_reason}, {channel_reason}, issue affinity for "
+        f"{supporter['issue_affinity']}, and donor fatigue score {supporter['donor_fatigue_score']}."
+    )
 
 
 def engagement_level(value: float) -> str:

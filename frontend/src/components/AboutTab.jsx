@@ -16,15 +16,15 @@ export default function AboutTab() {
         <article className="panel">
           <h3>Inspired by campaign data science</h3>
           <p>
-            Campaign data science is mainly resource allocation and optimization: who should be
-            contacted, with which issue frame, through which channel, and with what evidence of impact.
+            Inspired by DNC-style campaign resource allocation: who should be contacted, with which
+            issue frame, through which channel, and with what evidence of impact.
           </p>
         </article>
         <article className="panel">
           <h3>Inspired by charitable-giving bandits</h3>
           <p>
-            The donation solicitation setup mirrors contextual bandit research where different
-            messages are assigned to profiles and the system learns which appeals perform best.
+            Inspired by Stanford charitable-giving contextual bandit research where different
+            donation appeals are assigned to profiles and the system learns which messages work best.
           </p>
         </article>
         <article className="panel">
@@ -39,9 +39,25 @@ export default function AboutTab() {
           <p>
             This is not an election prediction model, a production campaign platform, or an
             autonomous persuasion system. It is a portfolio simulation for explaining adaptive
-            experimentation and campaign resource allocation.
+            experimentation and campaign resource allocation while monitoring uncertainty and fatigue.
           </p>
         </article>
+      </section>
+
+      <section className="panel">
+        <h2>Simple guardrails</h2>
+        <div className="guardrail-grid">
+          {[
+            "Human review required",
+            "Approved message templates only",
+            "Fatigue and exposure caps",
+            "Avoid overreacting to noisy early results",
+            "Preserve some exploration",
+            "Do not maximize donations at all costs",
+          ].map((item) => (
+            <span key={item}>{item}</span>
+          ))}
+        </div>
       </section>
     </div>
   );

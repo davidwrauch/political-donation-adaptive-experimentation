@@ -93,7 +93,7 @@ button {
   border-radius: 10px;
   display: grid;
   gap: 6px;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   margin: 18px 0;
   padding: 6px;
 }
@@ -134,7 +134,7 @@ button {
 }
 
 .metric-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .chart-grid,
@@ -146,6 +146,40 @@ button {
 .metric-card {
   min-height: 112px;
   padding: 16px;
+}
+
+.primary-metric {
+  background: #eaf5f1;
+  border-color: #cbe3da;
+}
+
+.leadership-box {
+  align-items: center;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1.25fr 0.95fr;
+}
+
+.leadership-box h2 {
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  line-height: 1.2;
+}
+
+.next-allocation {
+  background: #f8faf8;
+  border: 1px solid #e5ece7;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.next-allocation span,
+.detail-list dt,
+.design-grid span {
+  color: #627175;
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 850;
+  margin-bottom: 6px;
 }
 
 .decision-strip {
@@ -192,6 +226,81 @@ button {
   height: 100%;
 }
 
+.line-panel svg {
+  display: block;
+  height: auto;
+  margin-top: 12px;
+  max-width: 100%;
+}
+
+.axis {
+  stroke: #c8d4cf;
+  stroke-width: 1.5;
+}
+
+.axis-label {
+  fill: #627175;
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.chart-heading {
+  align-items: end;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.chart-heading p,
+.panel-copy {
+  color: #526165;
+  margin: 4px 0 0;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 10px;
+}
+
+.legend span {
+  align-items: center;
+  color: #526165;
+  display: inline-flex;
+  font-size: 0.84rem;
+  font-weight: 750;
+  gap: 6px;
+}
+
+.legend i {
+  border-radius: 999px;
+  display: inline-block;
+  height: 10px;
+  width: 10px;
+}
+
+.allocation-grid,
+.ai-summary-grid,
+.explain-grid,
+.design-grid,
+.guardrail-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.allocation-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.allocation-grid article,
+.design-grid article {
+  background: #f8faf8;
+  border: 1px solid #e5ece7;
+  border-radius: 8px;
+  padding: 12px;
+}
+
 .channel-grid,
 .template-grid {
   display: grid;
@@ -220,6 +329,64 @@ button {
   display: flex;
   gap: 16px;
   justify-content: space-between;
+}
+
+.ai-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.explain-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.compact-card {
+  min-height: 92px;
+}
+
+.detail-list {
+  display: grid;
+  gap: 8px 12px;
+  grid-template-columns: 140px 1fr;
+  margin: 0;
+}
+
+.detail-list dd {
+  margin: 0;
+}
+
+.risk-note {
+  background: #fffaf0;
+  border-color: #eadcb5;
+}
+
+.design-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.question-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.question-list li {
+  line-height: 1.45;
+}
+
+.guardrail-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.guardrail-grid span {
+  background: #eef5f1;
+  border: 1px solid #d8e7df;
+  border-radius: 999px;
+  color: #24443c;
+  font-size: 0.82rem;
+  font-weight: 850;
+  padding: 0.5rem 0.7rem;
 }
 
 .review-pill {
@@ -253,8 +420,14 @@ button {
 @media (max-width: 780px) {
   .hero,
   .metric-grid,
+  .leadership-box,
   .chart-grid,
   .ai-grid,
+  .ai-summary-grid,
+  .explain-grid,
+  .allocation-grid,
+  .design-grid,
+  .guardrail-grid,
   .about-grid,
   .decision-strip,
   .channel-grid,

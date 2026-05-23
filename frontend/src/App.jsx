@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { fetchAiRecommendation, fetchOverview } from "./api";
 import OverviewTab from "./components/OverviewTab";
+import ExperimentDesignTab from "./components/ExperimentDesignTab";
 import AiTab from "./components/AiTab";
 import AboutTab from "./components/AboutTab";
 
-const tabs = ["Overview", "AI", "About"];
+const tabs = ["Overview", "Experiment Design", "AI", "About"];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("Overview");
@@ -50,10 +51,11 @@ export default function App() {
 
       {error && <div className="alert">{error}</div>}
       {!overview ? (
-        <section className="panel loading">Loading campaign experiment metrics...</section>
+        <section className="panel loading">Loading campaign donation experiment results...</section>
       ) : (
         <>
           {activeTab === "Overview" && <OverviewTab overview={overview} />}
+          {activeTab === "Experiment Design" && <ExperimentDesignTab />}
           {activeTab === "AI" && <AiTab recommendation={aiRecommendation} overview={overview} />}
           {activeTab === "About" && <AboutTab />}
         </>
