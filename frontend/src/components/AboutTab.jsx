@@ -84,10 +84,10 @@ export default function AboutTab() {
           causal inference, adaptive decision systems, and public-interest technology.
         </p>
         <a href="https://github.com/davidwrauch/political-donation-adaptive-experimentation" target="_blank" rel="noreferrer">
-          GitHub: davidwrauch/political-donation-adaptive-experimentation
+          GitHub: https://github.com/davidwrauch/political-donation-adaptive-experimentation
         </a>
         <a href="https://www.linkedin.com/in/davidwrauch/" target="_blank" rel="noreferrer">
-          LinkedIn: davidwrauch
+          LinkedIn: https://www.linkedin.com/in/davidwrauch/
         </a>
       </section>
     </div>

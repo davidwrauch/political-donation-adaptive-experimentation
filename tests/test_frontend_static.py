@@ -15,7 +15,8 @@ def test_four_tabs_and_campaign_loading_language():
         assert tab in app
     assert "OverviewTab overview={overview}" in app
     assert "Net donation value per contact" in app
-    assert "Secondary metrics: donation conversion rate, average donation amount, fatigue risk, and exploration rate." in app
+    assert "Secondary metrics: donation conversion rate, average donation amount, fatigue risk, exploration rate, and p-value check." in app
+    assert "This live demo compresses a longer campaign experiment into a short simulation" in app
     assert "Loading simulated campaign results, usually 10-15 seconds" in app
     assert "Data ready" in app
 
@@ -36,6 +37,8 @@ def test_overview_contains_leadership_metrics_and_charts():
 
     for text in [
         "A New York Democratic campaign is testing donation outreach",
+        "The simulation updates quickly so",
+        "the tradeoff between learning and scaling is visible during a short demo.",
         "Current experiment status",
         "How reliable is the current winner?",
         "Campaign-wide experiment status",
@@ -51,17 +54,25 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Probability best",
         "Additional contacts before high-confidence rollout",
         "Rollout confidence status",
+        "Frequentist check",
+        "p vs control",
+        "p vs runner-up",
+        "significant:",
+        "A traditional p-value check compares whether the current leader",
         "Do not send 100% of traffic to the current winner unless confidence is high.",
-        "High confidence generally means the leading strategy has remained stable",
+        "High confidence generally means",
+        "the leading strategy has remained stable",
         "Traditional statistical significance can still be reported in a real",
-        "Probability best estimates how likely the current leading strategy is to be the best option",
+        "Probability best estimates how likely the current leading strategy is to outperform the others",
         "Average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
-        "Unlike a p-value",
-        "The current winner may simply reflect early noise",
+        "Directional only means the current leader is promising",
         "Pause updates",
         "Resume updates",
         "Last updated",
         "Next update in",
+        "Live simulation running",
+        "Simulation paused",
+        "Updates paused",
         "Allocation status",
         "Current leader",
         "Donation conversion rate",
@@ -96,7 +107,11 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "setVisibleIndex" in overview
     assert "setNextUpdateIn" in overview
     assert "window.setInterval" in overview
-    assert "}, 10000)" in overview
+    assert "}, 5000)" in overview
+    assert "setNextUpdateIn(5)" in overview
+    assert "confidence-highlight" in overview
+    assert "reliability-note" in overview
+    assert "live-status" in overview
     assert "chart-tooltip" in overview
     assert "tooltip-popover" in overview
     assert "getBoundingClientRect" in overview

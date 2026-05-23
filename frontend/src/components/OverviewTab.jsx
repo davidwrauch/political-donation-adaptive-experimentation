@@ -6,7 +6,7 @@ const helpText = {
   "Net donation value per contact": "Average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
   "Donation conversion rate": "Share of contacted people who are expected to donate.",
   "Average donation amount": "Average expected donation size among contacted supporters in this simulation.",
-  "Probability best": "Probability best estimates how likely the current leading strategy is to be the best option if the experiment continues. Unlike a p-value, it is expressed directly as a probability.",
+  "Probability best": "Probability best estimates how likely the current leading strategy is to outperform the others if the experiment continues. In this prototype, high confidence means roughly 80-90% probability best plus stable performance over additional batches. Traditional statistical significance can still be reported separately.",
   "Additional contacts before high-confidence rollout": "Estimated number of additional outreach contacts needed before the result is reliable enough for broad rollout.",
   "Recommendation status": "Plain-English rollout guidance based on current simulated confidence and whether the campaign should keep learning.",
   "Rollout confidence status": "Plain-English rollout guidance based on current simulated confidence and whether the campaign should keep learning.",
@@ -20,13 +20,14 @@ const helpText = {
   "Exploration rate": "Share of traffic intentionally reserved for learning rather than only using the current winner.",
   "Control": "Generic non-personalized outreach with fixed messaging and no adaptive allocation.",
   "Static randomized test": "Randomly splits traffic across approved message/channel combinations, but does not adapt allocation based on results.",
-  "Directional only": "The current winner may simply reflect early noise. More data is needed before confidently scaling traffic.",
+  "Directional only": "Directional only means the current leader is promising, but the evidence is not strong enough to shift all traffic to it yet.",
   "Promising but keep testing": "The current winner looks encouraging, but the campaign should keep learning before shifting most traffic.",
   "Ready to scale": "The leading strategy has remained strong enough in the simulation to justify broader rollout with monitoring.",
   "Overall donation conversion rate by strategy": "Compares the share of contacts that convert into donations for each allocation strategy.",
   "Net donation value per contact by strategy": "Compares average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
   "Fatigue risk by strategy": "Compares the estimated risk that repeated outreach lowers future response or increases opt-outs.",
   "Message-frame performance within the current leading strategy": "Shows which approved donation frames are converting within the strategy currently leading on net donation value per contact.",
+  "Frequentist check": "A traditional p-value check compares whether the current leader's observed results are unlikely to be due to random chance. Many teams still expect this alongside Bayesian probability best.",
 };
 const defaultStrategies = [
   {
@@ -59,7 +60,7 @@ const defaultStrategies = [
 export default function OverviewTab({ overview }) {
   const [paused, setPaused] = useState(false);
   const [visibleIndex, setVisibleIndex] = useState(0);
-  const [nextUpdateIn, setNextUpdateIn] = useState(10);
+  const [nextUpdateIn, setNextUpdateIn] = useState(5);
   const snapshots = overview?.strategy_status_timeline ?? [];
   const activeIndex = snapshots.length ? Math.min(visibleIndex, snapshots.length - 1) : 0;
   const snapshot = snapshots[activeIndex];
@@ -70,22 +71,23 @@ export default function OverviewTab({ overview }) {
 
   useEffect(() => {
     if (!overview) return undefined;
-    setVisibleIndex(Math.min(2, Math.max(0, snapshots.length - 1)));
+    setVisibleIndex(Math.min(1, Math.max(0, snapshots.length - 1)));
+    setNextUpdateIn(5);
   }, [overview, snapshots.length]);
 
   useEffect(() => {
     if (!overview || paused || !snapshots.length) return undefined;
     const timer = window.setInterval(() => {
       setVisibleIndex((current) => (current >= snapshots.length - 1 ? current : current + 1));
-      setNextUpdateIn(10);
-    }, 10000);
+      setNextUpdateIn(5);
+    }, 5000);
     return () => window.clearInterval(timer);
   }, [overview, paused, snapshots.length]);
 
   useEffect(() => {
     if (!overview || paused) return undefined;
     const countdown = window.setInterval(() => {
-      setNextUpdateIn((current) => (current <= 1 ? 10 : current - 1));
+      setNextUpdateIn((current) => (current <= 1 ? 5 : current - 1));
     }, 1000);
     return () => window.clearInterval(countdown);
   }, [overview, paused]);
@@ -97,7 +99,8 @@ export default function OverviewTab({ overview }) {
           A New York Democratic campaign is testing donation outreach before scaling donation outreach.
           This dashboard compares Control plus four allocation strategies to see which approach allocates limited contacts most
           effectively across messages, audience segments, and channels. It does not declare one global best message
-          because adaptive campaigns assign different messages to different people.
+          because adaptive campaigns assign different messages to different people. The simulation updates quickly so
+          the tradeoff between learning and scaling is visible during a short demo.
         </p>
       </section>
 
@@ -211,7 +214,6 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
       <section className="panel current-readout readiness-card">
         <div>
           <p className="eyebrow">Current experiment status</p>
-          <h2>How reliable is the current winner?</h2>
           <p>Loading live experiment metrics. The strategy cards below are available immediately and will fill in current results when the API responds.</p>
         </div>
       </section>
@@ -222,28 +224,27 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
     <section className="panel current-readout readiness-card">
       <div className="readout-intro">
         <p className="eyebrow">Current experiment status</p>
-        <h2>How reliable is the current winner?</h2>
-        <p>
-          Do not send 100% of traffic to the current winner unless confidence is high. Keep some exploration active
-          while the campaign is still learning.
-        </p>
+        <LiveSimulationStatus paused={paused} lastUpdated={lastUpdated} nextUpdateIn={nextUpdateIn} onTogglePaused={onTogglePaused} />
       </div>
       <div className="executive-scope-grid">
         <section className="scope-card">
           <h3>Campaign-wide experiment status</h3>
-          <div className="readout-grid compact">
-            <ReadoutMetric label="Total contacts observed" value={readout.total_contacts_observed.toLocaleString()} />
-            <ReadoutMetric label="Current leading strategy" value={readout.leading_strategy.label} />
+          <div className="confidence-highlight">
             <ReadoutMetric
               label="Probability best"
               value={`${Math.round(readout.bayesian_confidence.probability_best * 100)}% simulated`}
             />
             <ReadoutMetric label="Rollout confidence status" value={readout.recommendation_status} valueHelp={helpText[readout.recommendation_status]} />
+          </div>
+          <div className="readout-grid compact">
+            <ReadoutMetric label="Total contacts observed" value={readout.total_contacts_observed.toLocaleString()} />
+            <ReadoutMetric label="Current leading strategy" value={readout.leading_strategy.label} />
             <ReadoutMetric
               label="Additional contacts before high-confidence rollout"
               value={contactsNeeded > 0 ? `~${contactsNeeded.toLocaleString()}` : "0"}
             />
             <ReadoutMetric label="Adaptive lift vs control" value={formatMoney(readout.adaptive_lift_vs_control)} />
+            <ReadoutMetric label="Frequentist check" value={formatFrequentistCheck(readout.frequentist_check)} />
           </div>
         </section>
         <section className="scope-card leading-scope">
@@ -259,18 +260,29 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
           </div>
         </section>
       </div>
-      <p className="confidence-note">
-        High confidence generally means the leading strategy has remained stable over additional traffic and reached
-        roughly 80-90% simulated probability best. Traditional statistical significance can still be reported in a real
-        deployment, but this prototype uses Bayesian-style probability best because it is easier to interpret for live
-        allocation decisions.
-      </p>
-      <div className="stream-controls">
-        <button onClick={onTogglePaused} type="button">{paused ? "Resume updates" : "Pause updates"}</button>
+      <section className="reliability-note">
+        <h3>How reliable is the current winner?</h3>
+        <p>
+          Do not send 100% of traffic to the current winner unless confidence is high. High confidence generally means
+          the leading strategy has remained stable over additional traffic and reached roughly 80-90% simulated
+          probability best. Traditional statistical significance can still be reported in a real deployment, but this
+          prototype uses Bayesian-style probability best because it is easier to interpret for live allocation decisions.
+        </p>
+      </section>
+    </section>
+  );
+}
+
+function LiveSimulationStatus({ paused, onTogglePaused, lastUpdated, nextUpdateIn }) {
+  return (
+    <div className={paused ? "live-status paused" : "live-status running"}>
+      <div>
+        <strong>{paused ? "Simulation paused" : "Live simulation running"}</strong>
         <span>Last updated: {lastUpdated || "Loading"}</span>
         <span>{paused ? "Updates paused" : `Next update in ${nextUpdateIn}s`}</span>
       </div>
-    </section>
+      <button onClick={onTogglePaused} type="button">{paused ? "Resume updates" : "Pause updates"}</button>
+    </div>
   );
 }
 
@@ -484,6 +496,11 @@ function formatMaybeNumber(value) {
 
 function formatWholePercent(value) {
   return `${Math.round(value * 100)}%`;
+}
+
+function formatFrequentistCheck(check) {
+  if (!check) return "Loading";
+  return `p vs control ${check.p_value_vs_control.toFixed(3)}; p vs runner-up ${check.p_value_vs_runner_up.toFixed(3)}; significant: ${check.statistically_significant ? "Yes" : "No"}`;
 }
 
 function lineOpacity(id, hoveredId, isolatedId) {

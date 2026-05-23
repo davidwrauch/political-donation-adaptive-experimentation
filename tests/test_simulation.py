@@ -58,6 +58,10 @@ def test_summary_has_campaign_experiment_metrics():
     assert "adaptive_lift_vs_control" in summary["current_readout"]
     assert 0 <= summary["current_readout"]["bayesian_confidence"]["probability_best"] <= 1
     assert summary["current_readout"]["bayesian_confidence"]["basis"] == "simulated"
+    assert summary["current_readout"]["frequentist_check"]["basis"] == "simulated"
+    assert 0 <= summary["current_readout"]["frequentist_check"]["p_value_vs_control"] <= 1
+    assert 0 <= summary["current_readout"]["frequentist_check"]["p_value_vs_runner_up"] <= 1
+    assert isinstance(summary["current_readout"]["frequentist_check"]["statistically_significant"], bool)
     assert summary["current_readout"]["recommendation_status"] in [
         "Directional only",
         "Promising but keep testing",

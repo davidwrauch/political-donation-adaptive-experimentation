@@ -219,7 +219,7 @@ button {
 }
 
 .readout-intro {
-  max-width: 850px;
+  max-width: none;
 }
 
 .scope-card {
@@ -241,6 +241,29 @@ button {
 
 .leading-scope {
   background: #ffffff;
+}
+
+.confidence-highlight {
+  background: #e4f4ed;
+  border: 1px solid #acd8c4;
+  border-radius: 10px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 10px 0 12px;
+  padding: 10px;
+}
+
+.confidence-highlight article {
+  background: white;
+  border: 1px solid #d5eadf;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.confidence-highlight strong {
+  color: #17694f;
+  font-size: 1.12rem;
 }
 
 .readout-grid {
@@ -283,13 +306,40 @@ button {
   margin: 0;
 }
 
-.stream-controls {
+.live-status {
   align-items: center;
+  border-radius: 10px;
   display: flex;
-  gap: 12px;
-  grid-column: 1 / -1;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 12px 14px;
 }
 
+.live-status.running {
+  background: #e3f5ec;
+  border: 1px solid #a7d8c1;
+  color: #17694f;
+}
+
+.live-status.paused {
+  background: #fff8e7;
+  border: 1px solid #ecd89f;
+  color: #765400;
+}
+
+.live-status div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.live-status strong,
+.live-status span {
+  font-size: 0.88rem;
+  font-weight: 850;
+}
+
+.live-status button,
 .stream-controls button {
   background: #19363b;
   color: white;
@@ -297,10 +347,30 @@ button {
   padding: 0.55rem 0.8rem;
 }
 
+.live-status.paused button {
+  background: #9a5b00;
+}
+
 .stream-controls span {
   color: #526165;
   font-size: 0.85rem;
   font-weight: 750;
+}
+
+.reliability-note {
+  background: #f8faf8;
+  border: 1px solid #dce8e1;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.reliability-note h3 {
+  margin: 0 0 6px;
+}
+
+.reliability-note p {
+  color: #526165;
+  margin: 0;
 }
 
 .section-note {
@@ -870,7 +940,7 @@ button {
 
 .built-by a {
   color: #1b6358;
-  display: inline-block;
+  display: block;
   font-weight: 850;
   margin-top: 8px;
 }
@@ -929,6 +999,15 @@ button {
 
   .card-title-row {
     display: block;
+  }
+
+  .confidence-highlight {
+    grid-template-columns: 1fr;
+  }
+
+  .live-status {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .leader-pill {

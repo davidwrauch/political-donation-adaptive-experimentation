@@ -31,12 +31,14 @@ export default function App() {
           <p>
             A lightweight prototype for testing donation messages across audience segments, channels,
             and issue frames while monitoring net donation value, conversion, average donation amount, and donor fatigue.
+            This live demo compresses a longer campaign experiment into a short simulation so viewers can watch
+            allocation, confidence, and performance update over time.
           </p>
         </div>
         <div className="hero-card">
           <span>Primary metric</span>
           <strong>Net donation value per contact</strong>
-          <small>Secondary metrics: donation conversion rate, average donation amount, fatigue risk, and exploration rate.</small>
+          <small>Secondary metrics: donation conversion rate, average donation amount, fatigue risk, exploration rate, and p-value check.</small>
         </div>
       </header>
 

@@ -141,7 +141,7 @@ def generate_supporters(n: int = 2500, seed: int = 42) -> list[dict]:
     return supporters
 
 
-def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float = 0.18, batches: int = 12) -> dict:
+def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float = 0.18, batches: int = 24) -> dict:
     rng = random.Random(seed)
     supporters = generate_supporters(n=n, seed=seed)
     strategy_priors = {strategy["id"]: defaultdict(lambda: {"alpha": 2.0, "beta": 8.0}) for strategy in STRATEGIES}
@@ -417,6 +417,7 @@ def build_current_readout(strategy_rows: list[dict]) -> dict:
     adaptive_rows = [row for row in strategy_rows if row["id"] != "control"]
     adaptive_winner = max(adaptive_rows, key=lambda row: row["net_expected_value"])
     confidence = simulated_bayesian_confidence(strategy_rows, value_winner["id"])
+    frequentist = simulated_frequentist_check(strategy_rows)
     total_contacts = sum(row["event_count"] for row in strategy_rows)
     return {
         "leading_strategy": value_winner,
@@ -426,6 +427,7 @@ def build_current_readout(strategy_rows: list[dict]) -> dict:
         "control": control_row,
         "adaptive_lift_vs_control": round(adaptive_winner["net_expected_value"] - control_row["net_expected_value"], 4),
         "bayesian_confidence": confidence,
+        "frequentist_check": frequentist,
         "estimated_additional_contacts_needed": estimated_contacts_needed(confidence["probability_best"]),
         "recommendation_status": recommendation_status(confidence["probability_best"]),
         "total_contacts_observed": total_contacts,
@@ -573,6 +575,24 @@ def simulated_bayesian_confidence(strategy_rows: list[dict], leading_strategy_id
         "strategy_id": leading_strategy_id,
         "strategy_label": leader["label"],
         "probability_best": round(probability, 2),
+        "basis": "simulated",
+    }
+
+
+def simulated_frequentist_check(strategy_rows: list[dict]) -> dict:
+    ordered = sorted(strategy_rows, key=lambda row: row["net_expected_value"], reverse=True)
+    leader = ordered[0]
+    runner_up = ordered[1] if len(ordered) > 1 else ordered[0]
+    control = next(row for row in strategy_rows if row["id"] == "control")
+    control_gap = max(0.0, leader["net_expected_value"] - control["net_expected_value"])
+    runner_gap = max(0.0, leader["net_expected_value"] - runner_up["net_expected_value"])
+    sample_factor = min(1.0, leader["event_count"] / 900)
+    p_vs_control = clamp(0.34 - control_gap * 0.045 - sample_factor * 0.06, 0.01, 0.49)
+    p_vs_runner_up = clamp(0.42 - runner_gap * 0.075 - sample_factor * 0.04, 0.02, 0.55)
+    return {
+        "p_value_vs_control": round(p_vs_control, 3),
+        "p_value_vs_runner_up": round(p_vs_runner_up, 3),
+        "statistically_significant": p_vs_control < 0.05 and p_vs_runner_up < 0.05,
         "basis": "simulated",
     }
 
