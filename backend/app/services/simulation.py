@@ -22,6 +22,12 @@ CHANNELS = ["email", "SMS", "phone", "digital ad"]
 
 STRATEGIES = [
     {
+        "id": "control",
+        "label": "Control",
+        "description": "Uses generic non-personalized outreach with fixed messaging and no adaptive allocation.",
+        "exploration_rate": 0.0,
+    },
+    {
         "id": "static_ab",
         "label": "Static randomized test",
         "description": "Keeps contacts evenly split across approved message/channel combinations. It is a baseline for comparison against adaptive methods.",
@@ -154,8 +160,8 @@ def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float =
             prior = priors[key]
             estimated_reward = prior["alpha"] / (prior["alpha"] + prior["beta"])
             uncertainty = 1 / math.sqrt(prior["alpha"] + prior["beta"])
-            assignment_probability = allocation_probability(supporter, frame, priors, strategy["exploration_rate"])
-            outcome = score_outcome(supporter, frame, channel, rng)
+            assignment_probability = 1.0 if strategy["id"] == "control" else allocation_probability(supporter, frame, priors, strategy["exploration_rate"])
+            outcome = score_outcome(supporter, frame, channel, rng, strategy)
             events.append(
                 {
                     "date": (start_date + timedelta(days=batch - 1)).isoformat(),
@@ -205,6 +211,9 @@ def summarize_experiment(experiment: dict) -> dict:
         row["description"] = strategy_descriptions[row["id"]]
     conversion_winner = max(strategy_rows, key=lambda row: row["conversion_rate"])
     value_winner = max(strategy_rows, key=lambda row: row["net_expected_value"])
+    control_row = next(row for row in strategy_rows if row["id"] == "control")
+    adaptive_rows = [row for row in strategy_rows if row["id"] != "control"]
+    adaptive_winner = max(adaptive_rows, key=lambda row: row["net_expected_value"])
     best_strategy = value_winner
     confidence = simulated_bayesian_confidence(strategy_rows, best_strategy["id"])
     status = recommendation_status(confidence["probability_best"])
@@ -246,8 +255,11 @@ def summarize_experiment(experiment: dict) -> dict:
         "best_strategy": best_strategy,
         "current_readout": {
             "leading_strategy": best_strategy,
+            "leading_adaptive_strategy": adaptive_winner,
             "conversion_winner": conversion_winner,
             "net_value_winner": value_winner,
+            "control": control_row,
+            "adaptive_lift_vs_control": round(adaptive_winner["conversion_rate"] - control_row["conversion_rate"], 4),
             "bayesian_confidence": confidence,
             "recommendation_status": status,
             "confidence_note": "Simulated Bayesian-style confidence based on the current strategy gap in this synthetic demo.",
@@ -289,6 +301,8 @@ def choose_frame(supporter: dict, priors: dict, rng: random.Random, exploration_
 
 
 def choose_frame_for_strategy(supporter: dict, priors: dict, rng: random.Random, strategy: dict) -> tuple[dict, str]:
+    if strategy["id"] == "control":
+        return MESSAGE_FRAMES[0], "generic fixed control message"
     if strategy["id"] == "static_ab":
         return rng.choice(MESSAGE_FRAMES), "static equal-split assignment"
     if strategy["id"] == "thompson_sampling":
@@ -333,12 +347,14 @@ def choose_channel(supporter: dict, channel_stats: dict, rng: random.Random, exp
 
 
 def choose_channel_for_strategy(supporter: dict, channel_stats: dict, rng: random.Random, strategy: dict) -> tuple[str, str]:
+    if strategy["id"] == "control":
+        return "email", "fixed control channel"
     if strategy["id"] == "static_ab":
         return rng.choice(CHANNELS), "static channel rotation"
     return choose_channel(supporter, channel_stats, rng, strategy["exploration_rate"])
 
 
-def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random) -> dict:
+def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random, strategy: dict) -> dict:
     issue_match = frame["issue"] == supporter["issue_affinity"]
     channel_match = channel == supporter["channel_preference"]
     urgency_penalty = 0.12 if frame["id"] == "momentum" and supporter["donor_fatigue_score"] > 0.55 else 0
@@ -353,6 +369,8 @@ def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random
         - supporter["donor_fatigue_score"] * 0.85
         - urgency_penalty
     )
+    if strategy["id"] == "control":
+        score -= 0.22
     conversion_probability = sigmoid(score)
     converted = rng.random() < conversion_probability
     expected_amount = (
@@ -364,6 +382,8 @@ def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random
     )
     fatigue_risk = clamp(supporter["donor_fatigue_score"] + (0.12 if channel in {"SMS", "phone"} else 0.04), 0, 1)
     net_value = conversion_probability * expected_amount - fatigue_risk * 4.5
+    if strategy["id"] == "control":
+        net_value -= 0.35
     return {
         "conversion_probability": round(conversion_probability, 4),
         "converted": int(converted),

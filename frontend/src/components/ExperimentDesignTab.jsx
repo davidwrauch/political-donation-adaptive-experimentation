@@ -3,7 +3,7 @@ import React from "react";
 const designItems = [
   ["Audience data needed", "Supporter history, donation behavior, engagement, geography, issue affinity, channel availability, and fatigue/exposure history."],
   ["Message arms needed", "A small set of approved donation frames: affordability, democracy protection, accountability, local investment, economic fairness, and campaign momentum."],
-  ["Experimentation strategies compared", "Static randomized test, Thompson sampling, LinUCB, and contextual bandit with fatigue guardrail."],
+  ["Experimentation strategies compared", "Control, static randomized test, Thompson sampling, LinUCB, and contextual bandit with fatigue guardrail."],
   ["Channels needed", "Email, SMS, phone, and digital ads, with real eligibility constraints and opt-out rules."],
   ["Outcome definitions", "Primary: donation conversion. Secondary: expected donation amount, net expected value, channel response, fatigue risk, and segment lift."],
   ["Randomization / assignment logic", "Compare fixed equal-split assignment against adaptive strategies that learn by batch while preserving exploration."],
@@ -21,6 +21,24 @@ const leadershipQuestions = [
   "What historical outreach data exists?",
   "What ethical or legal constraints apply?",
   "How much exploration is acceptable?",
+];
+
+const operationalSteps = [
+  "Vendor platforms",
+  "Warehouse",
+  "Experimentation models",
+  "Allocation engine",
+  "Reviewed outreach recommendations",
+  "Vendor execution",
+];
+
+const operationalDetails = [
+  "Outreach vendors/platforms send campaign interaction data back through APIs or batch uploads.",
+  "Data flows into a centralized warehouse containing demographic, behavioral, donation, and engagement history.",
+  "Allocation models evaluate message/channel performance across supporter segments.",
+  "The system generates updated outreach recommendations including supporter ID, message variant, delivery channel, and cadence/frequency guidance.",
+  "Recommended assignments are exported back to campaign vendors/tools through CSVs or APIs for execution.",
+  "Human review and campaign approval remain part of the workflow.",
 ];
 
 export default function ExperimentDesignTab() {
@@ -57,6 +75,27 @@ export default function ExperimentDesignTab() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="panel">
+        <h2>How this would work operationally</h2>
+        <p>
+          In a real campaign, this dashboard would sit between outreach systems, the campaign data warehouse, and
+          reviewed recommendations that staff approve before execution.
+        </p>
+        <div className="flow-row" aria-label="Operational architecture flow">
+          {operationalSteps.map((step, index) => (
+            <React.Fragment key={step}>
+              <span>{step}</span>
+              {index < operationalSteps.length - 1 && <b aria-hidden="true">→</b>}
+            </React.Fragment>
+          ))}
+        </div>
+        <ul className="question-list">
+          {operationalDetails.map((detail) => (
+            <li key={detail}>{detail}</li>
+          ))}
+        </ul>
       </section>
 
       <section className="panel">

@@ -1,7 +1,12 @@
 import React from "react";
 
-const lineColors = ["#2e8f7f", "#a16a2a", "#3f6f9f", "#8b4b66"];
+const lineColors = ["#6d7a80", "#2e8f7f", "#a16a2a", "#3f6f9f", "#8b4b66"];
 const defaultStrategies = [
+  {
+    id: "control",
+    label: "Control",
+    description: "Uses generic non-personalized outreach with fixed messaging and no adaptive allocation.",
+  },
   {
     id: "static_ab",
     label: "Static randomized test",
@@ -31,7 +36,7 @@ export default function OverviewTab({ overview }) {
       <section className="panel intro-card">
         <p>
           A New York Democratic campaign is testing donation outreach before scaling paid and volunteer outreach.
-          This dashboard compares four allocation strategies to see which one allocates limited contacts most
+          This dashboard compares Control plus four allocation strategies to see which approach allocates limited contacts most
           effectively across messages, audience segments, and channels. It does not declare one global best message
           because adaptive campaigns assign different messages to different people.
         </p>
@@ -87,7 +92,7 @@ export default function OverviewTab({ overview }) {
 
 function StrategyLegend({ strategies }) {
   return (
-    <section className="strategy-legend" aria-label="Allocation strategies being compared">
+      <section className="strategy-legend" aria-label="Allocation strategies being compared">
       {strategies.map((strategy) => (
         <article className="panel" key={strategy.id}>
           <h3>{strategy.label}</h3>
@@ -102,7 +107,7 @@ function StrategyMetrics({ strategies }) {
   return (
     <>
       <section className="section-note">
-        This dashboard compares four allocation strategies. It does not declare a single global best message because
+        This dashboard compares Control, a static randomized baseline, and three adaptive allocation strategies. It does not declare a single global best message because
         adaptive campaigns assign different messages to different people.
       </section>
 
@@ -146,6 +151,8 @@ function CurrentReadout({ readout }) {
       </div>
       <div className="readout-grid">
         <ReadoutMetric label="Current leading strategy" value={readout.leading_strategy.label} />
+        <ReadoutMetric label="Leading adaptive method" value={readout.leading_adaptive_strategy.label} />
+        <ReadoutMetric label="Adaptive lift vs control" value={formatPercent(readout.adaptive_lift_vs_control)} />
         <ReadoutMetric label="Winner by donation conversion rate" value={readout.conversion_winner.label} />
         <ReadoutMetric label="Winner by net expected value" value={readout.net_value_winner.label} />
         <ReadoutMetric
@@ -244,8 +251,11 @@ function MessageAllocationChart({ rows, strategy }) {
     <section className="panel">
       <h2>Message allocation within the current leading strategy</h2>
       <p className="panel-copy">
-        This secondary view uses {strategy}. Under the current leading strategy, some message frames receive
-        more allocation for specific donor segments while exploration remains active.
+        <strong>Current leading strategy: {strategy}.</strong>
+      </p>
+      <p className="panel-copy">
+        This secondary view shows how the current leading strategy distributes outreach across message frames while
+        preserving some exploration.
       </p>
       <div className="allocation-grid">
         {latest.map((frame) => {
@@ -253,7 +263,7 @@ function MessageAllocationChart({ rows, strategy }) {
           return (
             <article key={frame.id}>
               <strong>{frame.label}</strong>
-              <span>Latest batch {formatPercent(frame.allocation_share)}</span>
+              <span>Latest batch allocation: {formatPercent(frame.allocation_share)}</span>
               <small>Started at {formatPercent(starting)}</small>
               <div className="bar-track">
                 <div className="bar-fill" style={{ width: `${Math.max(4, frame.allocation_share * 100)}%` }} />

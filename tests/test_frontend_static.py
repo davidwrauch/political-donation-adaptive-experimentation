@@ -35,6 +35,8 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Current readout",
         "Which allocation strategy is winning right now, and can we trust it yet?",
         "Current leading strategy",
+        "Leading adaptive method",
+        "Adaptive lift vs control",
         "Winner by donation conversion rate",
         "Winner by net expected value",
         "Probability this is the best strategy",
@@ -56,6 +58,7 @@ def test_overview_contains_leadership_metrics_and_charts():
     ]:
         assert text in overview
     for strategy in [
+        "Control",
         "Static randomized test",
         "Thompson sampling",
         "LinUCB",
@@ -79,6 +82,13 @@ def test_experiment_design_is_practical_and_guardrailed():
 
     for text in [
         "How we would actually run this",
+        "How this would work operationally",
+        "Vendor platforms",
+        "Warehouse",
+        "Experimentation models",
+        "Allocation engine",
+        "Reviewed outreach recommendations",
+        "Vendor execution",
         "What adaptive experimentation means",
         "How the static randomized baseline is comparable",
         "Audience data needed",
@@ -94,6 +104,8 @@ def test_experiment_design_is_practical_and_guardrailed():
         "How much exploration is acceptable?",
     ]:
         assert text in design
+    assert "supporter ID" in design
+    assert "CSVs or APIs" in design
 
 
 def test_ai_tab_is_campaign_synthesis_not_autonomous_persuasion():

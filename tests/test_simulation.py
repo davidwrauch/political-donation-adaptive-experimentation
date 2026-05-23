@@ -33,8 +33,9 @@ def test_summary_has_campaign_experiment_metrics():
     summary = summarize_experiment(generate_experiment(seed=8, n=250))
 
     assert summary["total_supporters"] == 250
-    assert summary["active_arms"] == 4
+    assert summary["active_arms"] == 5
     assert [strategy["label"] for strategy in summary["strategies"]] == [
+        "Control",
         "Static randomized test",
         "Thompson sampling",
         "LinUCB",
@@ -44,8 +45,11 @@ def test_summary_has_campaign_experiment_metrics():
     assert summary["secondary_metrics"]["expected_donation_amount"] > 0
     assert summary["best_strategy"]["label"]
     assert summary["current_readout"]["leading_strategy"]["label"]
+    assert summary["current_readout"]["leading_adaptive_strategy"]["label"]
     assert summary["current_readout"]["conversion_winner"]["label"]
     assert summary["current_readout"]["net_value_winner"]["label"]
+    assert summary["current_readout"]["control"]["label"] == "Control"
+    assert "adaptive_lift_vs_control" in summary["current_readout"]
     assert 0 <= summary["current_readout"]["bayesian_confidence"]["probability_best"] <= 1
     assert summary["current_readout"]["bayesian_confidence"]["basis"] == "simulated"
     assert summary["current_readout"]["recommendation_status"] in [
