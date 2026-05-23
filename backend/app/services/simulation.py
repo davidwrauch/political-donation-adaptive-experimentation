@@ -20,6 +20,33 @@ ISSUES = [
 ]
 CHANNELS = ["email", "SMS", "phone", "digital ad"]
 
+STRATEGIES = [
+    {
+        "id": "static_ab",
+        "label": "Static A/B test",
+        "description": "Keeps traffic split evenly across approved message frames as a baseline.",
+        "exploration_rate": 1.0,
+    },
+    {
+        "id": "thompson_sampling",
+        "label": "Thompson sampling",
+        "description": "Shifts allocation toward frames with stronger observed donation conversion while preserving uncertainty-aware learning.",
+        "exploration_rate": 0.18,
+    },
+    {
+        "id": "linucb",
+        "label": "LinUCB",
+        "description": "Uses supporter context such as issue affinity, engagement, channel preference, and donation history to personalize assignments.",
+        "exploration_rate": 0.14,
+    },
+    {
+        "id": "guarded_contextual_bandit",
+        "label": "Contextual bandit with fatigue guardrail",
+        "description": "Personalizes outreach while reducing exposure for high-fatigue supporters and preserving a small exploration budget.",
+        "exploration_rate": 0.10,
+    },
+]
+
 MESSAGE_FRAMES = [
     {
         "id": "economic_fairness",
@@ -111,50 +138,56 @@ def generate_supporters(n: int = 2500, seed: int = 42) -> list[dict]:
 def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float = 0.18, batches: int = 12) -> dict:
     rng = random.Random(seed)
     supporters = generate_supporters(n=n, seed=seed)
-    priors = defaultdict(lambda: {"alpha": 2.0, "beta": 8.0})
-    channel_stats = defaultdict(lambda: {"alpha": 2.0, "beta": 8.0})
+    strategy_priors = {strategy["id"]: defaultdict(lambda: {"alpha": 2.0, "beta": 8.0}) for strategy in STRATEGIES}
+    channel_stats = {strategy["id"]: defaultdict(lambda: {"alpha": 2.0, "beta": 8.0}) for strategy in STRATEGIES}
     events = []
     start_date = date(2026, 5, 1)
 
-    for index, supporter in enumerate(supporters):
-        batch = min(batches, index // max(1, math.ceil(n / batches)) + 1)
-        frame, frame_reason = choose_frame(supporter, priors, rng, exploration_rate)
-        channel, channel_reason = choose_channel(supporter, channel_stats, rng, exploration_rate)
-        key = (supporter["segment"], frame["id"])
-        prior = priors[key]
-        estimated_reward = prior["alpha"] / (prior["alpha"] + prior["beta"])
-        uncertainty = 1 / math.sqrt(prior["alpha"] + prior["beta"])
-        assignment_probability = allocation_probability(supporter, frame, priors, exploration_rate)
-        outcome = score_outcome(supporter, frame, channel, rng)
-        events.append(
-            {
-                "date": (start_date + timedelta(days=batch - 1)).isoformat(),
-                "batch": batch,
-                "supporter_id": supporter["supporter_id"],
-                "segment": supporter["segment"],
-                "message_frame": frame["id"],
-                "message_label": frame["label"],
-                "channel": channel,
-                "assignment_probability": round(assignment_probability, 4),
-                "allocation_share": round(assignment_probability, 4),
-                "expected_reward": round(estimated_reward, 4),
-                "uncertainty": round(uncertainty, 4),
-                "exploration_need": round(uncertainty + (exploration_rate * 0.2), 4),
-                "fatigue_penalty": round(fatigue_penalty_for(supporter, frame, channel), 4),
-                "channel_fit": round(1 if channel == supporter["channel_preference"] else 0.35, 2),
-                "selection_reason": build_selection_reason(frame_reason, channel_reason, supporter),
-                **outcome,
-            }
-        )
-        priors[key]["alpha" if outcome["converted"] else "beta"] += 1
-        channel_key = (supporter["segment"], channel)
-        channel_stats[channel_key]["alpha" if outcome["converted"] else "beta"] += 1
+    for strategy in STRATEGIES:
+        priors = strategy_priors[strategy["id"]]
+        channels_for_strategy = channel_stats[strategy["id"]]
+        for index, supporter in enumerate(supporters):
+            batch = min(batches, index // max(1, math.ceil(n / batches)) + 1)
+            frame, frame_reason = choose_frame_for_strategy(supporter, priors, rng, strategy)
+            channel, channel_reason = choose_channel_for_strategy(supporter, channels_for_strategy, rng, strategy)
+            key = (supporter["segment"], frame["id"])
+            prior = priors[key]
+            estimated_reward = prior["alpha"] / (prior["alpha"] + prior["beta"])
+            uncertainty = 1 / math.sqrt(prior["alpha"] + prior["beta"])
+            assignment_probability = allocation_probability(supporter, frame, priors, strategy["exploration_rate"])
+            outcome = score_outcome(supporter, frame, channel, rng)
+            events.append(
+                {
+                    "date": (start_date + timedelta(days=batch - 1)).isoformat(),
+                    "batch": batch,
+                    "strategy": strategy["id"],
+                    "strategy_label": strategy["label"],
+                    "supporter_id": supporter["supporter_id"],
+                    "segment": supporter["segment"],
+                    "message_frame": frame["id"],
+                    "message_label": frame["label"],
+                    "channel": channel,
+                    "assignment_probability": round(assignment_probability, 4),
+                    "allocation_share": round(assignment_probability, 4),
+                    "expected_reward": round(estimated_reward, 4),
+                    "uncertainty": round(uncertainty, 4),
+                    "exploration_need": round(uncertainty + (strategy["exploration_rate"] * 0.2), 4),
+                    "fatigue_penalty": round(fatigue_penalty_for(supporter, frame, channel), 4),
+                    "channel_fit": round(1 if channel == supporter["channel_preference"] else 0.35, 2),
+                    "selection_reason": build_selection_reason(frame_reason, channel_reason, supporter),
+                    **outcome,
+                }
+            )
+            priors[key]["alpha" if outcome["converted"] else "beta"] += 1
+            channel_key = (supporter["segment"], channel)
+            channels_for_strategy[channel_key]["alpha" if outcome["converted"] else "beta"] += 1
 
     return {
         "supporters": supporters,
         "events": events,
         "message_frames": MESSAGE_FRAMES,
         "channels": CHANNELS,
+        "strategies": STRATEGIES,
         "exploration_rate": exploration_rate,
         "batches": batches,
     }
@@ -163,20 +196,26 @@ def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float =
 def summarize_experiment(experiment: dict) -> dict:
     events = experiment["events"]
     supporters = experiment["supporters"]
-    frame_rows = grouped_metrics(events, "message_frame", label_key="message_label")
+    strategy_rows = grouped_metrics(events, "strategy", label_key="strategy_label")
+    strategy_exploration = {strategy["id"]: strategy["exploration_rate"] for strategy in STRATEGIES}
+    for row in strategy_rows:
+        row["exploration_rate"] = strategy_exploration[row["id"]]
+    best_strategy = max(strategy_rows, key=lambda row: row["net_expected_value"])
+    best_strategy_events = [event for event in events if event["strategy"] == best_strategy["id"]]
+    frame_rows = grouped_metrics(best_strategy_events, "message_frame", label_key="message_label")
     segment_rows = grouped_metrics(events, "segment")
     channel_rows = grouped_metrics(events, "channel")
-    best_frame = max(frame_rows, key=lambda row: row["conversion_rate"])
     best_segment = max(segment_rows, key=lambda row: row["net_expected_value"])
     best_channel = max(channel_rows, key=lambda row: row["net_expected_value"])
     fatigue_risk = mean(event["fatigue_risk"] for event in events)
-    allocation = allocation_shift(events)
-    timeline = conversion_timeline(events)
+    allocation = message_allocation_shift(best_strategy_events)
+    timeline = strategy_conversion_timeline(events)
     latest_event = events[-1]
 
     return {
         "total_supporters": len(supporters),
-        "active_arms": len(experiment["message_frames"]),
+        "active_arms": len(experiment["strategies"]),
+        "strategies": experiment["strategies"],
         "channels": experiment["channels"],
         "exploration_rate": experiment["exploration_rate"],
         "primary_metric": {
@@ -190,23 +229,24 @@ def summarize_experiment(experiment: dict) -> dict:
             "donor_fatigue_risk": fatigue_risk,
             "message_frame_lift_by_segment": best_segment["conversion_rate"] - mean(event["converted"] for event in events),
         },
-        "best_message_frame": best_frame,
+        "best_strategy": best_strategy,
         "best_segment": best_segment,
         "best_channel": best_channel,
         "donor_fatigue_warning": fatigue_risk >= 0.34,
         "recommended_next_allocation": (
-            f"Shift the next outreach batch toward {best_frame['label']} for {best_segment['label']} "
-            f"using {best_channel['label']}, while preserving {int(experiment['exploration_rate'] * 100)}% exploration."
+            f"Use {best_strategy['label']} as the leading allocation strategy for the next batch, "
+            f"while preserving exploration and monitoring fatigue in high-contact donor segments."
         ),
         "leadership_takeaway": (
-            f"{best_frame['label']} is the strongest current fundraising frame, but leadership should "
-            f"keep some exploration active and monitor fatigue before scaling outreach to {best_segment['label']}."
+            "Under the best-performing strategy, some message frames receive more allocation for specific donor segments, "
+            "while the system preserves exploration because performance varies by segment and channel."
         ),
+        "strategy_performance": strategy_rows,
         "message_performance": frame_rows,
         "segment_performance": sorted(segment_rows, key=lambda row: row["net_expected_value"], reverse=True)[:8],
         "channel_performance": channel_rows,
-        "conversion_timeline": timeline,
-        "allocation_shift": allocation,
+        "strategy_timeline": timeline,
+        "message_allocation_shift": allocation,
         "latest_decision": latest_event,
         "plain_english": (
             "The system is optimizing scarce campaign outreach by learning which donation message "
@@ -229,6 +269,36 @@ def choose_frame(supporter: dict, priors: dict, rng: random.Random, exploration_
     return max(scored, key=lambda item: item[0])[1], "highest expected reward after affinity and fatigue adjustment"
 
 
+def choose_frame_for_strategy(supporter: dict, priors: dict, rng: random.Random, strategy: dict) -> tuple[dict, str]:
+    if strategy["id"] == "static_ab":
+        return rng.choice(MESSAGE_FRAMES), "static equal-split assignment"
+    if strategy["id"] == "thompson_sampling":
+        return choose_frame(supporter, priors, rng, strategy["exploration_rate"])
+    if strategy["id"] == "linucb":
+        return choose_contextual_frame(supporter, priors, rng, strategy["exploration_rate"], guarded=False)
+    return choose_contextual_frame(supporter, priors, rng, strategy["exploration_rate"], guarded=True)
+
+
+def choose_contextual_frame(supporter: dict, priors: dict, rng: random.Random, exploration_rate: float, guarded: bool) -> tuple[dict, str]:
+    if rng.random() < exploration_rate:
+        return rng.choice(MESSAGE_FRAMES), "contextual exploration"
+    scored = []
+    for frame in MESSAGE_FRAMES:
+        prior = priors[(supporter["segment"], frame["id"])]
+        estimated_conversion = prior["alpha"] / (prior["alpha"] + prior["beta"])
+        context_score = (
+            estimated_conversion
+            + (0.13 if frame["issue"] == supporter["issue_affinity"] else 0)
+            + supporter["recent_engagement_score"] * 0.05
+            + min(supporter["prior_donation_count"], 4) * 0.015
+        )
+        if guarded:
+            context_score -= fatigue_penalty_for(supporter, frame, "SMS") * 1.2
+        scored.append((context_score, frame))
+    reason = "contextual score with fatigue guardrail" if guarded else "contextual score from donor profile"
+    return max(scored, key=lambda item: item[0])[1], reason
+
+
 def choose_channel(supporter: dict, channel_stats: dict, rng: random.Random, exploration_rate: float) -> tuple[str, str]:
     if rng.random() < exploration_rate:
         return rng.choice(CHANNELS), "channel exploration"
@@ -241,6 +311,12 @@ def choose_channel(supporter: dict, channel_stats: dict, rng: random.Random, exp
         fatigue_penalty = 0.05 if channel in {"SMS", "phone"} and supporter["donor_fatigue_score"] > 0.58 else 0
         scored.append((estimated + preference_bonus - fatigue_penalty, channel))
     return max(scored, key=lambda item: item[0])[1], "best channel fit after response and fatigue adjustment"
+
+
+def choose_channel_for_strategy(supporter: dict, channel_stats: dict, rng: random.Random, strategy: dict) -> tuple[str, str]:
+    if strategy["id"] == "static_ab":
+        return rng.choice(CHANNELS), "static channel rotation"
+    return choose_channel(supporter, channel_stats, rng, strategy["exploration_rate"])
 
 
 def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random) -> dict:
@@ -301,33 +377,31 @@ def grouped_metrics(events: list[dict], key: str, label_key: str | None = None) 
     return sorted(rows, key=lambda row: row["conversion_rate"], reverse=True)
 
 
-def conversion_timeline(events: list[dict]) -> list[dict]:
-    tracked_frames = [frame["id"] for frame in MESSAGE_FRAMES[:4]]
-    labels = {frame["id"]: frame["label"] for frame in MESSAGE_FRAMES}
+def strategy_conversion_timeline(events: list[dict]) -> list[dict]:
+    labels = {strategy["id"]: strategy["label"] for strategy in STRATEGIES}
     by_batch = defaultdict(list)
     for event in events:
-        if event["message_frame"] in tracked_frames:
-            by_batch[event["batch"]].append(event)
+        by_batch[event["batch"]].append(event)
     cumulative = defaultdict(int)
     rows = []
     for batch in sorted(by_batch):
         batch_events = by_batch[batch]
-        for frame in tracked_frames:
-            cumulative[frame] += sum(1 for event in batch_events if event["message_frame"] == frame and event["converted"])
+        for strategy in STRATEGIES:
+            cumulative[strategy["id"]] += sum(1 for event in batch_events if event["strategy"] == strategy["id"] and event["converted"])
         rows.append(
             {
                 "batch": batch,
                 "date": batch_events[0]["date"],
                 "series": [
-                    {"id": frame, "label": labels[frame], "cumulative_conversions": cumulative[frame]}
-                    for frame in tracked_frames
+                    {"id": strategy["id"], "label": labels[strategy["id"]], "cumulative_conversions": cumulative[strategy["id"]]}
+                    for strategy in STRATEGIES
                 ],
             }
         )
     return rows
 
 
-def allocation_shift(events: list[dict]) -> list[dict]:
+def message_allocation_shift(events: list[dict]) -> list[dict]:
     labels = {frame["id"]: frame["label"] for frame in MESSAGE_FRAMES}
     by_batch = defaultdict(list)
     for event in events:

@@ -33,16 +33,23 @@ def test_summary_has_campaign_experiment_metrics():
     summary = summarize_experiment(generate_experiment(seed=8, n=250))
 
     assert summary["total_supporters"] == 250
-    assert summary["active_arms"] == 6
+    assert summary["active_arms"] == 4
+    assert [strategy["label"] for strategy in summary["strategies"]] == [
+        "Static A/B test",
+        "Thompson sampling",
+        "LinUCB",
+        "Contextual bandit with fatigue guardrail",
+    ]
     assert 0 <= summary["primary_metric"]["value"] <= 1
     assert summary["secondary_metrics"]["expected_donation_amount"] > 0
-    assert summary["best_message_frame"]["label"]
+    assert summary["best_strategy"]["label"]
     assert summary["best_segment"]["label"]
     assert summary["best_channel"]["label"]
     assert summary["recommended_next_allocation"]
     assert summary["leadership_takeaway"]
-    assert summary["conversion_timeline"]
-    assert summary["allocation_shift"]
+    assert summary["strategy_timeline"]
+    assert summary["strategy_performance"]
+    assert summary["message_allocation_shift"]
     assert summary["latest_decision"]["assignment_probability"] > 0
     assert "selection_reason" in summary["latest_decision"]
 
@@ -52,15 +59,15 @@ def test_ai_synthesis_is_deterministic_and_human_reviewed():
     recommendation = synthesize_recommendation(summary)
 
     assert recommendation["human_review_required"] is True
-    assert "not autonomous persuasion" in recommendation["warning"]
-    assert "human-reviewed" in recommendation["generated_rationale"]
-    assert recommendation["approved_message_templates"]
-    assert recommendation["recommended_outreach_strategy"]
-    assert recommendation["recommended_message_frame"]
-    assert recommendation["recommended_channel"]
-    assert recommendation["why_prioritized"]
-    assert recommendation["risk_note"]
-    assert recommendation["decision_explanation"]["expected_reward"] >= 0
+    assert "does not send messages automatically" in recommendation["explanation"]
+    assert recommendation["base_message"]
+    assert recommendation["retrieved_context"]["approved_issue_brief"] == "Affordability / cost of living"
+    assert len(recommendation["variants"]) == 4
+    assert {variant["medium"] for variant in recommendation["variants"]} == {
+        "SMS",
+        "Email",
+        "Door-knocking script",
+    }
 
 
 def test_events_include_batch_and_assignment_explanation_fields():
@@ -69,6 +76,8 @@ def test_events_include_batch_and_assignment_explanation_fields():
     for field in [
         "date",
         "batch",
+        "strategy",
+        "strategy_label",
         "supporter_id",
         "message_frame",
         "channel",

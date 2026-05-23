@@ -3,14 +3,15 @@ import React from "react";
 const designItems = [
   ["Audience data needed", "Supporter history, donation behavior, engagement, geography, issue affinity, channel availability, and fatigue/exposure history."],
   ["Message arms needed", "A small set of approved donation frames: affordability, democracy protection, accountability, local investment, economic fairness, and campaign momentum."],
+  ["Experimentation strategies compared", "Static A/B test, Thompson sampling, LinUCB, and contextual bandit with fatigue guardrail."],
   ["Channels needed", "Email, SMS, phone, and digital ads, with real eligibility constraints and opt-out rules."],
   ["Outcome definitions", "Primary: donation conversion. Secondary: expected donation amount, net expected value, channel response, fatigue risk, and segment lift."],
-  ["Randomization / assignment logic", "Use epsilon-greedy or Thompson-style assignment so most traffic goes to promising arms while some traffic preserves learning."],
+  ["Randomization / assignment logic", "Compare fixed equal-split assignment against adaptive strategies that learn by batch while preserving exploration."],
   ["Sample size caveat", "Do not overreact to early noisy results. Treat small cells as directional until more batches arrive."],
   ["Fatigue guardrails", "Cap repeated contacts, monitor high-fatigue segments, and reduce SMS/phone exposure when risk rises."],
-  ["Human approval process", "All message templates and AI-assisted recommendations require campaign review before use."],
-  ["What the system supports", "Prioritizing audiences, messages, and channels for efficient fundraising experiments."],
-  ["What it should not automate", "It should not autonomously persuade voters, ignore compliance review, or maximize donations at all costs."],
+  ["Human approval process", "All message templates and generated variants require campaign review before use."],
+  ["What the system supports", "Comparing allocation strategies and showing how they affect conversion, value, exploration, and fatigue."],
+  ["What it should not automate", "It should not send messages, replace compliance review, or maximize donations at all costs."],
 ];
 
 const leadershipQuestions = [

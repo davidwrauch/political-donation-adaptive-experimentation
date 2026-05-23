@@ -28,28 +28,36 @@ def test_app_fetches_actual_fastapi_routes_and_reports_failed_url():
 
 def test_overview_contains_leadership_metrics_and_charts():
     overview = read("frontend/src/components/OverviewTab.jsx")
+    simulation = read("backend/app/services/simulation.py")
 
     for text in [
-        "What leadership should know",
+        "A New York Democratic campaign is testing donation outreach",
         "Donation conversion rate",
-        "Expected donation amount",
-        "Net expected donation value",
-        "Best message frame",
-        "Best segment",
-        "Best channel",
-        "Current exploration rate",
-        "Donor fatigue warning",
-        "Recommended next allocation",
-        "Cumulative donation conversions by message frame",
-        "Donation conversion by message frame",
-        "Expected donation value by segment",
-        "Allocation shift over time",
+        "Net expected value",
+        "Fatigue risk",
+        "Exploration rate",
+        "Cumulative donation conversions by strategy",
+        "Y-axis: cumulative conversions. X-axis: experiment batch/date.",
+        "Overall donation conversion rate by strategy",
+        "Net expected donation value by strategy",
+        "Fatigue risk by strategy",
+        "Message-frame performance under the best-performing strategy",
+        "Message allocation under the best-performing strategy",
     ]:
         assert text in overview
+    for strategy in [
+        "Static A/B test",
+        "Thompson sampling",
+        "LinUCB",
+        "Contextual bandit with fatigue guardrail",
+    ]:
+        assert strategy in simulation
 
     assert "<polyline" in overview
-    assert "conversion_timeline" in overview
-    assert "allocation_shift" in overview
+    assert "strategy_timeline" in overview
+    assert "strategy_performance" in overview
+    assert "message_allocation_shift" in overview
+    assert "winning message" not in overview.lower()
 
 
 def test_experiment_design_is_practical_and_guardrailed():
@@ -59,6 +67,7 @@ def test_experiment_design_is_practical_and_guardrailed():
         "How we would actually run this",
         "Audience data needed",
         "Message arms needed",
+        "Experimentation strategies compared",
         "Channels needed",
         "Outcome definitions",
         "Randomization / assignment logic",
@@ -73,23 +82,35 @@ def test_experiment_design_is_practical_and_guardrailed():
 
 def test_ai_tab_is_campaign_synthesis_not_autonomous_persuasion():
     ai = read("frontend/src/components/AiTab.jsx")
+    synthesis = read("backend/app/services/ai_synthesis.py")
 
     for text in [
-        "Campaign messaging research synthesis",
+        "Constrained message adaptation workflow",
+        "Staff-written base message",
+        "Retrieved campaign context",
+        "LLM-generated variants for review",
+        "Approved issue brief",
+        "Approved tone",
+        "Prior performance note",
+        "Approve",
+        "Reject",
+        "Write replacement message",
+        "Submit replacement",
+        "Human review required",
+    ]:
+        assert text in ai
+    for medium in ["SMS", "Email", "Door-knocking script"]:
+        assert medium in synthesis
+    for removed in [
         "Recommended outreach strategy",
-        "Recommended message frame",
-        "Recommended channel",
         "Why this segment is prioritized",
-        "Retrieved prior performance",
-        "Why this arm was selected",
         "Expected reward",
         "Uncertainty",
         "Exploration need",
         "Fatigue penalty",
         "Channel fit",
-        "Human review required",
     ]:
-        assert text in ai
+        assert removed not in ai
 
 
 def test_about_tab_matches_campaign_positioning_and_boundaries():
@@ -101,6 +122,9 @@ def test_about_tab_matches_campaign_positioning_and_boundaries():
     assert "DNC-style campaign resource allocation" in about
     assert "Stanford charitable-giving contextual bandit research" in about
     assert "monitoring uncertainty and fatigue" in about
+    assert "David Rauch" in about
+    assert "https://github.com/davidwrauch/political-donation-adaptive-experimentation" in about
+    assert "Product-focused data scientist" in about
     for guardrail in [
         "Human review required",
         "Approved message templates only",

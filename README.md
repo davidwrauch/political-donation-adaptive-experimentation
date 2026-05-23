@@ -4,7 +4,7 @@ A production-style prototype for adaptive campaign fundraising experiments that 
 
 ## What This Is
 
-This is a lightweight interactive prototype for campaign fundraising and civic engagement experimentation. It simulates supporter records, assigns donation message frames across channels, observes synthetic donation outcomes, and summarizes which audiences, messages, and contact modes appear most promising.
+This is a lightweight interactive prototype for a New York Democratic campaign testing donation outreach before scaling paid and volunteer outreach. It compares four experimentation strategies for allocating limited contacts across messages, audience segments, and channels while monitoring conversion, expected value, exploration, and donor fatigue.
 
 The demo is inspired by three ideas:
 
@@ -37,9 +37,9 @@ The prototype tests donation appeals across:
 
 The app has four focused tabs:
 
-- **Overview:** campaign experiment metrics, best message frame, best segment, channel performance, fatigue warning, and simple charts.
+- **Overview:** comparison of Static A/B test, Thompson sampling, LinUCB, and contextual bandit with fatigue guardrail.
 - **Experiment Design:** practical setup notes for audience data, message arms, channels, outcomes, assignment logic, fatigue guardrails, and leadership questions.
-- **AI:** deterministic campaign research synthesis from approved templates and historical segment performance.
+- **AI:** constrained RAG/LLM-style workflow for adapting one approved affordability message into human-reviewed channel drafts.
 - **About:** project purpose, inspiration, and boundaries.
 
 ## Simulated Supporter Data
@@ -79,7 +79,14 @@ Channels:
 
 ## Decision Engine
 
-The assignment engine is intentionally simple and explainable. It uses segment-level beta priors in a Thompson-sampling-inspired style, combined with issue affinity, channel preference, and donor fatigue penalties.
+The assignment engine is intentionally simple and explainable. It compares:
+
+1. Static A/B test
+2. Thompson sampling
+3. LinUCB
+4. Contextual bandit with fatigue guardrail
+
+The adaptive strategies use segment-level response estimates, supporter context, channel fit, and fatigue penalties.
 
 It chooses and explains:
 
@@ -107,11 +114,11 @@ It does **not** implement OPE, IPS, SNIPS, doubly robust estimation, or advanced
 
 ## Dashboard Flow
 
-The Overview tab is designed to feel like a campaign experimentation control room. It leads with the donation conversion rate, expected donation value, best-performing frame, best segment, best channel, current exploration rate, donor fatigue warning, and recommended next allocation. A large cumulative conversion chart shows how message frames perform across experiment batches.
+The Overview tab is designed to feel like a campaign experimentation control room. It leads with the four strategies being compared and a cumulative conversion chart with one line per strategy. It then shows donation conversion rate, net expected donation value, fatigue risk, and exploration rate by strategy.
 
 The Experiment Design tab answers, "How would we actually run this?" It keeps the demo practical for campaign leadership: available channels, audience data, approved message arms, outcome definitions, sample-size caveats, fatigue guardrails, human approval, and what should not be automated.
 
-The AI tab is campaign messaging and research synthesis, not generic AI. It retrieves approved templates and prior segment performance, then produces a deterministic recommendation that requires human review.
+The AI tab is a message adaptation review workflow, not an experiment decision engine. A staff-written affordability message is adapted into SMS, email, and door-knocking drafts using approved context. Staff must approve, reject, or replace every draft; nothing is sent automatically.
 
 ## Run Locally
 

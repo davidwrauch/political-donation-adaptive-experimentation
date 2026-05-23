@@ -133,10 +133,6 @@ button {
   gap: 14px;
 }
 
-.metric-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
 .chart-grid,
 .ai-grid,
 .about-grid {
@@ -153,16 +149,63 @@ button {
   border-color: #cbe3da;
 }
 
-.leadership-box {
-  align-items: center;
-  display: grid;
-  gap: 18px;
-  grid-template-columns: 1.25fr 0.95fr;
+.intro-card p {
+  color: #344247;
+  font-size: 1rem;
+  margin: 0 0 8px;
 }
 
-.leadership-box h2 {
-  font-size: clamp(1.25rem, 2vw, 1.7rem);
-  line-height: 1.2;
+.summary-card p:last-of-type {
+  color: #344247;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+
+.summary-card small {
+  color: #526165;
+  display: block;
+}
+
+.strategy-legend,
+.strategy-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.strategy-legend .panel,
+.strategy-metric-card {
+  min-height: 156px;
+}
+
+.strategy-legend p {
+  color: #526165;
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+.strategy-metric-list {
+  display: grid;
+  gap: 8px;
+}
+
+.strategy-metric-list div {
+  border-top: 1px solid #e5ece7;
+  padding-top: 8px;
+}
+
+.strategy-metric-list span {
+  color: #627175;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.strategy-metric-list strong {
+  display: block;
+  font-size: 1rem;
+  margin-top: 2px;
 }
 
 .next-allocation {
@@ -244,6 +287,18 @@ button {
   text-anchor: middle;
 }
 
+.axis-title {
+  fill: #526165;
+  font-size: 12px;
+  font-weight: 800;
+  text-anchor: middle;
+}
+
+.y-title {
+  transform: rotate(-90deg);
+  transform-origin: 14px center;
+}
+
 .chart-heading {
   align-items: end;
   display: flex;
@@ -281,8 +336,8 @@ button {
 }
 
 .allocation-grid,
-.ai-summary-grid,
-.explain-grid,
+.context-grid,
+.variant-grid,
 .design-grid,
 .guardrail-grid {
   display: grid;
@@ -331,32 +386,102 @@ button {
   justify-content: space-between;
 }
 
-.ai-summary-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.context-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.explain-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+.context-grid article,
+.variant-card {
+  background: #f8faf8;
+  border: 1px solid #e5ece7;
+  border-radius: 8px;
+  padding: 12px;
 }
 
-.compact-card {
-  min-height: 92px;
+.context-grid span,
+.variant-meta dt {
+  color: #627175;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 850;
 }
 
-.detail-list {
+.variant-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.variant-head {
+  align-items: start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.variant-head span,
+.review-pill {
+  flex: 0 0 auto;
+}
+
+.generated-message,
+.base-message {
+  background: white;
+  border: 1px solid #e5ece7;
+  border-radius: 8px;
+  color: #243237;
+  padding: 12px;
+}
+
+.variant-meta {
   display: grid;
-  gap: 8px 12px;
-  grid-template-columns: 140px 1fr;
+  gap: 7px 10px;
+  grid-template-columns: 120px 1fr;
+}
+
+.variant-meta dd {
   margin: 0;
 }
 
-.detail-list dd {
-  margin: 0;
+.review-actions {
+  display: flex;
+  gap: 8px;
 }
 
-.risk-note {
-  background: #fffaf0;
-  border-color: #eadcb5;
+.approve-button {
+  background: #1d765b;
+  color: white;
+  padding: 0.55rem 0.8rem;
+}
+
+.reject-button {
+  background: #8a2e2e;
+  color: white;
+  padding: 0.55rem 0.8rem;
+}
+
+.replacement-box {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.replacement-box label {
+  color: #526165;
+  font-weight: 850;
+}
+
+.replacement-box textarea {
+  border: 1px solid #cbd8d2;
+  border-radius: 8px;
+  font: inherit;
+  min-height: 90px;
+  padding: 10px;
+}
+
+.replacement-box button {
+  background: #19363b;
+  color: white;
+  justify-self: start;
+  padding: 0.55rem 0.8rem;
 }
 
 .design-grid {
@@ -389,6 +514,13 @@ button {
   padding: 0.5rem 0.7rem;
 }
 
+.built-by a {
+  color: #1b6358;
+  display: inline-block;
+  font-weight: 850;
+  margin-top: 8px;
+}
+
 .review-pill {
   background: #fff2cf;
   border-radius: 999px;
@@ -419,12 +551,12 @@ button {
 
 @media (max-width: 780px) {
   .hero,
-  .metric-grid,
-  .leadership-box,
+  .strategy-legend,
+  .strategy-grid,
   .chart-grid,
   .ai-grid,
-  .ai-summary-grid,
-  .explain-grid,
+  .context-grid,
+  .variant-grid,
   .allocation-grid,
   .design-grid,
   .guardrail-grid,

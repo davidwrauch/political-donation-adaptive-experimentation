@@ -1,72 +1,71 @@
 from __future__ import annotations
 
-from .simulation import MESSAGE_FRAMES
-
 
 def synthesize_recommendation(summary: dict) -> dict:
-    best_segment = summary["best_segment"]
-    best_frame = summary["best_message_frame"]
-    best_channel = summary["best_channel"]
-    template = next(frame for frame in MESSAGE_FRAMES if frame["id"] == best_frame["id"])
-    lower_fatigue = "lower fatigue risk" if best_frame["fatigue_risk"] < 0.38 else "fatigue risk that requires monitoring"
-    latest = summary["latest_decision"]
-
     return {
-        "approved_message_templates": MESSAGE_FRAMES,
-        "segment_context": {
-            "segment": best_segment["label"],
-            "conversion_rate": best_segment["conversion_rate"],
-            "expected_value": best_segment["net_expected_value"],
-            "fatigue_risk": best_segment["fatigue_risk"],
-        },
-        "issue_affinity_summary": {
-            "priority_segment": best_segment["label"],
-            "dominant_frame": best_frame["label"],
-            "interpretation": (
-                f"{best_segment['label']} is currently the strongest segment by net expected value, "
-                f"with {best_frame['label']} as the leading frame."
+        "base_message": (
+            "Costs are too high for New York families. Will you make a donation today to help us "
+            "fight for lower everyday costs and a fairer economy?"
+        ),
+        "retrieved_context": {
+            "approved_issue_brief": "Affordability / cost of living",
+            "approved_tone": "Clear, direct, non-inflammatory",
+            "prior_performance_note": (
+                "Shorter SMS performs better for high-engagement prior donors; longer email works "
+                "better for lower-engagement prospects."
             ),
         },
-        "recommended_message_frame_by_segment": {
-            best_segment["label"]: {
-                "frame": best_frame["label"],
-                "channel": best_channel["label"],
-                "conversion_rate": best_segment["conversion_rate"],
-                "net_expected_value": best_segment["net_expected_value"],
-            }
-        },
-        "recommended_outreach_strategy": (
-            f"Prioritize {best_segment['label']} with {best_frame['label']} over {best_channel['label']}."
-        ),
-        "recommended_message_frame": best_frame["label"],
-        "recommended_channel": best_channel["label"],
-        "why_prioritized": (
-            f"This segment combines strong donation conversion, high net expected value, and an issue-frame match."
-        ),
-        "fatigue_risk": best_segment["fatigue_risk"],
-        "risk_note": (
-            "Keep fatigue and exposure caps active. Do not maximize donations at all costs or overreact to one batch."
-        ),
-        "decision_explanation": {
-            "expected_reward": latest["expected_reward"],
-            "uncertainty": latest["uncertainty"],
-            "exploration_need": latest["exploration_need"],
-            "fatigue_penalty": latest["fatigue_penalty"],
-            "channel_fit": latest["channel_fit"],
-            "selection_reason": latest["selection_reason"],
-        },
-        "generated_rationale": (
-            f"For {best_segment['label']}, use a {best_frame['label'].lower()} frame over "
-            f"{best_channel['label']} because this segment shows stronger response, "
-            f"higher expected donation value, and {lower_fatigue}. Messaging should remain "
-            "human-reviewed before use."
-        ),
-        "sample_template": template["template"],
         "human_review_required": True,
-        "warning": "This is AI-assisted campaign research synthesis, not autonomous persuasion. All messaging requires human review.",
-        "retrieved_evidence": [
-            f"Best segment conversion rate: {best_segment['conversion_rate']:.1%}",
-            f"Best frame net expected value: ${best_frame['net_expected_value']:.2f}",
-            f"Best channel response rate: {best_channel['conversion_rate']:.1%}",
+        "explanation": (
+            "This tab shows how a constrained RAG/LLM layer could adapt an approved campaign message "
+            "into channel-specific drafts. It does not send messages automatically. Staff must approve "
+            "or replace every draft."
+        ),
+        "variants": [
+            {
+                "id": "sms_prior_donor",
+                "audience": "High-engagement prior donor",
+                "medium": "SMS",
+                "length": "Short",
+                "message": (
+                    "Costs are still too high for NY families. Can you chip in again today to help us "
+                    "fight for lower everyday costs?"
+                ),
+                "reason": "Prior donors respond well to concise SMS reminders tied to a familiar issue frame.",
+            },
+            {
+                "id": "email_prior_donor",
+                "audience": "High-engagement prior donor",
+                "medium": "Email",
+                "length": "Medium",
+                "message": (
+                    "You have helped power this campaign before. Today, we are focused on lowering "
+                    "everyday costs for New York families, and another grassroots donation would help "
+                    "us reach more voters before the next outreach push."
+                ),
+                "reason": "Email allows a little more context while keeping the ask direct for engaged donors.",
+            },
+            {
+                "id": "sms_prospect",
+                "audience": "Lower-engagement prospect",
+                "medium": "SMS",
+                "length": "Very short",
+                "message": (
+                    "We are organizing around lower costs for NY families. Can we count on your support today?"
+                ),
+                "reason": "Prospects get a softer, lower-pressure SMS with no assumption of prior donation history.",
+            },
+            {
+                "id": "door_script_prospect",
+                "audience": "Lower-engagement prospect",
+                "medium": "Door-knocking script",
+                "length": "Conversational",
+                "message": (
+                    "Hi, I am volunteering with the campaign. We are talking with neighbors about the cost "
+                    "of living and what would make life more affordable here in New York. Is that an issue "
+                    "you would like to hear more about?"
+                ),
+                "reason": "Door outreach should start with listening and issue relevance rather than an immediate donation ask.",
+            },
         ],
     }

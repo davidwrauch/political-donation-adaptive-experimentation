@@ -5,95 +5,112 @@ const lineColors = ["#2e8f7f", "#a16a2a", "#3f6f9f", "#8b4b66"];
 export default function OverviewTab({ overview }) {
   return (
     <div className="tab-panel">
-      <section className="panel leadership-box">
-        <div>
-          <p className="eyebrow">What leadership should know</p>
-          <h2>{overview.leadership_takeaway}</h2>
-        </div>
-        <div className="next-allocation">
-          <span>Recommended next allocation</span>
-          <strong>{overview.recommended_next_allocation}</strong>
-        </div>
+      <section className="panel intro-card">
+        <p>
+          A New York Democratic campaign is testing donation outreach before scaling paid and
+          volunteer outreach. The campaign wants to learn which experimentation strategy allocates
+          limited contacts most effectively across messages, audience segments, and channels while
+          avoiding donor fatigue.
+        </p>
+        <p>
+          This dashboard compares four allocation strategies. It does not declare a single global
+          best message because adaptive campaigns assign different messages to different people.
+        </p>
       </section>
 
-      <section className="metric-grid leadership-metrics">
-        <Metric label="Donation conversion rate" value={formatPercent(overview.primary_metric.value)} primary />
-        <Metric label="Expected donation amount" value={formatMoney(overview.secondary_metrics.expected_donation_amount)} />
-        <Metric label="Net expected donation value" value={formatMoney(overview.secondary_metrics.net_expected_donation_value)} />
-        <Metric label="Best message frame" value={overview.best_message_frame.label} />
-        <Metric label="Best segment" value={overview.best_segment.label} />
-        <Metric label="Best channel" value={overview.best_channel.label} />
-        <Metric label="Current exploration rate" value={formatPercent(overview.exploration_rate)} />
-        <Metric
-          label="Donor fatigue warning"
-          value={overview.donor_fatigue_warning ? "Monitor closely" : "Stable"}
-          tone={overview.donor_fatigue_warning ? "warning" : "stable"}
-        />
+      <StrategyLegend strategies={overview.strategies} />
+
+      <section className="panel summary-card">
+        <p className="eyebrow">Campaign readout</p>
+        <p>{overview.leadership_takeaway}</p>
+        <small>{overview.recommended_next_allocation}</small>
       </section>
 
-      <LineChart rows={overview.conversion_timeline} />
+      <StrategyLineChart rows={overview.strategy_timeline} />
+
+      <section className="strategy-grid">
+        {overview.strategy_performance.map((strategy) => (
+          <article className="panel strategy-metric-card" key={strategy.id}>
+            <h3>{strategy.label}</h3>
+            <div className="strategy-metric-list">
+              <Metric label="Donation conversion rate" value={formatPercent(strategy.conversion_rate)} />
+              <Metric label="Net expected value" value={formatMoney(strategy.net_expected_value)} />
+              <Metric label="Fatigue risk" value={formatPercent(strategy.fatigue_risk)} />
+              <Metric label="Exploration rate" value={formatPercent(strategy.exploration_rate)} />
+            </div>
+          </article>
+        ))}
+      </section>
 
       <section className="chart-grid">
         <BarChart
-          title="Donation conversion by message frame"
-          rows={overview.message_performance}
+          title="Overall donation conversion rate by strategy"
+          rows={overview.strategy_performance}
           valueKey="conversion_rate"
           formatter={formatPercent}
         />
         <BarChart
-          title="Expected donation value by segment"
-          rows={overview.segment_performance}
+          title="Net expected donation value by strategy"
+          rows={overview.strategy_performance}
           valueKey="net_expected_value"
           formatter={formatMoney}
         />
       </section>
 
-      <AllocationChart rows={overview.allocation_shift} />
-
-      <section className="panel">
-        <h2>Channel response rates</h2>
-        <div className="channel-grid">
-          {overview.channel_performance.map((channel) => (
-            <article key={channel.id}>
-              <strong>{channel.label}</strong>
-              <span>{formatPercent(channel.conversion_rate)}</span>
-              <small>Net value {formatMoney(channel.net_expected_value)}</small>
-            </article>
-          ))}
-        </div>
+      <section className="chart-grid">
+        <BarChart
+          title="Fatigue risk by strategy"
+          rows={overview.strategy_performance}
+          valueKey="fatigue_risk"
+          formatter={formatPercent}
+        />
+        <BarChart
+          title="Message-frame performance under the best-performing strategy"
+          rows={overview.message_performance}
+          valueKey="conversion_rate"
+          formatter={formatPercent}
+        />
       </section>
+
+      <MessageAllocationChart rows={overview.message_allocation_shift} />
     </div>
   );
 }
 
-function Metric({ label, value, primary = false, tone = "" }) {
+function StrategyLegend({ strategies }) {
   return (
-    <article className={primary ? "metric-card primary-metric" : "metric-card"}>
-      <span>{label}</span>
-      <strong className={tone}>{value}</strong>
-    </article>
+    <section className="strategy-legend">
+      {strategies.map((strategy) => (
+        <article className="panel" key={strategy.id}>
+          <h3>{strategy.label}</h3>
+          <p>{strategy.description}</p>
+        </article>
+      ))}
+    </section>
   );
 }
 
-function LineChart({ rows }) {
+function StrategyLineChart({ rows }) {
   const series = rows[0]?.series ?? [];
   const max = Math.max(
     1,
     ...rows.flatMap((row) => row.series.map((point) => point.cumulative_conversions)),
   );
   const width = 760;
-  const height = 260;
-  const padding = 34;
+  const height = 270;
+  const padding = 38;
 
   return (
     <section className="panel line-panel">
       <div className="chart-heading">
         <div>
-          <h2>Cumulative donation conversions by message frame</h2>
-          <p>Batch-by-batch view of how the active message arms are performing.</p>
+          <h2>Cumulative donation conversions by strategy</h2>
+          <p>Y-axis: cumulative conversions. X-axis: experiment batch/date.</p>
         </div>
       </div>
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Cumulative conversions by message frame">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Cumulative conversions by strategy">
+        <text className="axis-title" x={width / 2} y={height - 3}>Experiment batch</text>
+        <text className="axis-title y-title" x="14" y={height / 2}>Cumulative conversions</text>
         <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} className="axis" />
         <line x1={padding} y1={padding} x2={padding} y2={height - padding} className="axis" />
         {series.map((item, seriesIndex) => {
@@ -117,7 +134,7 @@ function LineChart({ rows }) {
         })}
         {rows.map((row, index) => {
           const x = padding + (index / Math.max(1, rows.length - 1)) * (width - padding * 2);
-          return <text className="axis-label" key={row.batch} x={x} y={height - 8}>{row.batch}</text>;
+          return <text className="axis-label" key={row.batch} x={x} y={height - 21}>{row.batch}</text>;
         })}
       </svg>
       <div className="legend">
@@ -132,14 +149,15 @@ function LineChart({ rows }) {
   );
 }
 
-function AllocationChart({ rows }) {
+function MessageAllocationChart({ rows }) {
   const latest = rows.at(-1)?.frames ?? [];
   const first = rows[0]?.frames ?? [];
   return (
     <section className="panel">
-      <h2>Allocation shift over time</h2>
+      <h2>Message allocation under the best-performing strategy</h2>
       <p className="panel-copy">
-        Shows how assignment share moves from broad exploration toward better-performing message frames.
+        Under the best-performing strategy, some message frames receive more allocation for specific
+        donor segments, while the system preserves exploration because performance varies by segment and channel.
       </p>
       <div className="allocation-grid">
         {latest.map((frame) => {
@@ -147,7 +165,7 @@ function AllocationChart({ rows }) {
           return (
             <article key={frame.id}>
               <strong>{frame.label}</strong>
-              <span>Now {formatPercent(frame.allocation_share)}</span>
+              <span>Latest batch {formatPercent(frame.allocation_share)}</span>
               <small>Started at {formatPercent(starting)}</small>
               <div className="bar-track">
                 <div className="bar-fill" style={{ width: `${Math.max(4, frame.allocation_share * 100)}%` }} />
@@ -157,6 +175,15 @@ function AllocationChart({ rows }) {
         })}
       </div>
     </section>
+  );
+}
+
+function Metric({ label, value }) {
+  return (
+    <div>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 

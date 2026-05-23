@@ -59,6 +59,17 @@ export default function AboutTab() {
           ))}
         </div>
       </section>
+
+      <section className="panel built-by">
+        <h2>Built by</h2>
+        <p>
+          <strong>David Rauch</strong> - Product-focused data scientist working on experimentation,
+          causal inference, adaptive decision systems, and public-interest technology.
+        </p>
+        <a href="https://github.com/davidwrauch/political-donation-adaptive-experimentation" target="_blank" rel="noreferrer">
+          GitHub: davidwrauch/political-donation-adaptive-experimentation
+        </a>
+      </section>
     </div>
   );
 }
