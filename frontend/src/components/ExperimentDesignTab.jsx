@@ -122,6 +122,11 @@ export default function ExperimentDesignTab() {
           These signals could strengthen operational awareness later, but they are not core model inputs in this
           lightweight prototype.
         </p>
+        <p>
+          <strong>Social listening extension:</strong> Future versions could incorporate social listening, news trend
+          signals, issue salience, earned media sentiment, and regional spikes to inform which message families deserve
+          more exploration.
+        </p>
         <div className="guardrail-grid">
           {futureInputs.map((item) => (
             <span key={item}>{item}</span>

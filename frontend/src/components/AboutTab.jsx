@@ -86,6 +86,9 @@ export default function AboutTab() {
         <a href="https://github.com/davidwrauch/political-donation-adaptive-experimentation" target="_blank" rel="noreferrer">
           GitHub: davidwrauch/political-donation-adaptive-experimentation
         </a>
+        <a href="https://www.linkedin.com/in/davidwrauch/" target="_blank" rel="noreferrer">
+          LinkedIn: davidwrauch
+        </a>
       </section>
     </div>
   );

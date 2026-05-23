@@ -43,7 +43,7 @@ def test_summary_has_campaign_experiment_metrics():
     ]
     assert summary["primary_metric"]["value"] > 0
     assert summary["primary_metric"]["label"] == "Net donation value per contact"
-    assert "Average expected dollars raised" in summary["primary_metric"]["definition"]
+    assert "Average dollars raised per person contacted" in summary["primary_metric"]["definition"]
     assert "donation_conversion_rate" in summary["secondary_metrics"]
     assert summary["secondary_metrics"]["expected_donation_amount"] > 0
     assert summary["best_strategy"]["label"]
@@ -89,6 +89,8 @@ def test_ai_synthesis_is_deterministic_and_human_reviewed():
     assert "does not send messages automatically" in recommendation["explanation"]
     assert recommendation["base_message"]
     assert recommendation["retrieved_context"]["approved_issue_brief"] == "Affordability / cost of living"
+    assert "High-engagement prior donors usually need concise" in recommendation["retrieved_context"]["prior_performance_note"]
+    assert "trust-building" in recommendation["retrieved_context"]["prior_performance_note"]
     assert len(recommendation["variants"]) == 4
     assert {variant["medium"] for variant in recommendation["variants"]} == {
         "SMS",

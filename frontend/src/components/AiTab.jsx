@@ -1,67 +1,76 @@
 import React, { useState } from "react";
 
 const messageFamilies = [
-  "Economic affordability",
-  "Healthcare access",
-  "Democracy/voting rights",
-  "Climate/resiliency",
-  "Public transit/infrastructure",
+  "Affordability / cost of living",
+  "Anti-corruption / accountability",
+  "Democracy / voting rights",
+  "Climate / resiliency",
+  "Public transit / infrastructure",
   "Reproductive rights",
 ];
 
 const familyContent = {
-  "Economic affordability": {
+  "Affordability / cost of living": {
     tone: "practical and kitchen-table",
-    base: `Families across New York are making hard choices every month. Rent is high. Groceries cost more. A surprise bill can throw a household off track.
+    base: `New York families are doing the math every week. Rent is high. Groceries cost more. A small emergency can turn into a big problem fast.
 
-Our campaign is focused on making everyday life more affordable. That means fighting for lower costs, fair wages, and leaders who understand what working families are facing.
+Our campaign is focused on costs people feel every day: housing, food, child care, transit, and utility bills. We are fighting for leaders who understand what working families are carrying.
 
-Your donation helps us reach voters with a clear message: New York should work for the people who keep it running.`,
+Your donation helps us reach more New Yorkers with a simple message: working people deserve a fair shot and a government that takes affordability seriously.`,
     frame: "making everyday life more affordable",
   },
   "Healthcare access": {
     tone: "calm and care-focused",
-    base: `No one should skip a doctor visit because the bill is too high. Families need healthcare they can actually use, not just a plan that looks good on paper.
+    base: `Too many people wait to get care because they are worried about the bill. A doctor visit, medicine, or a hospital charge should not push a family into debt.
 
-Our campaign is talking with voters about lower prescription costs, better access to care, and protecting community health services.
+Our campaign is speaking up for lower prescription costs, local health services, and care that people can actually reach when they need it.
 
-A donation today helps us share that message with more New Yorkers who want healthcare decisions to put people first.`,
+A donation today helps us talk with voters who believe healthcare should put people first, not paperwork, profits, or politics.`,
     frame: "protecting affordable healthcare access",
   },
-  "Democracy/voting rights": {
+  "Anti-corruption / accountability": {
+    tone: "clear and accountability-focused",
+    base: `People lose faith when powerful interests get special treatment and regular families feel ignored. Government should work in the open and answer to the public.
+
+Our campaign is focused on clean, accountable leadership. That means fighting for honest budgets, fair rules, and leaders who do not forget who sent them there.
+
+Your donation helps us reach voters who want a campaign that is people-powered, transparent, and not bought by the loudest special interests.`,
+    frame: "clean government and public accountability",
+  },
+  "Democracy / voting rights": {
     tone: "civic and urgent without being inflammatory",
-    base: `Democracy depends on people being able to vote, be heard, and trust that government works for them.
+    base: `Voting is how people make their voices count. When voting is harder, government becomes less fair and less connected to the people it serves.
 
-Our campaign is organizing around voting rights, fair elections, and public leaders who answer to the communities they serve.
+Our campaign is organizing around fair elections, voting access, and public leaders who respect every community's right to be heard.
 
-Your donation helps us reach voters who care about protecting the basic rules that let every voice count.`,
+Your donation helps us reach voters who believe democracy is strongest when more people participate, not fewer.`,
     frame: "protecting voting rights and fair elections",
   },
-  "Climate/resiliency": {
+  "Climate / resiliency": {
     tone: "future-focused and local",
-    base: `New Yorkers are already seeing stronger storms, hotter summers, and flooding that puts homes, transit, and neighborhoods at risk.
+    base: `New Yorkers know what stronger storms and hotter summers look like. Flooded streets, delayed trains, and damaged homes are not faraway problems.
 
-Our campaign is focused on practical climate action: safer infrastructure, cleaner air, and communities that can recover when severe weather hits.
+Our campaign is focused on practical climate action: safer neighborhoods, cleaner air, stronger infrastructure, and faster recovery when severe weather hits.
 
-A donation helps us talk with voters about protecting the places we live now and the future we leave behind.`,
+A donation helps us reach voters who want climate plans that protect families today and prepare communities for tomorrow.`,
     frame: "building safer climate-ready communities",
   },
-  "Public transit/infrastructure": {
+  "Public transit / infrastructure": {
     tone: "local and problem-solving",
-    base: `Reliable transit and strong infrastructure shape daily life. People need trains, buses, roads, bridges, and sidewalks that are safe and dependable.
+    base: `When transit fails, daily life gets harder. People are late to work, miss appointments, and spend more time just trying to get where they need to go.
 
-Our campaign is focused on investments that help people get to work, school, healthcare, and family without wasting hours or risking safety.
+Our campaign is focused on reliable trains and buses, safer streets, stronger bridges, and public systems that serve every neighborhood.
 
-Your donation helps us reach voters with a practical plan for public systems that serve every neighborhood.`,
+Your donation helps us talk with voters about the basic infrastructure that makes opportunity possible: getting to work, school, healthcare, and home safely.`,
     frame: "better transit and stronger infrastructure",
   },
   "Reproductive rights": {
     tone: "values-based and direct",
-    base: `People should be able to make private healthcare decisions without politicians standing in the way.
+    base: `Private healthcare decisions should stay with patients, families, and doctors. Politicians should not decide what care someone can receive.
 
-Our campaign is organizing to protect reproductive freedom, defend access to care, and support leaders who trust people to make decisions about their own lives.
+Our campaign is organizing to protect reproductive freedom and defend access to care before rights are weakened or taken away.
 
-A donation today helps us reach voters who believe basic rights must be protected before they are threatened.`,
+A donation today helps us reach voters who believe personal freedom and basic healthcare rights deserve strong public defense.`,
     frame: "protecting reproductive freedom",
   },
 };
@@ -196,14 +205,16 @@ function ContextItem({ label, value }) {
 function renderVariant(type, frame) {
   if (type === "SMS") return `We are organizing around ${frame}. Can you chip in today to help us reach more New Yorkers?`;
   if (type === "Fundraising email") {
-    return `Our campaign is focused on ${frame}. Your donation helps us reach voters with a clear, practical message before the next outreach push.`;
+    return `Our campaign is focused on ${frame}. Your donation helps us reach voters with a clear, practical message before the next outreach push.\n\nThis is how we turn one approved issue frame into real voter conversations. If you can, please make a donation today.`;
   }
   if (type === "Volunteer call script") {
-    return `Hi, this is the campaign calling. We are reaching voters about ${frame}. Is this an issue you care about, and would you consider making a small donation today?`;
+    return `Hi, this is the campaign calling. We are reaching supporters about ${frame}. Is this an issue you care about?\n\nIf yes: Thank you. We are asking supporters to help fund the next round of voter outreach. Would you consider a small donation today?`;
   }
   if (type === "Door knocking script") {
     return (
       <div>
+        <strong>Intro</strong>
+        <p>Hi, I am with the campaign. We are checking in with neighbors and listening first.</p>
         <strong>4 questions</strong>
         <ol>
           <li>What issue feels most urgent in your neighborhood right now?</li>
@@ -217,6 +228,8 @@ function renderVariant(type, frame) {
           <li>The focus today is {frame}.</li>
           <li>Small donations help reach more voters.</li>
         </ul>
+        <strong>CTA and thank-you</strong>
+        <p>If the voter is interested, offer a donation link or follow-up card. Thank them for their time either way.</p>
         <strong>Canvasser guidance</strong>
         <p>Ask before making a donation request. Keep the conversation local and respectful.</p>
       </div>

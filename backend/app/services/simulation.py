@@ -226,7 +226,7 @@ def summarize_experiment(experiment: dict) -> dict:
         "primary_metric": {
             "label": "Net donation value per contact",
             "value": mean(event["net_expected_value"] for event in events),
-            "definition": "Average expected dollars raised per person contacted, after accounting for conversion rate, donation amount, and fatigue penalty.",
+            "definition": "Average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
         },
         "secondary_metrics": {
             "donation_conversion_rate": mean(event["converted"] for event in events),

@@ -20,8 +20,9 @@ def synthesize_recommendation(summary: dict) -> dict:
                 "Door-knocking scripts should open with listening before making an ask."
             ),
             "prior_performance_note": (
-                "Shorter SMS performs better for high-engagement prior donors; longer email works "
-                "better for lower-engagement prospects."
+                "High-engagement prior donors usually need concise, direct donation asks. "
+                "Lower-engagement prospects often need more context, trust-building, and issue "
+                "framing before an ask."
             ),
         },
         "human_review_required": True,

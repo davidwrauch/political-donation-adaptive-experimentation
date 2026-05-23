@@ -55,7 +55,7 @@ def test_overview_contains_leadership_metrics_and_charts():
         "High confidence generally means the leading strategy has remained stable",
         "Traditional statistical significance can still be reported in a real",
         "Probability best estimates how likely the current leading strategy is to be the best option",
-        "Average expected dollars raised per person contacted",
+        "Average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
         "Unlike a p-value",
         "The current winner may simply reflect early noise",
         "Pause updates",
@@ -77,6 +77,7 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Fatigue risk by strategy",
         "Message-frame performance within the current leading strategy",
         "Message allocation within the current leading strategy",
+        "<h2><LabelWithHelp label={title} help={helpText[title]} /></h2>",
     ]:
         assert text in overview
     for strategy in [
@@ -148,6 +149,10 @@ def test_experiment_design_is_practical_and_guardrailed():
         "Fundraising response shifts after major events",
         "Earned media sentiment",
         "Regional issue spikes",
+        "Social listening extension:",
+        "Future versions could incorporate social listening, news trend",
+        "inform which message families deserve",
+        "more exploration",
     ]:
         assert text in design
     assert "supporter ID" in design
@@ -174,11 +179,12 @@ def test_ai_tab_is_campaign_synthesis_not_autonomous_persuasion():
         "This section shows ONE example message family",
         "A real campaign would repeat this workflow across multiple issue frames",
         "Message family",
-        "Economic affordability",
+        "Affordability / cost of living",
         "Healthcare access",
-        "Democracy/voting rights",
-        "Climate/resiliency",
-        "Public transit/infrastructure",
+        "Anti-corruption / accountability",
+        "Democracy / voting rights",
+        "Climate / resiliency",
+        "Public transit / infrastructure",
         "Reproductive rights",
         "Fundraising email",
         "Volunteer call script",
@@ -187,7 +193,16 @@ def test_ai_tab_is_campaign_synthesis_not_autonomous_persuasion():
         "High-engagement prior donor version",
         "4 questions",
         "3 talking points",
+        "Intro",
+        "CTA and thank-you",
         "Canvasser guidance",
+        "Rent is high. Groceries cost more.",
+        "Too many people wait to get care",
+        "special treatment and regular families feel ignored",
+        "Voting is how people make their voices count",
+        "Flooded streets, delayed trains",
+        "When transit fails, daily life gets harder",
+        "Private healthcare decisions should stay with patients",
         "Human review required",
     ]:
         assert text in ai
@@ -225,6 +240,7 @@ def test_about_tab_matches_campaign_positioning_and_boundaries():
     assert "exploration and preventing premature lock-in" in about
     assert "David Rauch" in about
     assert "https://github.com/davidwrauch/political-donation-adaptive-experimentation" in about
+    assert "https://www.linkedin.com/in/davidwrauch/" in about
     assert "https://arxiv.org/abs/2211.12004" in about
     assert "Adapted from my adaptive experimentation platform" not in about
     assert "Product-focused data scientist" in about

@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 const lineColors = ["#6d7a80", "#2e8f7f", "#a16a2a", "#3f6f9f", "#8b4b66"];
 const helpText = {
   "Current leading strategy": "The strategy with the highest net donation value per contact in this simulated experiment.",
-  "Net donation value per contact": "Average expected dollars raised per person contacted, after accounting for conversion rate, donation amount, and fatigue penalty.",
+  "Net donation value per contact": "Average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
   "Donation conversion rate": "Share of contacted people who are expected to donate.",
   "Average donation amount": "Average expected donation size among contacted supporters in this simulation.",
   "Probability best": "Probability best estimates how likely the current leading strategy is to be the best option if the experiment continues. Unlike a p-value, it is expressed directly as a probability.",
@@ -23,6 +23,10 @@ const helpText = {
   "Directional only": "The current winner may simply reflect early noise. More data is needed before confidently scaling traffic.",
   "Promising but keep testing": "The current winner looks encouraging, but the campaign should keep learning before shifting most traffic.",
   "Ready to scale": "The leading strategy has remained strong enough in the simulation to justify broader rollout with monitoring.",
+  "Overall donation conversion rate by strategy": "Compares the share of contacts that convert into donations for each allocation strategy.",
+  "Net donation value per contact by strategy": "Compares average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
+  "Fatigue risk by strategy": "Compares the estimated risk that repeated outreach lowers future response or increases opt-outs.",
+  "Message-frame performance within the current leading strategy": "Shows which approved donation frames are converting within the strategy currently leading on net donation value per contact.",
 };
 const defaultStrategies = [
   {
@@ -441,7 +445,7 @@ function BarChart({ title, rows, valueKey, formatter, note }) {
   const max = Math.max(...rows.map((row) => Math.abs(row[valueKey])), 0.01);
   return (
     <section className="panel">
-      <h2>{title}</h2>
+      <h2><LabelWithHelp label={title} help={helpText[title]} /></h2>
       {note && <p className="panel-copy">{note}</p>}
       <div className="bar-list">
         {rows.map((row) => (
