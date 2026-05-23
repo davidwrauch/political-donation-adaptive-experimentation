@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { fetchAiRecommendation, fetchOverview } from "./api";
 import OverviewTab from "./components/OverviewTab";
 import ExperimentDesignTab from "./components/ExperimentDesignTab";
 import AiTab from "./components/AiTab";
 import AboutTab from "./components/AboutTab";
 
+const API_BASE = (import.meta.env.VITE_API_BASE ?? "http://localhost:8000").replace(/\/$/, "");
 const tabs = ["Overview", "Experiment Design", "AI", "About"];
+const overviewUrl = `${API_BASE}/api/overview`;
+const aiRecommendationUrl = `${API_BASE}/api/ai/recommendation`;
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("Overview");
@@ -14,8 +16,10 @@ export default function App() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchOverview().then(setOverview).catch((err) => setError(err.message));
-    fetchAiRecommendation().then(setAiRecommendation).catch(() => undefined);
+    fetchJson(overviewUrl, "overview metrics").then(setOverview).catch((err) => setError(err.message));
+    fetchJson(aiRecommendationUrl, "AI recommendation")
+      .then(setAiRecommendation)
+      .catch((err) => setError(err.message));
   }, []);
 
   return (
@@ -62,4 +66,12 @@ export default function App() {
       )}
     </main>
   );
+}
+
+async function fetchJson(url, label) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Unable to load ${label} from ${url} (${response.status}).`);
+  }
+  return response.json();
 }

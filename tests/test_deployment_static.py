@@ -20,10 +20,16 @@ def test_backend_uses_env_driven_cors_with_localhost_defaults():
 
 def test_frontend_uses_deployed_api_base_env_var():
     api = read("frontend/src/api.js")
+    app = read("frontend/src/App.jsx")
     env = read("frontend/.env.example")
 
     assert "VITE_API_BASE" in api
+    assert "VITE_API_BASE" in app
     assert ".replace(/\\/$/, \"\")" in api
+    assert ".replace(/\\/$/, \"\")" in app
+    assert "/api/overview" in app
+    assert "/api/ai/recommendation" in app
+    assert "from ${url}" in app
     assert "https://your-render-service.onrender.com" in env
 
 

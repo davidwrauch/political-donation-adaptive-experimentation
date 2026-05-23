@@ -16,6 +16,16 @@ def test_four_tabs_and_campaign_loading_language():
     assert "Loading campaign donation experiment results" in app
 
 
+def test_app_fetches_actual_fastapi_routes_and_reports_failed_url():
+    app = read("frontend/src/App.jsx")
+
+    assert "`${API_BASE}/api/overview`" in app
+    assert "`${API_BASE}/api/ai/recommendation`" in app
+    assert "fetchJson(overviewUrl" in app
+    assert "fetchJson(aiRecommendationUrl" in app
+    assert "Unable to load ${label} from ${url}" in app
+
+
 def test_overview_contains_leadership_metrics_and_charts():
     overview = read("frontend/src/components/OverviewTab.jsx")
 
