@@ -1,7 +1,26 @@
 import React, { useState } from "react";
 
+const messageFamilies = [
+  "Affordability / cost of living",
+  "Anti-corruption / accountability",
+  "Democracy protection",
+  "Local community investment",
+  "Economic fairness",
+  "Candidate momentum / urgency",
+];
+
+const familyThemes = {
+  "Affordability / cost of living": "lower everyday costs for New York families",
+  "Anti-corruption / accountability": "accountability and cleaner government",
+  "Democracy protection": "protecting voting rights and democratic institutions",
+  "Local community investment": "stronger schools, safer neighborhoods, and local services",
+  "Economic fairness": "fair wages and an economy that works for everyone",
+  "Candidate momentum / urgency": "keeping campaign momentum strong before the next deadline",
+};
+
 export default function AiTab({ recommendation }) {
   const [reviews, setReviews] = useState({});
+  const [family, setFamily] = useState(messageFamilies[0]);
   if (!recommendation) {
     return <section className="panel loading">Loading campaign message adaptation workflow...</section>;
   }
@@ -14,21 +33,37 @@ export default function AiTab({ recommendation }) {
     setReviews((current) => ({ ...current, [id]: { ...current[id], replacement } }));
   }
 
+  const familyTheme = familyThemes[family];
+
   return (
     <div className="tab-panel">
+      <section className="panel ai-callout">
+        <strong>This section shows ONE example message family.</strong>
+        <p>
+          A real campaign would repeat this workflow across multiple issue frames, supporter types, and outreach channels.
+        </p>
+      </section>
+
       <section className="panel intro-card">
         <h2>AI Message Review</h2>
-        <p>
-          This is one example message family. A campaign could repeat this workflow across affordability,
-          anti-corruption, democracy protection, local investment, economic fairness, and candidate momentum frames.
-        </p>
         <p>{recommendation.explanation}</p>
         <span className="review-pill">Human review required</span>
       </section>
 
+      <section className="panel family-selector">
+        <label htmlFor="message-family">Message family</label>
+        <select id="message-family" onChange={(event) => setFamily(event.target.value)} value={family}>
+          {messageFamilies.map((item) => (
+            <option key={item}>{item}</option>
+          ))}
+        </select>
+      </section>
+
       <section className="panel">
         <h2>Staff-written base message</h2>
-        <div className="base-message">{recommendation.base_message}</div>
+        <div className="base-message">
+          {recommendation.base_message.replaceAll("lower everyday costs", familyTheme).replaceAll("cost of living", familyTheme)}
+        </div>
       </section>
 
       <section className="panel">
@@ -52,7 +87,7 @@ export default function AiTab({ recommendation }) {
                   <strong>{variant.medium}</strong>
                   <span>{variant.audience}</span>
                 </div>
-                <p className="generated-message">{variant.message}</p>
+                <p className="generated-message">{adaptVariantMessage(variant, familyTheme)}</p>
                 <dl className="variant-meta">
                   <dt>Audience</dt>
                   <dd>{variant.audience}</dd>
@@ -99,4 +134,16 @@ function ContextItem({ label, value }) {
       <strong>{value}</strong>
     </article>
   );
+}
+
+function adaptVariantMessage(variant, theme) {
+  if (variant.medium === "SMS") {
+    return variant.audience.includes("prior donor")
+      ? `You have helped before. Can you chip in today to support ${theme}?`
+      : `We are organizing around ${theme}. Can we count on your support today?`;
+  }
+  if (variant.medium === "Email") {
+    return `You have helped power this campaign before. Today, we are focused on ${theme}, and another grassroots donation would help us reach more voters before the next outreach push.`;
+  }
+  return `Hi, I am volunteering with the campaign. We are talking with neighbors about ${theme}. Is that an issue you would like to hear more about?`;
 }

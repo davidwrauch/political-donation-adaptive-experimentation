@@ -545,7 +545,7 @@ def recommendation_status(probability_best: float) -> str:
     if probability_best >= 0.78:
         return "Ready to scale"
     if probability_best >= 0.62:
-        return "Promising but continue exploration"
+        return "Promising but keep testing"
     return "Directional only"
 
 

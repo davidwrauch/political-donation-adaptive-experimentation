@@ -1,6 +1,19 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const lineColors = ["#6d7a80", "#2e8f7f", "#a16a2a", "#3f6f9f", "#8b4b66"];
+const helpText = {
+  "Current leading strategy": "The strategy with the strongest current donation conversion rate in this simulated experiment.",
+  "Probability best": "Simulated estimate of how likely this strategy is to outperform the others if the experiment continues.",
+  "Additional contacts before high-confidence rollout": "Estimated number of additional outreach contacts needed before the result is reliable enough for broad rollout.",
+  "Recommendation status": "Plain-English rollout guidance based on current simulated confidence and whether the campaign should keep learning.",
+  "Adaptive lift vs control": "Estimated improvement versus generic non-personalized outreach.",
+  "Net expected value": "Estimated donation value after accounting for response rate, average donation amount, and fatigue effects.",
+  "Fatigue risk": "Estimated risk that repeated outreach reduces future response or increases opt-outs.",
+  "Exploration rate": "Share of traffic intentionally reserved for learning rather than only using the current winner.",
+  "Directional only": "The current winner may simply reflect early noise. More data is needed before confidently scaling traffic.",
+  "Promising but keep testing": "The current winner looks encouraging, but the campaign should keep learning before shifting most traffic.",
+  "Ready to scale": "The leading strategy has remained strong enough in the simulation to justify broader rollout with monitoring.",
+};
 const defaultStrategies = [
   {
     id: "control",
@@ -169,19 +182,23 @@ function CurrentReadout({ readout }) {
           label="Additional contacts before high-confidence rollout"
           value={contactsNeeded > 0 ? `~${contactsNeeded.toLocaleString()}` : "0"}
         />
-        <ReadoutMetric label="Recommendation status" value={readout.recommendation_status} />
-        <ReadoutMetric label="Leading adaptive method" value={readout.leading_adaptive_strategy.label} />
+        <ReadoutMetric label="Recommendation status" value={readout.recommendation_status} valueHelp={helpText[readout.recommendation_status]} />
         <ReadoutMetric label="Adaptive lift vs control" value={formatPercent(readout.adaptive_lift_vs_control)} />
       </div>
+      <p className="confidence-note">
+        High confidence generally means the leading strategy has remained stable over additional traffic and reached
+        roughly 80-90% simulated probability best.
+      </p>
     </section>
   );
 }
 
-function ReadoutMetric({ label, value }) {
+function ReadoutMetric({ label, value, valueHelp }) {
   return (
     <article>
-      <span>{label}</span>
+      <span><LabelWithHelp label={label} help={helpText[label]} /></span>
       <strong>{value}</strong>
+      {valueHelp && <InfoTooltip text={valueHelp} />}
     </article>
   );
 }
@@ -191,6 +208,9 @@ function StrategyLineChart({ rows }) {
 }
 
 function StrategyRateChart({ rows }) {
+  const [hoveredId, setHoveredId] = useState("");
+  const [isolatedId, setIsolatedId] = useState("");
+  const [pointTooltip, setPointTooltip] = useState(null);
   const series = rows[0]?.series ?? [];
   const max = Math.max(0.4, ...rows.flatMap((row) => row.series.map((point) => point.conversion_rate)));
   const width = 820;
@@ -233,15 +253,47 @@ function StrategyRateChart({ rows }) {
             .join(" ");
           return (
             <polyline
+              className="chart-line"
               fill="none"
               key={item.id}
+              onMouseEnter={() => setHoveredId(item.id)}
+              onMouseLeave={() => setHoveredId("")}
               points={points}
               stroke={lineColors[seriesIndex % lineColors.length]}
-              strokeOpacity="0.84"
-              strokeWidth="2.75"
+              strokeOpacity={lineOpacity(item.id, hoveredId, isolatedId)}
+              strokeWidth={hoveredId === item.id ? "3.8" : "2.55"}
             />
           );
         })}
+        {rows.flatMap((row, rowIndex) =>
+          row.series.map((point, seriesIndex) => {
+            const x = padding.left + (rowIndex / Math.max(1, rows.length - 1)) * chartWidth;
+            const y = height - padding.bottom - (point.conversion_rate / max) * chartHeight;
+            return (
+              <circle
+                className="chart-point"
+                cx={x}
+                cy={y}
+                fill={lineColors[seriesIndex % lineColors.length]}
+                key={`${point.id}-${row.experiment_date}`}
+                onMouseEnter={(event) => {
+                  setHoveredId(point.id);
+                  setPointTooltip({
+                    x: event.clientX,
+                    y: event.clientY,
+                    text: `${point.label} • ${formatAxisDate(row.experiment_date)} • ${formatPercent(point.conversion_rate)}`,
+                  });
+                }}
+                onMouseLeave={() => {
+                  setHoveredId("");
+                  setPointTooltip(null);
+                }}
+                opacity={lineOpacity(point.id, hoveredId, isolatedId)}
+                r={hoveredId === point.id ? 4 : 2.8}
+              />
+            );
+          })
+        )}
         {rows.map((row, index) => {
           const x = padding.left + (index / Math.max(1, rows.length - 1)) * chartWidth;
           return <text className="axis-label" key={row.experiment_date} x={x} y={height - 32}>{formatAxisDate(row.experiment_date)}</text>;
@@ -249,12 +301,20 @@ function StrategyRateChart({ rows }) {
       </svg>
       <div className="legend">
         {series.map((item, index) => (
-          <span key={item.id}>
+          <button
+            className={isolatedId === item.id ? "legend-item active" : "legend-item"}
+            key={item.id}
+            onClick={() => setIsolatedId((current) => (current === item.id ? "" : item.id))}
+            onMouseEnter={() => setHoveredId(item.id)}
+            onMouseLeave={() => setHoveredId("")}
+            type="button"
+          >
             <i style={{ background: lineColors[index % lineColors.length] }} />
             {item.label}
-          </span>
+          </button>
         ))}
       </div>
+      {pointTooltip && <div className="chart-tooltip" style={chartTooltipStyle(pointTooltip)}>{pointTooltip.text}</div>}
     </section>
   );
 }
@@ -294,9 +354,8 @@ function MessageAllocationChart({ rows, strategy }) {
 function Metric({ label, value, help }) {
   return (
     <div>
-      <span>{label}</span>
+      <span><LabelWithHelp label={label} help={help} /></span>
       <strong>{value}</strong>
-      {help && <small>{help}</small>}
     </div>
   );
 }
@@ -342,7 +401,87 @@ function formatWholePercent(value) {
   return `${Math.round(value * 100)}%`;
 }
 
+function lineOpacity(id, hoveredId, isolatedId) {
+  if (isolatedId) {
+    return isolatedId === id ? 0.96 : 0.16;
+  }
+  if (hoveredId) {
+    return hoveredId === id ? 0.96 : 0.26;
+  }
+  return 0.84;
+}
+
+function chartTooltipStyle(point) {
+  const width = 260;
+  const height = 42;
+  const margin = 16;
+  const left = Math.min(Math.max(point.x + 14, margin), window.innerWidth - width - margin);
+  const openAbove = point.y + height + margin > window.innerHeight;
+  const top = openAbove ? point.y - height - 14 : point.y + 14;
+  return { left, top: Math.max(margin, top), width };
+}
+
 function formatAxisDate(value) {
   const date = new Date(`${value}T00:00:00`);
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function LabelWithHelp({ label, help }) {
+  return (
+    <span className="label-with-help">
+      {label}
+      {help && <InfoTooltip text={help} />}
+    </span>
+  );
+}
+
+function InfoTooltip({ text }) {
+  const buttonRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [style, setStyle] = useState({});
+
+  useEffect(() => {
+    if (!open) return undefined;
+    function position() {
+      const button = buttonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      const margin = 16;
+      const width = Math.min(320, window.innerWidth - margin * 2);
+      const estimatedHeight = 92;
+      let left = rect.left + rect.width / 2 - width / 2;
+      left = Math.min(Math.max(left, margin), window.innerWidth - width - margin);
+      const openAbove = rect.bottom + estimatedHeight + margin > window.innerHeight;
+      const top = openAbove ? rect.top - estimatedHeight - 8 : rect.bottom + 8;
+      setStyle({
+        left,
+        maxHeight: `calc(100vh - ${margin * 2}px)`,
+        top: Math.max(margin, top),
+        width,
+      });
+    }
+    position();
+    window.addEventListener("resize", position);
+    window.addEventListener("scroll", position, true);
+    return () => {
+      window.removeEventListener("resize", position);
+      window.removeEventListener("scroll", position, true);
+    };
+  }, [open]);
+
+  return (
+    <span className="tooltip-wrap" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button
+        aria-label="Help"
+        className="help-icon"
+        onBlur={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        ref={buttonRef}
+        type="button"
+      >
+        ?
+      </button>
+      {open && <span className="tooltip-popover" role="tooltip" style={style}>{text}</span>}
+    </span>
+  );
 }

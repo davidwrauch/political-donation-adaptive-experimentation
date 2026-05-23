@@ -35,12 +35,15 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Current experiment status",
         "How reliable is the current winner?",
         "Current leading strategy",
-        "Leading adaptive method",
         "Adaptive lift vs control",
         "Probability best",
         "Additional contacts before high-confidence rollout",
         "Recommendation status",
         "Do not send 100% of traffic to the current winner unless confidence is high.",
+        "High confidence generally means the leading strategy has remained stable",
+        "Simulated estimate of how likely this strategy is to outperform the others",
+        "Estimated donation value after accounting for response rate",
+        "The current winner may simply reflect early noise",
         "Current leader",
         "Donation conversion rate",
         "Net expected value",
@@ -69,7 +72,13 @@ def test_overview_contains_leadership_metrics_and_charts():
 
     assert "<polyline" in overview
     assert "leader-card" in overview
-    assert "strokeWidth=\"2.75\"" in overview
+    assert "strokeWidth={hoveredId === item.id ? \"3.8\" : \"2.55\"}" in overview
+    assert "setIsolatedId" in overview
+    assert "chart-tooltip" in overview
+    assert "tooltip-popover" in overview
+    assert "getBoundingClientRect" in overview
+    assert "window.addEventListener(\"resize\"" in overview
+    assert "window.addEventListener(\"scroll\"" in overview
     assert "formatWholePercent(tick)" in overview
     assert "strategy_rate_timeline" in overview
     assert "formatAxisDate(row.experiment_date)" in overview
@@ -77,6 +86,7 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "message_allocation_shift" in overview
     assert "Cumulative donation conversions by allocation strategy" not in overview
     assert "Campaign readout" not in overview
+    assert "Leading adaptive method" not in overview
     assert "Use Contextual bandit with fatigue guardrail as the leading allocation strategy" not in overview
     assert "winning message" not in overview.lower()
 
@@ -129,7 +139,13 @@ def test_ai_tab_is_campaign_synthesis_not_autonomous_persuasion():
         "Revise",
         "Write revised message",
         "Submit revised version",
-        "This is one example message family",
+        "This section shows ONE example message family",
+        "A real campaign would repeat this workflow across multiple issue frames",
+        "Message family",
+        "Affordability / cost of living",
+        "Anti-corruption / accountability",
+        "Democracy protection",
+        "Candidate momentum / urgency",
         "Human review required",
     ]:
         assert text in ai
