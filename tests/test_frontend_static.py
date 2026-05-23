@@ -32,15 +32,16 @@ def test_overview_contains_leadership_metrics_and_charts():
 
     for text in [
         "A New York Democratic campaign is testing donation outreach",
-        "Current readout",
-        "Which allocation strategy is winning right now, and can we trust it yet?",
+        "Current experiment status",
+        "How reliable is the current winner?",
         "Current leading strategy",
         "Leading adaptive method",
         "Adaptive lift vs control",
-        "Winner by donation conversion rate",
-        "Winner by net expected value",
-        "Probability this is the best strategy",
+        "Probability best",
+        "Additional contacts before high-confidence rollout",
         "Recommendation status",
+        "Do not send 100% of traffic to the current winner unless confidence is high.",
+        "Current leader",
         "Donation conversion rate",
         "Net expected value",
         "Fatigue risk",
@@ -67,6 +68,9 @@ def test_overview_contains_leadership_metrics_and_charts():
         assert strategy in simulation
 
     assert "<polyline" in overview
+    assert "leader-card" in overview
+    assert "strokeWidth=\"2.75\"" in overview
+    assert "formatWholePercent(tick)" in overview
     assert "strategy_rate_timeline" in overview
     assert "formatAxisDate(row.experiment_date)" in overview
     assert "strategy_performance" in overview

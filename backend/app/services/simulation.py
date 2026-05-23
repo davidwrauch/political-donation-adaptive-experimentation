@@ -213,8 +213,8 @@ def summarize_experiment(experiment: dict) -> dict:
     value_winner = max(strategy_rows, key=lambda row: row["net_expected_value"])
     control_row = next(row for row in strategy_rows if row["id"] == "control")
     adaptive_rows = [row for row in strategy_rows if row["id"] != "control"]
-    adaptive_winner = max(adaptive_rows, key=lambda row: row["net_expected_value"])
-    best_strategy = value_winner
+    adaptive_winner = max(adaptive_rows, key=lambda row: row["conversion_rate"])
+    best_strategy = conversion_winner
     confidence = simulated_bayesian_confidence(strategy_rows, best_strategy["id"])
     status = recommendation_status(confidence["probability_best"])
     for row in strategy_rows:
@@ -261,6 +261,7 @@ def summarize_experiment(experiment: dict) -> dict:
             "control": control_row,
             "adaptive_lift_vs_control": round(adaptive_winner["conversion_rate"] - control_row["conversion_rate"], 4),
             "bayesian_confidence": confidence,
+            "estimated_additional_contacts_needed": estimated_contacts_needed(confidence["probability_best"]),
             "recommendation_status": status,
             "confidence_note": "Simulated Bayesian-style confidence based on the current strategy gap in this synthetic demo.",
         },
@@ -527,11 +528,11 @@ def build_selection_reason(frame_reason: str, channel_reason: str, supporter: di
 
 
 def simulated_bayesian_confidence(strategy_rows: list[dict], leading_strategy_id: str) -> dict:
-    ordered = sorted(strategy_rows, key=lambda row: row["net_expected_value"], reverse=True)
+    ordered = sorted(strategy_rows, key=lambda row: row["conversion_rate"], reverse=True)
     leader = ordered[0]
     runner_up = ordered[1] if len(ordered) > 1 else ordered[0]
-    gap = max(0.0, leader["net_expected_value"] - runner_up["net_expected_value"])
-    probability = clamp(0.52 + gap * 0.09, 0.52, 0.86)
+    gap = max(0.0, leader["conversion_rate"] - runner_up["conversion_rate"])
+    probability = clamp(0.52 + gap * 4.0, 0.52, 0.86)
     return {
         "strategy_id": leading_strategy_id,
         "strategy_label": leader["label"],
@@ -544,8 +545,15 @@ def recommendation_status(probability_best: float) -> str:
     if probability_best >= 0.78:
         return "Ready to scale"
     if probability_best >= 0.62:
-        return "Promising but keep testing"
+        return "Promising but continue exploration"
     return "Directional only"
+
+
+def estimated_contacts_needed(probability_best: float) -> int:
+    if probability_best >= 0.78:
+        return 0
+    gap_to_high_confidence = 0.78 - probability_best
+    return int(math.ceil(gap_to_high_confidence * 100000 / 1000) * 1000)
 
 
 def engagement_level(value: float) -> str:

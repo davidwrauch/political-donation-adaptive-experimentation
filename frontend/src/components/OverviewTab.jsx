@@ -30,7 +30,7 @@ const defaultStrategies = [
 ];
 
 export default function OverviewTab({ overview }) {
-  const strategies = overview?.strategies ?? defaultStrategies;
+  const strategies = overview?.strategy_performance ?? defaultStrategies;
   return (
     <div className="tab-panel">
       <section className="panel intro-card">
@@ -42,14 +42,12 @@ export default function OverviewTab({ overview }) {
         </p>
       </section>
 
-      <StrategyLegend strategies={strategies} />
+      <ExperimentStatus strategies={strategies} readout={overview?.current_readout} />
 
       {!overview ? (
         <section className="panel loading">Loading campaign donation experiment results...</section>
       ) : (
         <>
-          <CurrentReadout readout={overview.current_readout} />
-          <StrategyMetrics strategies={overview.strategy_performance} />
           <StrategyRateChart rows={overview.strategy_rate_timeline} />
 
           <section className="chart-grid">
@@ -90,76 +88,90 @@ export default function OverviewTab({ overview }) {
   );
 }
 
-function StrategyLegend({ strategies }) {
+function ExperimentStatus({ strategies, readout }) {
+  const leadingId = readout?.leading_strategy?.id;
   return (
-      <section className="strategy-legend" aria-label="Allocation strategies being compared">
-      {strategies.map((strategy) => (
-        <article className="panel" key={strategy.id}>
-          <h3>{strategy.label}</h3>
-          <p>{strategy.description}</p>
-        </article>
-      ))}
+    <section className="experiment-status" aria-label="Current experiment status">
+      <CurrentReadout readout={readout} />
+      <section className="strategy-grid">
+        {strategies.map((strategy) => (
+          <StrategyStatusCard
+            isLeader={strategy.id === leadingId}
+            key={strategy.id}
+            strategy={strategy}
+          />
+        ))}
+      </section>
     </section>
   );
 }
 
-function StrategyMetrics({ strategies }) {
+function StrategyStatusCard({ strategy, isLeader }) {
   return (
-    <>
-      <section className="section-note">
-        This dashboard compares Control, a static randomized baseline, and three adaptive allocation strategies. It does not declare a single global best message because
-        adaptive campaigns assign different messages to different people.
-      </section>
-
-      <section className="strategy-grid">
-        {strategies.map((strategy) => (
-          <article className="panel strategy-metric-card" key={strategy.id}>
-            <h3>{strategy.label}</h3>
-            <p>{strategy.description}</p>
-            <div className="strategy-metric-list">
-              <Metric label="Donation conversion rate" value={formatPercent(strategy.conversion_rate)} />
-              <Metric label="Net expected value" value={formatMoney(strategy.net_expected_value)} />
-              <Metric
-                label="Fatigue risk"
-                value={formatPercent(strategy.fatigue_risk)}
-                help="Estimated risk that repeated outreach reduces future response or causes opt-outs."
-              />
-              <Metric
-                label="Exploration rate"
-                value={formatPercent(strategy.exploration_rate)}
-                help="Share of contacts reserved for learning rather than only using the current best-performing option."
-              />
-              <Metric
-                label="Currently winning"
-                value={strategy.winning_metrics.length ? strategy.winning_metrics.join(", ") : "No leading metric yet"}
-              />
-            </div>
-          </article>
-        ))}
-      </section>
-    </>
+    <article className={isLeader ? "panel strategy-metric-card leader-card" : "panel strategy-metric-card"}>
+      <div className="card-title-row">
+        <h3>{strategy.label}</h3>
+        {isLeader && <span className="leader-pill">Current leader</span>}
+      </div>
+      <p>{strategy.description}</p>
+      <div className="strategy-metric-list">
+        <Metric label="Donation conversion rate" value={formatMaybePercent(strategy.conversion_rate)} />
+        <Metric label="Net expected value" value={formatMaybeMoney(strategy.net_expected_value)} />
+        <Metric
+          label="Fatigue risk"
+          value={formatMaybePercent(strategy.fatigue_risk)}
+          help="Estimated risk that repeated outreach reduces future response or causes opt-outs."
+        />
+        <Metric
+          label="Exploration rate"
+          value={formatMaybePercent(strategy.exploration_rate)}
+          help="Share of contacts reserved for learning rather than only using the current best-performing option."
+        />
+        <Metric
+          label="Leading metric"
+          value={strategy.winning_metrics?.length ? strategy.winning_metrics.join(", ") : "Not currently leading"}
+        />
+      </div>
+    </article>
   );
 }
 
 function CurrentReadout({ readout }) {
+  if (!readout) {
+    return (
+      <section className="panel current-readout readiness-card">
+        <div>
+          <p className="eyebrow">Current experiment status</p>
+          <h2>How reliable is the current winner?</h2>
+          <p>Loading live experiment metrics. The strategy cards below are available immediately and will fill in current results when the API responds.</p>
+        </div>
+      </section>
+    );
+  }
+  const contactsNeeded = readout.estimated_additional_contacts_needed;
   return (
-    <section className="panel current-readout">
+    <section className="panel current-readout readiness-card">
       <div>
-        <p className="eyebrow">Current readout</p>
-        <h2>Which allocation strategy is winning right now, and can we trust it yet?</h2>
-        <p>{readout.confidence_note}</p>
+        <p className="eyebrow">Current experiment status</p>
+        <h2>How reliable is the current winner?</h2>
+        <p>
+          Do not send 100% of traffic to the current winner unless confidence is high. Keep some exploration active
+          while the campaign is still learning.
+        </p>
       </div>
       <div className="readout-grid">
         <ReadoutMetric label="Current leading strategy" value={readout.leading_strategy.label} />
-        <ReadoutMetric label="Leading adaptive method" value={readout.leading_adaptive_strategy.label} />
-        <ReadoutMetric label="Adaptive lift vs control" value={formatPercent(readout.adaptive_lift_vs_control)} />
-        <ReadoutMetric label="Winner by donation conversion rate" value={readout.conversion_winner.label} />
-        <ReadoutMetric label="Winner by net expected value" value={readout.net_value_winner.label} />
         <ReadoutMetric
-          label="Probability this is the best strategy"
+          label="Probability best"
           value={`${Math.round(readout.bayesian_confidence.probability_best * 100)}% simulated`}
         />
+        <ReadoutMetric
+          label="Additional contacts before high-confidence rollout"
+          value={contactsNeeded > 0 ? `~${contactsNeeded.toLocaleString()}` : "0"}
+        />
         <ReadoutMetric label="Recommendation status" value={readout.recommendation_status} />
+        <ReadoutMetric label="Leading adaptive method" value={readout.leading_adaptive_strategy.label} />
+        <ReadoutMetric label="Adaptive lift vs control" value={formatPercent(readout.adaptive_lift_vs_control)} />
       </div>
     </section>
   );
@@ -181,10 +193,12 @@ function StrategyLineChart({ rows }) {
 function StrategyRateChart({ rows }) {
   const series = rows[0]?.series ?? [];
   const max = Math.max(0.4, ...rows.flatMap((row) => row.series.map((point) => point.conversion_rate)));
-  const width = 760;
-  const height = 270;
-  const padding = 44;
+  const width = 820;
+  const height = 300;
+  const padding = { top: 34, right: 36, bottom: 54, left: 86 };
   const ticks = [0.2, 0.25, 0.3, 0.35, 0.4].filter((tick) => tick <= Math.max(0.4, max + 0.05));
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
 
   return (
     <section className="panel line-panel">
@@ -195,16 +209,16 @@ function StrategyRateChart({ rows }) {
         </div>
       </div>
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Donation conversion rate over time by allocation strategy">
-        <text className="axis-title" x={width / 2} y={height - 3}>Date</text>
-        <text className="axis-title y-title" x="14" y={height / 2}>Conversion rate</text>
-        <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} className="axis" />
-        <line x1={padding} y1={padding} x2={padding} y2={height - padding} className="axis" />
+        <text className="axis-title" x={padding.left + chartWidth / 2} y={height - 8}>Date</text>
+        <text className="axis-title y-title" x="20" y={padding.top + chartHeight / 2}>Conversion rate</text>
+        <line x1={padding.left} y1={height - padding.bottom} x2={width - padding.right} y2={height - padding.bottom} className="axis" />
+        <line x1={padding.left} y1={padding.top} x2={padding.left} y2={height - padding.bottom} className="axis" />
         {ticks.map((tick) => {
-          const y = height - padding - (tick / max) * (height - padding * 2);
+          const y = height - padding.bottom - (tick / max) * chartHeight;
           return (
             <g key={tick}>
-              <line x1={padding - 4} y1={y} x2={width - padding} y2={y} className="grid-line" />
-              <text className="axis-label y-axis-label" x={padding - 8} y={y + 4}>{formatPercent(tick)}</text>
+              <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} className="grid-line" />
+              <text className="axis-label y-axis-label" x={padding.left - 12} y={y + 4}>{formatWholePercent(tick)}</text>
             </g>
           );
         })}
@@ -212,8 +226,8 @@ function StrategyRateChart({ rows }) {
           const points = rows
             .map((row, rowIndex) => {
               const value = row.series.find((point) => point.id === item.id)?.conversion_rate ?? 0;
-              const x = padding + (rowIndex / Math.max(1, rows.length - 1)) * (width - padding * 2);
-              const y = height - padding - (value / max) * (height - padding * 2);
+              const x = padding.left + (rowIndex / Math.max(1, rows.length - 1)) * chartWidth;
+              const y = height - padding.bottom - (value / max) * chartHeight;
               return `${x},${y}`;
             })
             .join(" ");
@@ -223,13 +237,14 @@ function StrategyRateChart({ rows }) {
               key={item.id}
               points={points}
               stroke={lineColors[seriesIndex % lineColors.length]}
-              strokeWidth="4"
+              strokeOpacity="0.84"
+              strokeWidth="2.75"
             />
           );
         })}
         {rows.map((row, index) => {
-          const x = padding + (index / Math.max(1, rows.length - 1)) * (width - padding * 2);
-          return <text className="axis-label" key={row.experiment_date} x={x} y={height - 21}>{formatAxisDate(row.experiment_date)}</text>;
+          const x = padding.left + (index / Math.max(1, rows.length - 1)) * chartWidth;
+          return <text className="axis-label" key={row.experiment_date} x={x} y={height - 32}>{formatAxisDate(row.experiment_date)}</text>;
         })}
       </svg>
       <div className="legend">
@@ -313,6 +328,18 @@ function formatPercent(value) {
 
 function formatMoney(value) {
   return `$${Number(value).toFixed(2)}`;
+}
+
+function formatMaybePercent(value) {
+  return typeof value === "number" ? formatPercent(value) : "Loading";
+}
+
+function formatMaybeMoney(value) {
+  return typeof value === "number" ? formatMoney(value) : "Loading";
+}
+
+function formatWholePercent(value) {
+  return `${Math.round(value * 100)}%`;
 }
 
 function formatAxisDate(value) {

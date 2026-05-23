@@ -54,9 +54,10 @@ def test_summary_has_campaign_experiment_metrics():
     assert summary["current_readout"]["bayesian_confidence"]["basis"] == "simulated"
     assert summary["current_readout"]["recommendation_status"] in [
         "Directional only",
-        "Promising but keep testing",
+        "Promising but continue exploration",
         "Ready to scale",
     ]
+    assert summary["current_readout"]["estimated_additional_contacts_needed"] >= 0
     assert summary["best_segment"]["label"]
     assert summary["best_channel"]["label"]
     assert summary["leadership_takeaway"]
