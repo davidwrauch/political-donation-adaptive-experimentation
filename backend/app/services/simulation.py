@@ -256,13 +256,14 @@ def summarize_experiment(experiment: dict) -> dict:
         "best_channel": best_channel,
         "donor_fatigue_warning": fatigue_risk >= 0.34,
         "leadership_takeaway": (
-            "Under the best-performing strategy, some message frames receive more allocation for specific donor segments, "
+            "Under the current leading allocation strategy, some message frames receive more allocation for specific donor segments, "
             "while the system preserves exploration because performance varies by segment and channel."
         ),
         "strategy_performance": strategy_rows,
         "message_performance": frame_rows,
         "segment_performance": sorted(segment_rows, key=lambda row: row["net_expected_value"], reverse=True)[:8],
         "channel_performance": channel_rows,
+        "strategy_rate_timeline": strategy_rate_timeline(events),
         "strategy_timeline": timeline,
         "message_allocation_shift": allocation,
         "latest_decision": latest_event,
@@ -413,6 +414,39 @@ def strategy_conversion_timeline(events: list[dict]) -> list[dict]:
                 "experiment_date": batch_events[0]["experiment_date"],
                 "series": [
                     {"id": strategy["id"], "label": labels[strategy["id"]], "cumulative_conversions": cumulative[strategy["id"]]}
+                    for strategy in STRATEGIES
+                ],
+            }
+        )
+    return rows
+
+
+def strategy_rate_timeline(events: list[dict]) -> list[dict]:
+    labels = {strategy["id"]: strategy["label"] for strategy in STRATEGIES}
+    by_batch = defaultdict(list)
+    for event in events:
+        by_batch[event["batch"]].append(event)
+    rows = []
+    for batch in sorted(by_batch):
+        batch_events = by_batch[batch]
+        rows.append(
+            {
+                "batch": batch,
+                "date": batch_events[0]["experiment_date"],
+                "experiment_date": batch_events[0]["experiment_date"],
+                "series": [
+                    {
+                        "id": strategy["id"],
+                        "label": labels[strategy["id"]],
+                        "conversion_rate": round(
+                            mean(
+                                event["converted"]
+                                for event in batch_events
+                                if event["strategy"] == strategy["id"]
+                            ),
+                            4,
+                        ),
+                    }
                     for strategy in STRATEGIES
                 ],
             }

@@ -18,6 +18,10 @@ export default function AiTab({ recommendation }) {
     <div className="tab-panel">
       <section className="panel intro-card">
         <h2>AI Message Review</h2>
+        <p>
+          This is one example message family. A campaign could repeat this workflow across affordability,
+          anti-corruption, democracy protection, local investment, economic fairness, and candidate momentum frames.
+        </p>
         <p>{recommendation.explanation}</p>
         <span className="review-pill">Human review required</span>
       </section>
@@ -63,20 +67,20 @@ export default function AiTab({ recommendation }) {
                   <button className="approve-button" onClick={() => setDecision(variant.id, "approved")} type="button">
                     Approve
                   </button>
-                  <button className="reject-button" onClick={() => setDecision(variant.id, "rejected")} type="button">
-                    Reject
+                  <button className="reject-button" onClick={() => setDecision(variant.id, "revise")} type="button">
+                    Revise
                   </button>
                 </div>
                 {review.decision && <small>Status: {review.decision}</small>}
-                {review.decision === "rejected" && (
+                {review.decision === "revise" && (
                   <div className="replacement-box">
-                    <label htmlFor={`replacement-${variant.id}`}>Write replacement message</label>
+                    <label htmlFor={`replacement-${variant.id}`}>Write revised message</label>
                     <textarea
                       id={`replacement-${variant.id}`}
                       onChange={(event) => setReplacement(variant.id, event.target.value)}
                       value={review.replacement ?? ""}
                     />
-                    <button type="button">Submit replacement</button>
+                    <button type="button">Submit revised version</button>
                   </div>
                 )}
               </article>

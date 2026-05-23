@@ -8,7 +8,9 @@ def synthesize_recommendation(summary: dict) -> dict:
             "utility bills are stretching household budgets across the state.\n\n"
             "Our campaign is organizing around practical affordability solutions and a fairer "
             "economy. Will you make a grassroots donation today to help us reach more voters before "
-            "the next outreach deadline?"
+            "the next outreach deadline?\n\n"
+            "Every contribution helps volunteers talk with more neighbors, share our plan, and build "
+            "support for leaders who will focus on the cost of living."
         ),
         "retrieved_context": {
             "approved_issue_brief": "Affordability / cost of living",

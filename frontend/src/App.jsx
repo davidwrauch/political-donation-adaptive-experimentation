@@ -54,16 +54,10 @@ export default function App() {
       </nav>
 
       {error && <div className="alert">{error}</div>}
-      {!overview ? (
-        <section className="panel loading">Loading campaign donation experiment results...</section>
-      ) : (
-        <>
-          {activeTab === "Overview" && <OverviewTab overview={overview} />}
-          {activeTab === "Experiment Design" && <ExperimentDesignTab />}
-          {activeTab === "AI Message Review" && <AiTab recommendation={aiRecommendation} overview={overview} />}
-          {activeTab === "About" && <AboutTab />}
-        </>
-      )}
+      {activeTab === "Overview" && <OverviewTab overview={overview} />}
+      {activeTab === "Experiment Design" && <ExperimentDesignTab />}
+      {activeTab === "AI Message Review" && <AiTab recommendation={aiRecommendation} overview={overview} />}
+      {activeTab === "About" && <AboutTab />}
     </main>
   );
 }

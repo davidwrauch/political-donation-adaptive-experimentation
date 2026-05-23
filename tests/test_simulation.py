@@ -58,6 +58,9 @@ def test_summary_has_campaign_experiment_metrics():
     assert summary["leadership_takeaway"]
     assert summary["strategy_timeline"]
     assert summary["strategy_timeline"][0]["experiment_date"] == "2026-02-01"
+    assert summary["strategy_rate_timeline"]
+    assert summary["strategy_rate_timeline"][0]["experiment_date"] == "2026-02-01"
+    assert 0 <= summary["strategy_rate_timeline"][0]["series"][0]["conversion_rate"] <= 1
     assert summary["strategy_performance"]
     assert all("winning_metrics" in strategy for strategy in summary["strategy_performance"])
     assert summary["message_allocation_shift"]

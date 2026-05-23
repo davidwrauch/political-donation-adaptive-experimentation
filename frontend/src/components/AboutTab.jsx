@@ -33,7 +33,7 @@ export default function AboutTab() {
         <article className="panel">
           <h3>Transparent and human-reviewed</h3>
           <p>
-            The AI tab is deterministic template-based synthesis. It does not call external LLM APIs
+            The AI Message Review tab is deterministic template-based synthesis. It does not call external LLM APIs
             and does not autonomously generate or deploy persuasion content.
           </p>
         </article>
@@ -68,10 +68,6 @@ export default function AboutTab() {
         <p>
           <strong>David Rauch</strong> - Product-focused data scientist working on experimentation,
           causal inference, adaptive decision systems, and public-interest technology.
-        </p>
-        <p>
-          Adapted from my adaptive experimentation platform and inspired in part by Stanford
-          charitable-giving contextual bandit research.
         </p>
         <a href="https://github.com/davidwrauch/political-donation-adaptive-experimentation" target="_blank" rel="noreferrer">
           GitHub: davidwrauch/political-donation-adaptive-experimentation

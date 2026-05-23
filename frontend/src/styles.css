@@ -330,10 +330,19 @@ button {
   stroke-width: 1.5;
 }
 
+.grid-line {
+  stroke: #e4ece7;
+  stroke-width: 1;
+}
+
 .axis-label {
   fill: #627175;
   font-size: 11px;
   text-anchor: middle;
+}
+
+.y-axis-label {
+  text-anchor: end;
 }
 
 .axis-title {

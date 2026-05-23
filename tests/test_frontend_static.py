@@ -13,7 +13,7 @@ def test_four_tabs_and_campaign_loading_language():
 
     for tab in ["Overview", "Experiment Design", "AI Message Review", "About"]:
         assert tab in app
-    assert "Loading campaign donation experiment results" in app
+    assert "OverviewTab overview={overview}" in app
 
 
 def test_app_fetches_actual_fastapi_routes_and_reports_failed_url():
@@ -44,9 +44,10 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Fatigue risk",
         "Exploration rate",
         "Estimated risk that repeated outreach reduces future response or causes opt-outs.",
-        "Share of contacts intentionally reserved for learning",
-        "Cumulative donation conversions by allocation strategy",
-        "X-axis: date. Y-axis: cumulative donations/conversions.",
+        "Share of contacts reserved for learning rather than only using the current best-performing option.",
+        "Donation conversion rate over time by allocation strategy",
+        "X-axis: dates. Y-axis: conversion rate percentage by experiment date.",
+        "ticks = [0.2, 0.25, 0.3, 0.35, 0.4]",
         "Overall donation conversion rate by strategy",
         "Net expected donation value by strategy",
         "Fatigue risk by strategy",
@@ -63,10 +64,11 @@ def test_overview_contains_leadership_metrics_and_charts():
         assert strategy in simulation
 
     assert "<polyline" in overview
+    assert "strategy_rate_timeline" in overview
     assert "formatAxisDate(row.experiment_date)" in overview
-    assert "strategy_timeline" in overview
     assert "strategy_performance" in overview
     assert "message_allocation_shift" in overview
+    assert "Cumulative donation conversions by allocation strategy" not in overview
     assert "Campaign readout" not in overview
     assert "Use Contextual bandit with fatigue guardrail as the leading allocation strategy" not in overview
     assert "winning message" not in overview.lower()
@@ -108,12 +110,14 @@ def test_ai_tab_is_campaign_synthesis_not_autonomous_persuasion():
         "Approved tone",
         "Prior performance note",
         "Approve",
-        "Reject",
-        "Write replacement message",
-        "Submit replacement",
+        "Revise",
+        "Write revised message",
+        "Submit revised version",
+        "This is one example message family",
         "Human review required",
     ]:
         assert text in ai
+    assert "Reject" not in ai
     for medium in ["SMS", "Email", "Door-knocking script"]:
         assert medium in synthesis
     for removed in [
@@ -140,7 +144,7 @@ def test_about_tab_matches_campaign_positioning_and_boundaries():
     assert "David Rauch" in about
     assert "https://github.com/davidwrauch/political-donation-adaptive-experimentation" in about
     assert "https://arxiv.org/abs/2211.12004" in about
-    assert "Adapted from my adaptive experimentation platform" in about
+    assert "Adapted from my adaptive experimentation platform" not in about
     assert "Product-focused data scientist" in about
     for guardrail in [
         "Human review required",
