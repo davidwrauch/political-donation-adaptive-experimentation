@@ -203,27 +203,9 @@ def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float =
 def summarize_experiment(experiment: dict) -> dict:
     events = experiment["events"]
     supporters = experiment["supporters"]
-    strategy_rows = grouped_metrics(events, "strategy", label_key="strategy_label")
-    strategy_exploration = {strategy["id"]: strategy["exploration_rate"] for strategy in STRATEGIES}
-    strategy_descriptions = {strategy["id"]: strategy["description"] for strategy in STRATEGIES}
-    for row in strategy_rows:
-        row["exploration_rate"] = strategy_exploration[row["id"]]
-        row["description"] = strategy_descriptions[row["id"]]
-    conversion_winner = max(strategy_rows, key=lambda row: row["conversion_rate"])
-    value_winner = max(strategy_rows, key=lambda row: row["net_expected_value"])
-    control_row = next(row for row in strategy_rows if row["id"] == "control")
-    adaptive_rows = [row for row in strategy_rows if row["id"] != "control"]
-    adaptive_winner = max(adaptive_rows, key=lambda row: row["conversion_rate"])
-    best_strategy = conversion_winner
-    confidence = simulated_bayesian_confidence(strategy_rows, best_strategy["id"])
-    status = recommendation_status(confidence["probability_best"])
-    for row in strategy_rows:
-        winning = []
-        if row["id"] == conversion_winner["id"]:
-            winning.append("Donation conversion rate")
-        if row["id"] == value_winner["id"]:
-            winning.append("Net expected value")
-        row["winning_metrics"] = winning
+    strategy_rows = enrich_strategy_rows(grouped_metrics(events, "strategy", label_key="strategy_label"))
+    current_readout = build_current_readout(strategy_rows)
+    best_strategy = current_readout["leading_strategy"]
     best_strategy_events = [event for event in events if event["strategy"] == best_strategy["id"]]
     frame_rows = grouped_metrics(best_strategy_events, "message_frame", label_key="message_label")
     segment_rows = grouped_metrics(events, "segment")
@@ -242,10 +224,12 @@ def summarize_experiment(experiment: dict) -> dict:
         "channels": experiment["channels"],
         "exploration_rate": experiment["exploration_rate"],
         "primary_metric": {
-            "label": "Donation conversion rate",
-            "value": mean(event["converted"] for event in events),
+            "label": "Net donation value per contact",
+            "value": mean(event["net_expected_value"] for event in events),
+            "definition": "Average expected dollars raised per person contacted, after accounting for conversion rate, donation amount, and fatigue penalty.",
         },
         "secondary_metrics": {
+            "donation_conversion_rate": mean(event["converted"] for event in events),
             "expected_donation_amount": mean(event["expected_donation_amount"] for event in events),
             "net_expected_donation_value": mean(event["net_expected_value"] for event in events),
             "channel_response_rate": mean(row["conversion_rate"] for row in channel_rows),
@@ -253,18 +237,7 @@ def summarize_experiment(experiment: dict) -> dict:
             "message_frame_lift_by_segment": best_segment["conversion_rate"] - mean(event["converted"] for event in events),
         },
         "best_strategy": best_strategy,
-        "current_readout": {
-            "leading_strategy": best_strategy,
-            "leading_adaptive_strategy": adaptive_winner,
-            "conversion_winner": conversion_winner,
-            "net_value_winner": value_winner,
-            "control": control_row,
-            "adaptive_lift_vs_control": round(adaptive_winner["conversion_rate"] - control_row["conversion_rate"], 4),
-            "bayesian_confidence": confidence,
-            "estimated_additional_contacts_needed": estimated_contacts_needed(confidence["probability_best"]),
-            "recommendation_status": status,
-            "confidence_note": "Simulated Bayesian-style confidence based on the current strategy gap in this synthetic demo.",
-        },
+        "current_readout": current_readout,
         "best_segment": best_segment,
         "best_channel": best_channel,
         "donor_fatigue_warning": fatigue_risk >= 0.34,
@@ -273,6 +246,7 @@ def summarize_experiment(experiment: dict) -> dict:
             "while the system preserves exploration because performance varies by segment and channel."
         ),
         "strategy_performance": strategy_rows,
+        "strategy_status_timeline": strategy_status_timeline(events),
         "message_performance": frame_rows,
         "segment_performance": sorted(segment_rows, key=lambda row: row["net_expected_value"], reverse=True)[:8],
         "channel_performance": channel_rows,
@@ -417,6 +391,68 @@ def grouped_metrics(events: list[dict], key: str, label_key: str | None = None) 
     return sorted(rows, key=lambda row: row["conversion_rate"], reverse=True)
 
 
+def enrich_strategy_rows(strategy_rows: list[dict]) -> list[dict]:
+    strategy_exploration = {strategy["id"]: strategy["exploration_rate"] for strategy in STRATEGIES}
+    strategy_descriptions = {strategy["id"]: strategy["description"] for strategy in STRATEGIES}
+    value_winner = max(strategy_rows, key=lambda row: row["net_expected_value"])
+    conversion_winner = max(strategy_rows, key=lambda row: row["conversion_rate"])
+    for row in strategy_rows:
+        row["exploration_rate"] = strategy_exploration[row["id"]]
+        row["description"] = strategy_descriptions[row["id"]]
+        row["contacts_observed"] = row["event_count"]
+        row["allocation_status"] = "Reduced allocation" if row["net_expected_value"] < value_winner["net_expected_value"] - 0.25 and row["event_count"] >= 100 else "Active learning"
+        winning = []
+        if row["id"] == value_winner["id"]:
+            winning.append("Net donation value per contact")
+        if row["id"] == conversion_winner["id"]:
+            winning.append("Donation conversion rate")
+        row["winning_metrics"] = winning
+    return sorted(strategy_rows, key=lambda row: row["net_expected_value"], reverse=True)
+
+
+def build_current_readout(strategy_rows: list[dict]) -> dict:
+    value_winner = max(strategy_rows, key=lambda row: row["net_expected_value"])
+    conversion_winner = max(strategy_rows, key=lambda row: row["conversion_rate"])
+    control_row = next(row for row in strategy_rows if row["id"] == "control")
+    adaptive_rows = [row for row in strategy_rows if row["id"] != "control"]
+    adaptive_winner = max(adaptive_rows, key=lambda row: row["net_expected_value"])
+    confidence = simulated_bayesian_confidence(strategy_rows, value_winner["id"])
+    total_contacts = sum(row["event_count"] for row in strategy_rows)
+    return {
+        "leading_strategy": value_winner,
+        "leading_adaptive_strategy": adaptive_winner,
+        "conversion_winner": conversion_winner,
+        "net_value_winner": value_winner,
+        "control": control_row,
+        "adaptive_lift_vs_control": round(adaptive_winner["net_expected_value"] - control_row["net_expected_value"], 4),
+        "bayesian_confidence": confidence,
+        "estimated_additional_contacts_needed": estimated_contacts_needed(confidence["probability_best"]),
+        "recommendation_status": recommendation_status(confidence["probability_best"]),
+        "total_contacts_observed": total_contacts,
+        "contacts_by_strategy": {row["id"]: row["event_count"] for row in strategy_rows},
+        "contacts_by_control": control_row["event_count"],
+        "confidence_note": "Simulated Bayesian-style confidence based on the current net value gap in this synthetic demo.",
+    }
+
+
+def strategy_status_timeline(events: list[dict]) -> list[dict]:
+    rows = []
+    by_batch = sorted({event["batch"] for event in events})
+    for batch in by_batch:
+        cumulative_events = [event for event in events if event["batch"] <= batch]
+        strategy_rows = enrich_strategy_rows(grouped_metrics(cumulative_events, "strategy", label_key="strategy_label"))
+        rows.append(
+            {
+                "batch": batch,
+                "experiment_date": cumulative_events[-1]["experiment_date"],
+                "total_contacts_observed": len(cumulative_events),
+                "strategy_performance": strategy_rows,
+                "current_readout": build_current_readout(strategy_rows),
+            }
+        )
+    return rows
+
+
 def strategy_conversion_timeline(events: list[dict]) -> list[dict]:
     labels = {strategy["id"]: strategy["label"] for strategy in STRATEGIES}
     by_batch = defaultdict(list)
@@ -528,11 +564,11 @@ def build_selection_reason(frame_reason: str, channel_reason: str, supporter: di
 
 
 def simulated_bayesian_confidence(strategy_rows: list[dict], leading_strategy_id: str) -> dict:
-    ordered = sorted(strategy_rows, key=lambda row: row["conversion_rate"], reverse=True)
+    ordered = sorted(strategy_rows, key=lambda row: row["net_expected_value"], reverse=True)
     leader = ordered[0]
     runner_up = ordered[1] if len(ordered) > 1 else ordered[0]
-    gap = max(0.0, leader["conversion_rate"] - runner_up["conversion_rate"])
-    probability = clamp(0.52 + gap * 4.0, 0.52, 0.86)
+    gap = max(0.0, leader["net_expected_value"] - runner_up["net_expected_value"])
+    probability = clamp(0.52 + gap * 0.16, 0.52, 0.9)
     return {
         "strategy_id": leading_strategy_id,
         "strategy_label": leader["label"],

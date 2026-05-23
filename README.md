@@ -4,7 +4,7 @@ A production-style prototype for adaptive campaign fundraising experiments that 
 
 ## What This Is
 
-This is a lightweight interactive prototype for a New York Democratic campaign testing donation outreach before scaling paid and volunteer outreach. It compares a true Control group, a static randomized baseline, and adaptive experimentation strategies for allocating limited contacts across messages, audience segments, and channels while monitoring conversion, expected value, exploration, and donor fatigue.
+This is a lightweight interactive prototype for a New York Democratic campaign testing donation outreach before scaling donation outreach. It compares a true Control group, a static randomized baseline, and adaptive experimentation strategies for allocating limited contacts across messages, audience segments, and channels while monitoring net donation value per contact, conversion, average donation amount, exploration, and donor fatigue.
 
 The demo is inspired by three ideas:
 

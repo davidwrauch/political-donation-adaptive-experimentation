@@ -2,14 +2,22 @@ import React, { useEffect, useRef, useState } from "react";
 
 const lineColors = ["#6d7a80", "#2e8f7f", "#a16a2a", "#3f6f9f", "#8b4b66"];
 const helpText = {
-  "Current leading strategy": "The strategy with the strongest current donation conversion rate in this simulated experiment.",
-  "Probability best": "Simulated estimate of how likely this strategy is to outperform the others if the experiment continues.",
+  "Current leading strategy": "The strategy with the highest net donation value per contact in this simulated experiment.",
+  "Net donation value per contact": "Average expected dollars raised per person contacted, after accounting for conversion rate, donation amount, and fatigue penalty.",
+  "Donation conversion rate": "Share of contacted people who are expected to donate.",
+  "Average donation amount": "Average expected donation size among contacted supporters in this simulation.",
+  "Probability best": "Probability best estimates how likely the current leading strategy is to be the best option if the experiment continues. Unlike a p-value, it is expressed directly as a probability.",
   "Additional contacts before high-confidence rollout": "Estimated number of additional outreach contacts needed before the result is reliable enough for broad rollout.",
   "Recommendation status": "Plain-English rollout guidance based on current simulated confidence and whether the campaign should keep learning.",
   "Adaptive lift vs control": "Estimated improvement versus generic non-personalized outreach.",
+  "Total contacts observed": "Total simulated supporter contacts included in the current dashboard readout.",
+  "Control contacts": "Number of simulated contacts assigned to generic non-personalized outreach.",
+  "Contacts observed": "Number of simulated supporter contacts assigned to this strategy so far.",
   "Net expected value": "Estimated donation value after accounting for response rate, average donation amount, and fatigue effects.",
   "Fatigue risk": "Estimated risk that repeated outreach reduces future response or increases opt-outs.",
   "Exploration rate": "Share of traffic intentionally reserved for learning rather than only using the current winner.",
+  "Control": "Generic non-personalized outreach with fixed messaging and no adaptive allocation.",
+  "Static randomized test": "Randomly splits traffic across approved message/channel combinations, but does not adapt allocation based on results.",
   "Directional only": "The current winner may simply reflect early noise. More data is needed before confidently scaling traffic.",
   "Promising but keep testing": "The current winner looks encouraging, but the campaign should keep learning before shifting most traffic.",
   "Ready to scale": "The leading strategy has remained strong enough in the simulation to justify broader rollout with monitoring.",
@@ -43,36 +51,64 @@ const defaultStrategies = [
 ];
 
 export default function OverviewTab({ overview }) {
-  const strategies = overview?.strategy_performance ?? defaultStrategies;
+  const [paused, setPaused] = useState(false);
+  const [visibleIndex, setVisibleIndex] = useState(0);
+  const snapshots = overview?.strategy_status_timeline ?? [];
+  const activeIndex = snapshots.length ? Math.min(visibleIndex, snapshots.length - 1) : 0;
+  const snapshot = snapshots[activeIndex];
+  const strategies = snapshot?.strategy_performance ?? overview?.strategy_performance ?? defaultStrategies;
+  const readout = snapshot?.current_readout ?? overview?.current_readout;
+  const chartRows = overview?.strategy_rate_timeline?.slice(0, activeIndex + 1) ?? [];
+  const lastUpdated = snapshot?.experiment_date ? formatAxisDate(snapshot.experiment_date) : "";
+
+  useEffect(() => {
+    if (!overview) return undefined;
+    setVisibleIndex(Math.min(2, Math.max(0, snapshots.length - 1)));
+  }, [overview, snapshots.length]);
+
+  useEffect(() => {
+    if (!overview || paused || !snapshots.length) return undefined;
+    const timer = window.setInterval(() => {
+      setVisibleIndex((current) => (current >= snapshots.length - 1 ? current : current + 1));
+    }, 3500);
+    return () => window.clearInterval(timer);
+  }, [overview, paused, snapshots.length]);
+
   return (
     <div className="tab-panel">
       <section className="panel intro-card">
         <p>
-          A New York Democratic campaign is testing donation outreach before scaling paid and volunteer outreach.
+          A New York Democratic campaign is testing donation outreach before scaling donation outreach.
           This dashboard compares Control plus four allocation strategies to see which approach allocates limited contacts most
           effectively across messages, audience segments, and channels. It does not declare one global best message
           because adaptive campaigns assign different messages to different people.
         </p>
       </section>
 
-      <ExperimentStatus strategies={strategies} readout={overview?.current_readout} />
+      <ExperimentStatus
+        lastUpdated={lastUpdated}
+        onTogglePaused={() => setPaused((current) => !current)}
+        paused={paused}
+        readout={readout}
+        strategies={strategies}
+      />
 
       {!overview ? (
         <section className="panel loading">Loading campaign donation experiment results...</section>
       ) : (
         <>
-          <StrategyRateChart rows={overview.strategy_rate_timeline} />
+          <StrategyRateChart rows={chartRows} />
 
           <section className="chart-grid">
             <BarChart
               title="Overall donation conversion rate by strategy"
-              rows={overview.strategy_performance}
+              rows={strategies}
               valueKey="conversion_rate"
               formatter={formatPercent}
             />
             <BarChart
-              title="Net expected donation value by strategy"
-              rows={overview.strategy_performance}
+              title="Net donation value per contact by strategy"
+              rows={strategies}
               valueKey="net_expected_value"
               formatter={formatMoney}
             />
@@ -81,7 +117,7 @@ export default function OverviewTab({ overview }) {
           <section className="chart-grid">
             <BarChart
               title="Fatigue risk by strategy"
-              rows={overview.strategy_performance}
+              rows={strategies}
               valueKey="fatigue_risk"
               formatter={formatPercent}
             />
@@ -101,11 +137,11 @@ export default function OverviewTab({ overview }) {
   );
 }
 
-function ExperimentStatus({ strategies, readout }) {
+function ExperimentStatus({ strategies, readout, paused, onTogglePaused, lastUpdated }) {
   const leadingId = readout?.leading_strategy?.id;
   return (
     <section className="experiment-status" aria-label="Current experiment status">
-      <CurrentReadout readout={readout} />
+      <CurrentReadout lastUpdated={lastUpdated} onTogglePaused={onTogglePaused} paused={paused} readout={readout} />
       <section className="strategy-grid">
         {strategies.map((strategy) => (
           <StrategyStatusCard
@@ -129,7 +165,9 @@ function StrategyStatusCard({ strategy, isLeader }) {
       <p>{strategy.description}</p>
       <div className="strategy-metric-list">
         <Metric label="Donation conversion rate" value={formatMaybePercent(strategy.conversion_rate)} />
-        <Metric label="Net expected value" value={formatMaybeMoney(strategy.net_expected_value)} />
+        <Metric label="Net donation value per contact" value={formatMaybeMoney(strategy.net_expected_value)} />
+        <Metric label="Average donation amount" value={formatMaybeMoney(strategy.expected_donation_amount)} />
+        <Metric label="Contacts observed" value={formatMaybeNumber(strategy.contacts_observed)} />
         <Metric
           label="Fatigue risk"
           value={formatMaybePercent(strategy.fatigue_risk)}
@@ -144,12 +182,13 @@ function StrategyStatusCard({ strategy, isLeader }) {
           label="Leading metric"
           value={strategy.winning_metrics?.length ? strategy.winning_metrics.join(", ") : "Not currently leading"}
         />
+        <Metric label="Allocation status" value={strategy.allocation_status ?? "Loading"} />
       </div>
     </article>
   );
 }
 
-function CurrentReadout({ readout }) {
+function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated }) {
   if (!readout) {
     return (
       <section className="panel current-readout readiness-card">
@@ -174,6 +213,10 @@ function CurrentReadout({ readout }) {
       </div>
       <div className="readout-grid">
         <ReadoutMetric label="Current leading strategy" value={readout.leading_strategy.label} />
+        <ReadoutMetric label="Net donation value per contact" value={formatMoney(readout.leading_strategy.net_expected_value)} />
+        <ReadoutMetric label="Donation conversion rate" value={formatPercent(readout.leading_strategy.conversion_rate)} />
+        <ReadoutMetric label="Average donation amount" value={formatMoney(readout.leading_strategy.expected_donation_amount)} />
+        <ReadoutMetric label="Total contacts observed" value={readout.total_contacts_observed.toLocaleString()} />
         <ReadoutMetric
           label="Probability best"
           value={`${Math.round(readout.bayesian_confidence.probability_best * 100)}% simulated`}
@@ -183,12 +226,19 @@ function CurrentReadout({ readout }) {
           value={contactsNeeded > 0 ? `~${contactsNeeded.toLocaleString()}` : "0"}
         />
         <ReadoutMetric label="Recommendation status" value={readout.recommendation_status} valueHelp={helpText[readout.recommendation_status]} />
-        <ReadoutMetric label="Adaptive lift vs control" value={formatPercent(readout.adaptive_lift_vs_control)} />
+        <ReadoutMetric label="Adaptive lift vs control" value={formatMoney(readout.adaptive_lift_vs_control)} />
+        <ReadoutMetric label="Control contacts" value={readout.contacts_by_control.toLocaleString()} />
       </div>
       <p className="confidence-note">
         High confidence generally means the leading strategy has remained stable over additional traffic and reached
-        roughly 80-90% simulated probability best.
+        roughly 80-90% simulated probability best. Traditional statistical significance can still be reported in a real
+        deployment, but this prototype uses Bayesian-style probability best because it is easier to interpret for live
+        allocation decisions.
       </p>
+      <div className="stream-controls">
+        <button onClick={onTogglePaused} type="button">{paused ? "Resume updates" : "Pause updates"}</button>
+        <span>Last updated: {lastUpdated || "Loading"}</span>
+      </div>
     </section>
   );
 }
@@ -281,7 +331,7 @@ function StrategyRateChart({ rows }) {
                   setPointTooltip({
                     x: event.clientX,
                     y: event.clientY,
-                    text: `${point.label} • ${formatAxisDate(row.experiment_date)} • ${formatPercent(point.conversion_rate)}`,
+                    text: `${point.label} - ${formatAxisDate(row.experiment_date)} - ${formatPercent(point.conversion_rate)}`,
                   });
                 }}
                 onMouseLeave={() => {
@@ -395,6 +445,10 @@ function formatMaybePercent(value) {
 
 function formatMaybeMoney(value) {
   return typeof value === "number" ? formatMoney(value) : "Loading";
+}
+
+function formatMaybeNumber(value) {
+  return typeof value === "number" ? value.toLocaleString() : "Loading";
 }
 
 function formatWholePercent(value) {

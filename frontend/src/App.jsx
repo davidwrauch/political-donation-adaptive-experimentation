@@ -30,15 +30,23 @@ export default function App() {
           <h1>Political Donation Adaptive Experimentation</h1>
           <p>
             A lightweight prototype for testing donation messages across audience segments, channels,
-            and issue frames while monitoring conversion, expected value, and donor fatigue.
+            and issue frames while monitoring net donation value, conversion, average donation amount, and donor fatigue.
           </p>
         </div>
         <div className="hero-card">
           <span>Primary metric</span>
-          <strong>Donation conversion rate</strong>
-          <small>Secondary guardrails: expected value, channel response, fatigue risk, segment lift.</small>
+          <strong>Net donation value per contact</strong>
+          <small>Secondary metrics: donation conversion rate, average donation amount, fatigue risk, and exploration rate.</small>
         </div>
       </header>
+
+      <section className={overview ? "load-banner ready" : "load-banner"}>
+        <strong>{overview ? "Data ready" : "Loading simulated campaign results, usually 10-15 seconds"}</strong>
+        <span>
+          This dashboard compares donation allocation strategies, tracks whether adaptive methods beat Control,
+          and keeps confidence/readiness visible for leadership.
+        </span>
+      </section>
 
       <nav className="tabs" aria-label="Dashboard tabs">
         {tabs.map((tab) => (

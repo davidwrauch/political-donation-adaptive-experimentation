@@ -98,6 +98,31 @@ button {
   padding: 6px;
 }
 
+.load-banner {
+  background: #fff8e7;
+  border: 1px solid #ecd89f;
+  border-radius: 10px;
+  color: #594514;
+  display: grid;
+  gap: 4px;
+  margin: 14px 0 18px;
+  padding: 12px 14px;
+}
+
+.load-banner.ready {
+  background: #eaf7ef;
+  border-color: #b9dccd;
+  color: #17694f;
+}
+
+.load-banner strong {
+  font-size: 0.95rem;
+}
+
+.load-banner span {
+  font-size: 0.88rem;
+}
+
 .tabs button {
   background: transparent;
   color: #526165;
@@ -191,7 +216,7 @@ button {
 .readout-grid {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .readout-grid article,
@@ -221,6 +246,26 @@ button {
   font-size: 0.92rem;
   grid-column: 1 / -1;
   margin: 0;
+}
+
+.stream-controls {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  grid-column: 1 / -1;
+}
+
+.stream-controls button {
+  background: #19363b;
+  color: white;
+  font-weight: 850;
+  padding: 0.55rem 0.8rem;
+}
+
+.stream-controls span {
+  color: #526165;
+  font-size: 0.85rem;
+  font-weight: 750;
 }
 
 .section-note {

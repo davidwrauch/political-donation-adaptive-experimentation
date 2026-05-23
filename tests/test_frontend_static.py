@@ -14,6 +14,10 @@ def test_four_tabs_and_campaign_loading_language():
     for tab in ["Overview", "Experiment Design", "AI Message Review", "About"]:
         assert tab in app
     assert "OverviewTab overview={overview}" in app
+    assert "Net donation value per contact" in app
+    assert "Secondary metrics: donation conversion rate, average donation amount, fatigue risk, and exploration rate." in app
+    assert "Loading simulated campaign results, usually 10-15 seconds" in app
+    assert "Data ready" in app
 
 
 def test_app_fetches_actual_fastapi_routes_and_reports_failed_url():
@@ -36,17 +40,27 @@ def test_overview_contains_leadership_metrics_and_charts():
         "How reliable is the current winner?",
         "Current leading strategy",
         "Adaptive lift vs control",
+        "Net donation value per contact",
+        "Average donation amount",
+        "Total contacts observed",
+        "Control contacts",
+        "Contacts observed",
         "Probability best",
         "Additional contacts before high-confidence rollout",
         "Recommendation status",
         "Do not send 100% of traffic to the current winner unless confidence is high.",
         "High confidence generally means the leading strategy has remained stable",
-        "Simulated estimate of how likely this strategy is to outperform the others",
-        "Estimated donation value after accounting for response rate",
+        "Traditional statistical significance can still be reported in a real",
+        "Probability best estimates how likely the current leading strategy is to be the best option",
+        "Average expected dollars raised per person contacted",
+        "Unlike a p-value",
         "The current winner may simply reflect early noise",
+        "Pause updates",
+        "Resume updates",
+        "Last updated",
+        "Allocation status",
         "Current leader",
         "Donation conversion rate",
-        "Net expected value",
         "Fatigue risk",
         "Exploration rate",
         "Estimated risk that repeated outreach reduces future response or causes opt-outs.",
@@ -55,7 +69,7 @@ def test_overview_contains_leadership_metrics_and_charts():
         "X-axis: dates. Y-axis: conversion rate percentage by experiment date.",
         "ticks = [0.2, 0.25, 0.3, 0.35, 0.4]",
         "Overall donation conversion rate by strategy",
-        "Net expected donation value by strategy",
+        "Net donation value per contact by strategy",
         "Fatigue risk by strategy",
         "Message-frame performance within the current leading strategy",
         "Message allocation within the current leading strategy",
@@ -74,6 +88,8 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "leader-card" in overview
     assert "strokeWidth={hoveredId === item.id ? \"3.8\" : \"2.55\"}" in overview
     assert "setIsolatedId" in overview
+    assert "setVisibleIndex" in overview
+    assert "window.setInterval" in overview
     assert "chart-tooltip" in overview
     assert "tooltip-popover" in overview
     assert "getBoundingClientRect" in overview
@@ -105,6 +121,9 @@ def test_experiment_design_is_practical_and_guardrailed():
         "Vendor execution",
         "What adaptive experimentation means",
         "How the static randomized baseline is comparable",
+        "Adaptive allocation does not split traffic evenly forever",
+        "Control uses generic non-personalized outreach",
+        "does not adapt allocation based on results",
         "Audience data needed",
         "Message arms needed",
         "Experimentation strategies compared",

@@ -41,7 +41,10 @@ def test_summary_has_campaign_experiment_metrics():
         "LinUCB",
         "Contextual bandit with fatigue guardrail",
     ]
-    assert 0 <= summary["primary_metric"]["value"] <= 1
+    assert summary["primary_metric"]["value"] > 0
+    assert summary["primary_metric"]["label"] == "Net donation value per contact"
+    assert "Average expected dollars raised" in summary["primary_metric"]["definition"]
+    assert "donation_conversion_rate" in summary["secondary_metrics"]
     assert summary["secondary_metrics"]["expected_donation_amount"] > 0
     assert summary["best_strategy"]["label"]
     assert summary["current_readout"]["leading_strategy"]["label"]
@@ -49,6 +52,9 @@ def test_summary_has_campaign_experiment_metrics():
     assert summary["current_readout"]["conversion_winner"]["label"]
     assert summary["current_readout"]["net_value_winner"]["label"]
     assert summary["current_readout"]["control"]["label"] == "Control"
+    assert summary["current_readout"]["total_contacts_observed"] > 0
+    assert summary["current_readout"]["contacts_by_control"] > 0
+    assert summary["current_readout"]["contacts_by_strategy"]["control"] > 0
     assert "adaptive_lift_vs_control" in summary["current_readout"]
     assert 0 <= summary["current_readout"]["bayesian_confidence"]["probability_best"] <= 1
     assert summary["current_readout"]["bayesian_confidence"]["basis"] == "simulated"
@@ -64,6 +70,8 @@ def test_summary_has_campaign_experiment_metrics():
     assert summary["strategy_timeline"]
     assert summary["strategy_timeline"][0]["experiment_date"] == "2026-02-01"
     assert summary["strategy_rate_timeline"]
+    assert summary["strategy_status_timeline"]
+    assert summary["strategy_status_timeline"][0]["total_contacts_observed"] < summary["strategy_status_timeline"][-1]["total_contacts_observed"]
     assert summary["strategy_rate_timeline"][0]["experiment_date"] == "2026-02-01"
     assert 0 <= summary["strategy_rate_timeline"][0]["series"][0]["conversion_rate"] <= 1
     assert summary["strategy_performance"]

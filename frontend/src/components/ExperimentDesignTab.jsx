@@ -5,7 +5,7 @@ const designItems = [
   ["Message arms needed", "A small set of approved donation frames: affordability, democracy protection, accountability, local investment, economic fairness, and campaign momentum."],
   ["Experimentation strategies compared", "Control, static randomized test, Thompson sampling, LinUCB, and contextual bandit with fatigue guardrail."],
   ["Channels needed", "Email, SMS, phone, and digital ads, with real eligibility constraints and opt-out rules."],
-  ["Outcome definitions", "Primary: donation conversion. Secondary: expected donation amount, net expected value, channel response, fatigue risk, and segment lift."],
+  ["Outcome definitions", "Primary: net donation value per contact. Secondary: donation conversion rate, average donation amount, fatigue risk, and exploration rate."],
   ["Randomization / assignment logic", "Compare fixed equal-split assignment against adaptive strategies that learn by batch while preserving exploration."],
   ["Sample size caveat", "Do not overreact to early noisy results. Treat small cells as directional until more batches arrive."],
   ["Fatigue guardrails", "Cap repeated contacts, monitor high-fatigue segments, and reduce SMS/phone exposure when risk rises."],
@@ -15,7 +15,7 @@ const designItems = [
 ];
 
 const leadershipQuestions = [
-  "What are we optimizing: donations, turnout, volunteer signups, persuasion, or long-term engagement?",
+  "What are we optimizing: net donation value, conversion rate, donor retention, or long-term engagement?",
   "Which channels are actually available?",
   "What audience segments or districts matter most?",
   "What historical outreach data exists?",
@@ -51,6 +51,11 @@ export default function ExperimentDesignTab() {
           comes in. Stronger-performing strategies receive more traffic, but some exploration remains so the campaign
           does not overreact to early noise or miss better options for smaller segments.
         </p>
+        <p>
+          Adaptive allocation does not split traffic evenly forever. It gradually shifts more contacts to stronger
+          strategies while preserving some exploration so the campaign does not prematurely discard an option that
+          might work for a smaller segment.
+        </p>
       </section>
 
       <section className="panel">
@@ -58,6 +63,10 @@ export default function ExperimentDesignTab() {
         <p>
           The static randomized baseline gives every approved arm a fixed share of contacts. The adaptive methods are
           compared against it using the same simulated campaign population and outcomes.
+        </p>
+        <p>
+          Control uses generic non-personalized outreach with fixed messaging. Static randomized test randomly splits
+          traffic across approved message/channel combinations, but does not adapt allocation based on results.
         </p>
       </section>
 

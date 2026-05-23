@@ -9,7 +9,7 @@ def synthesize_recommendation(summary: dict) -> dict:
             "Our campaign is organizing around practical affordability solutions and a fairer "
             "economy. Will you make a grassroots donation today to help us reach more voters before "
             "the next outreach deadline?\n\n"
-            "Every contribution helps volunteers talk with more neighbors, share our plan, and build "
+            "Every contribution helps organizers talk with more neighbors, share our plan, and build "
             "support for leaders who will focus on the cost of living."
         ),
         "retrieved_context": {
@@ -70,7 +70,7 @@ def synthesize_recommendation(summary: dict) -> dict:
                 "medium": "Door-knocking script",
                 "length": "Conversational",
                 "message": (
-                    "Hi, I am volunteering with the campaign. We are talking with neighbors about the cost "
+                    "Hi, I am with the campaign. We are talking with neighbors about the cost "
                     "of living and what would make life more affordable here in New York. Is that an issue "
                     "you would like to hear more about?"
                 ),

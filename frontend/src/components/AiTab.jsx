@@ -145,5 +145,5 @@ function adaptVariantMessage(variant, theme) {
   if (variant.medium === "Email") {
     return `You have helped power this campaign before. Today, we are focused on ${theme}, and another grassroots donation would help us reach more voters before the next outreach push.`;
   }
-  return `Hi, I am volunteering with the campaign. We are talking with neighbors about ${theme}. Is that an issue you would like to hear more about?`;
+  return `Hi, I am with the campaign. We are talking with neighbors about ${theme}. Is that an issue you would like to hear more about?`;
 }
