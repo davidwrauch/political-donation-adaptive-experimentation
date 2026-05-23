@@ -155,6 +155,96 @@ Run tests:
 pytest
 ```
 
+## Deploy As A Live Site
+
+This project is ready for a simple Vercel + Render deployment:
+
+- **Frontend:** Vercel, rooted at `frontend`
+- **Backend:** Render Web Service, rooted at the repository root
+- **Data:** synthetic in-memory demo data generated on backend startup
+- **External APIs:** none required
+
+### Backend: Render
+
+Create a Render Web Service from the GitHub repository.
+
+Use these settings:
+
+- **Build command:** `pip install -r backend/requirements.txt`
+- **Start command:** `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- **Health check path:** `/health`
+
+Required Render environment variables:
+
+```text
+APP_ENV=production
+CORS_ORIGINS=https://your-vercel-app.vercel.app,http://localhost:5173,http://127.0.0.1:5173
+```
+
+After deployment, confirm:
+
+```text
+https://your-render-service.onrender.com/health
+```
+
+Expected response:
+
+```json
+{"status":"ok"}
+```
+
+### Frontend: Vercel
+
+Create a Vercel project from the same GitHub repository.
+
+Use these settings:
+
+- **Framework preset:** Vite
+- **Root directory:** `frontend`
+- **Build command:** `npm install && npm run build`
+- **Output directory:** `dist`
+
+Required Vercel environment variable:
+
+```text
+VITE_API_BASE=https://your-render-service.onrender.com
+```
+
+The frontend reads `VITE_API_BASE` at build time and calls:
+
+- `/api/overview`
+- `/api/ai/recommendation`
+- `/health`
+
+### Deployment Order
+
+1. Push this repository to GitHub.
+2. Deploy the Render backend first.
+3. Copy the Render backend URL.
+4. Add that URL as `VITE_API_BASE` in Vercel.
+5. Add the Vercel frontend URL to `CORS_ORIGINS` in Render.
+6. Redeploy both services if environment variables change.
+
+### Confirmed Commands
+
+Frontend build:
+
+```bash
+npm install && npm run build
+```
+
+Backend build:
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+Render start command:
+
+```bash
+cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
 ## Interview-Friendly Explanation
 
 Most campaign analytics examples focus on prediction. This prototype focuses on decisions: if campaign resources are scarce, which audience should receive which donation message through which channel?
