@@ -35,7 +35,7 @@ def test_summary_has_campaign_experiment_metrics():
     assert summary["total_supporters"] == 250
     assert summary["active_arms"] == 4
     assert [strategy["label"] for strategy in summary["strategies"]] == [
-        "Static A/B test",
+        "Static randomized test",
         "Thompson sampling",
         "LinUCB",
         "Contextual bandit with fatigue guardrail",
@@ -43,12 +43,23 @@ def test_summary_has_campaign_experiment_metrics():
     assert 0 <= summary["primary_metric"]["value"] <= 1
     assert summary["secondary_metrics"]["expected_donation_amount"] > 0
     assert summary["best_strategy"]["label"]
+    assert summary["current_readout"]["leading_strategy"]["label"]
+    assert summary["current_readout"]["conversion_winner"]["label"]
+    assert summary["current_readout"]["net_value_winner"]["label"]
+    assert 0 <= summary["current_readout"]["bayesian_confidence"]["probability_best"] <= 1
+    assert summary["current_readout"]["bayesian_confidence"]["basis"] == "simulated"
+    assert summary["current_readout"]["recommendation_status"] in [
+        "Directional only",
+        "Promising but keep testing",
+        "Ready to scale",
+    ]
     assert summary["best_segment"]["label"]
     assert summary["best_channel"]["label"]
-    assert summary["recommended_next_allocation"]
     assert summary["leadership_takeaway"]
     assert summary["strategy_timeline"]
+    assert summary["strategy_timeline"][0]["experiment_date"] == "2026-02-01"
     assert summary["strategy_performance"]
+    assert all("winning_metrics" in strategy for strategy in summary["strategy_performance"])
     assert summary["message_allocation_shift"]
     assert summary["latest_decision"]["assignment_probability"] > 0
     assert "selection_reason" in summary["latest_decision"]
@@ -75,6 +86,7 @@ def test_events_include_batch_and_assignment_explanation_fields():
 
     for field in [
         "date",
+        "experiment_date",
         "batch",
         "strategy",
         "strategy_label",

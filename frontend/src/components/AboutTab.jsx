@@ -26,6 +26,9 @@ export default function AboutTab() {
             Inspired by Stanford charitable-giving contextual bandit research where different
             donation appeals are assigned to profiles and the system learns which messages work best.
           </p>
+          <a href="https://arxiv.org/abs/2211.12004" target="_blank" rel="noreferrer">
+            Stanford charitable-giving contextual bandit paper
+          </a>
         </article>
         <article className="panel">
           <h3>Transparent and human-reviewed</h3>
@@ -65,6 +68,10 @@ export default function AboutTab() {
         <p>
           <strong>David Rauch</strong> - Product-focused data scientist working on experimentation,
           causal inference, adaptive decision systems, and public-interest technology.
+        </p>
+        <p>
+          Adapted from my adaptive experimentation platform and inspired in part by Stanford
+          charitable-giving contextual bandit research.
         </p>
         <a href="https://github.com/davidwrauch/political-donation-adaptive-experimentation" target="_blank" rel="noreferrer">
           GitHub: davidwrauch/political-donation-adaptive-experimentation

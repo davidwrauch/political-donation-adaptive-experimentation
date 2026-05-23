@@ -167,6 +167,49 @@ button {
   display: block;
 }
 
+.current-readout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1.4fr;
+}
+
+.current-readout h2 {
+  font-size: 1.35rem;
+}
+
+.readout-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.readout-grid article,
+.section-note {
+  background: #f8faf8;
+  border: 1px solid #e5ece7;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.readout-grid span,
+.strategy-metric-list small {
+  color: #627175;
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.readout-grid strong {
+  display: block;
+  font-size: 1rem;
+  margin-top: 4px;
+}
+
+.section-note {
+  color: #344247;
+  font-weight: 750;
+}
+
 .strategy-legend,
 .strategy-grid {
   display: grid;
@@ -206,6 +249,12 @@ button {
   display: block;
   font-size: 1rem;
   margin-top: 2px;
+}
+
+.strategy-metric-list small {
+  font-weight: 650;
+  line-height: 1.35;
+  margin-top: 4px;
 }
 
 .next-allocation {
@@ -429,6 +478,7 @@ button {
   border-radius: 8px;
   color: #243237;
   padding: 12px;
+  white-space: pre-line;
 }
 
 .variant-meta {
@@ -564,6 +614,8 @@ button {
   .decision-strip,
   .channel-grid,
   .template-grid,
+  .current-readout,
+  .readout-grid,
   .bar-row {
     grid-template-columns: 1fr;
   }

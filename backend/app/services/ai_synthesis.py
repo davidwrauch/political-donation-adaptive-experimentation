@@ -4,12 +4,19 @@ from __future__ import annotations
 def synthesize_recommendation(summary: dict) -> dict:
     return {
         "base_message": (
-            "Costs are too high for New York families. Will you make a donation today to help us "
-            "fight for lower everyday costs and a fairer economy?"
+            "Costs are too high for New York families. Rent, groceries, child care, transit, and "
+            "utility bills are stretching household budgets across the state.\n\n"
+            "Our campaign is organizing around practical affordability solutions and a fairer "
+            "economy. Will you make a grassroots donation today to help us reach more voters before "
+            "the next outreach deadline?"
         ),
         "retrieved_context": {
             "approved_issue_brief": "Affordability / cost of living",
             "approved_tone": "Clear, direct, non-inflammatory",
+            "channel_constraints": (
+                "SMS drafts must be brief and easy to opt out of. Email can include more context. "
+                "Door-knocking scripts should open with listening before making an ask."
+            ),
             "prior_performance_note": (
                 "Shorter SMS performs better for high-engagement prior donors; longer email works "
                 "better for lower-engagement prospects."

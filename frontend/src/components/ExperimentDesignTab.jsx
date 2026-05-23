@@ -3,7 +3,7 @@ import React from "react";
 const designItems = [
   ["Audience data needed", "Supporter history, donation behavior, engagement, geography, issue affinity, channel availability, and fatigue/exposure history."],
   ["Message arms needed", "A small set of approved donation frames: affordability, democracy protection, accountability, local investment, economic fairness, and campaign momentum."],
-  ["Experimentation strategies compared", "Static A/B test, Thompson sampling, LinUCB, and contextual bandit with fatigue guardrail."],
+  ["Experimentation strategies compared", "Static randomized test, Thompson sampling, LinUCB, and contextual bandit with fatigue guardrail."],
   ["Channels needed", "Email, SMS, phone, and digital ads, with real eligibility constraints and opt-out rules."],
   ["Outcome definitions", "Primary: donation conversion. Secondary: expected donation amount, net expected value, channel response, fatigue risk, and segment lift."],
   ["Randomization / assignment logic", "Compare fixed equal-split assignment against adaptive strategies that learn by batch while preserving exploration."],
@@ -26,6 +26,23 @@ const leadershipQuestions = [
 export default function ExperimentDesignTab() {
   return (
     <div className="tab-panel">
+      <section className="panel">
+        <h2>What adaptive experimentation means</h2>
+        <p>
+          Instead of assigning every contact evenly forever, adaptive experimentation updates allocation as evidence
+          comes in. Stronger-performing strategies receive more traffic, but some exploration remains so the campaign
+          does not overreact to early noise or miss better options for smaller segments.
+        </p>
+      </section>
+
+      <section className="panel">
+        <h2>How the static randomized baseline is comparable</h2>
+        <p>
+          The static randomized baseline gives every approved arm a fixed share of contacts. The adaptive methods are
+          compared against it using the same simulated campaign population and outcomes.
+        </p>
+      </section>
+
       <section className="panel">
         <h2>How we would actually run this</h2>
         <p>

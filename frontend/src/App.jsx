@@ -5,7 +5,7 @@ import AiTab from "./components/AiTab";
 import AboutTab from "./components/AboutTab";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "http://localhost:8000").replace(/\/$/, "");
-const tabs = ["Overview", "Experiment Design", "AI", "About"];
+const tabs = ["Overview", "Experiment Design", "AI Message Review", "About"];
 const overviewUrl = `${API_BASE}/api/overview`;
 const aiRecommendationUrl = `${API_BASE}/api/ai/recommendation`;
 
@@ -60,7 +60,7 @@ export default function App() {
         <>
           {activeTab === "Overview" && <OverviewTab overview={overview} />}
           {activeTab === "Experiment Design" && <ExperimentDesignTab />}
-          {activeTab === "AI" && <AiTab recommendation={aiRecommendation} overview={overview} />}
+          {activeTab === "AI Message Review" && <AiTab recommendation={aiRecommendation} overview={overview} />}
           {activeTab === "About" && <AboutTab />}
         </>
       )}

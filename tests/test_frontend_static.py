@@ -11,7 +11,7 @@ def read(path: str) -> str:
 def test_four_tabs_and_campaign_loading_language():
     app = read("frontend/src/App.jsx")
 
-    for tab in ["Overview", "Experiment Design", "AI", "About"]:
+    for tab in ["Overview", "Experiment Design", "AI Message Review", "About"]:
         assert tab in app
     assert "Loading campaign donation experiment results" in app
 
@@ -32,21 +32,30 @@ def test_overview_contains_leadership_metrics_and_charts():
 
     for text in [
         "A New York Democratic campaign is testing donation outreach",
+        "Current readout",
+        "Which allocation strategy is winning right now, and can we trust it yet?",
+        "Current leading strategy",
+        "Winner by donation conversion rate",
+        "Winner by net expected value",
+        "Probability this is the best strategy",
+        "Recommendation status",
         "Donation conversion rate",
         "Net expected value",
         "Fatigue risk",
         "Exploration rate",
-        "Cumulative donation conversions by strategy",
-        "Y-axis: cumulative conversions. X-axis: experiment batch/date.",
+        "Estimated risk that repeated outreach reduces future response or causes opt-outs.",
+        "Share of contacts intentionally reserved for learning",
+        "Cumulative donation conversions by allocation strategy",
+        "X-axis: date. Y-axis: cumulative donations/conversions.",
         "Overall donation conversion rate by strategy",
         "Net expected donation value by strategy",
         "Fatigue risk by strategy",
-        "Message-frame performance under the best-performing strategy",
-        "Message allocation under the best-performing strategy",
+        "Message-frame performance within the current leading strategy",
+        "Message allocation within the current leading strategy",
     ]:
         assert text in overview
     for strategy in [
-        "Static A/B test",
+        "Static randomized test",
         "Thompson sampling",
         "LinUCB",
         "Contextual bandit with fatigue guardrail",
@@ -54,9 +63,12 @@ def test_overview_contains_leadership_metrics_and_charts():
         assert strategy in simulation
 
     assert "<polyline" in overview
+    assert "formatAxisDate(row.experiment_date)" in overview
     assert "strategy_timeline" in overview
     assert "strategy_performance" in overview
     assert "message_allocation_shift" in overview
+    assert "Campaign readout" not in overview
+    assert "Use Contextual bandit with fatigue guardrail as the leading allocation strategy" not in overview
     assert "winning message" not in overview.lower()
 
 
@@ -65,6 +77,8 @@ def test_experiment_design_is_practical_and_guardrailed():
 
     for text in [
         "How we would actually run this",
+        "What adaptive experimentation means",
+        "How the static randomized baseline is comparable",
         "Audience data needed",
         "Message arms needed",
         "Experimentation strategies compared",
@@ -85,9 +99,10 @@ def test_ai_tab_is_campaign_synthesis_not_autonomous_persuasion():
     synthesis = read("backend/app/services/ai_synthesis.py")
 
     for text in [
-        "Constrained message adaptation workflow",
+        "AI Message Review",
         "Staff-written base message",
         "Retrieved campaign context",
+        "Channel constraints",
         "LLM-generated variants for review",
         "Approved issue brief",
         "Approved tone",
@@ -124,6 +139,8 @@ def test_about_tab_matches_campaign_positioning_and_boundaries():
     assert "monitoring uncertainty and fatigue" in about
     assert "David Rauch" in about
     assert "https://github.com/davidwrauch/political-donation-adaptive-experimentation" in about
+    assert "https://arxiv.org/abs/2211.12004" in about
+    assert "Adapted from my adaptive experimentation platform" in about
     assert "Product-focused data scientist" in about
     for guardrail in [
         "Human review required",

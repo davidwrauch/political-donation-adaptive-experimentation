@@ -37,9 +37,9 @@ The prototype tests donation appeals across:
 
 The app has four focused tabs:
 
-- **Overview:** comparison of Static A/B test, Thompson sampling, LinUCB, and contextual bandit with fatigue guardrail.
+- **Overview:** comparison of Static randomized test, Thompson sampling, LinUCB, and contextual bandit with fatigue guardrail.
 - **Experiment Design:** practical setup notes for audience data, message arms, channels, outcomes, assignment logic, fatigue guardrails, and leadership questions.
-- **AI:** constrained RAG/LLM-style workflow for adapting one approved affordability message into human-reviewed channel drafts.
+- **AI Message Review:** constrained RAG/LLM-style workflow for adapting one approved affordability message into human-reviewed channel drafts.
 - **About:** project purpose, inspiration, and boundaries.
 
 ## Simulated Supporter Data
@@ -81,18 +81,17 @@ Channels:
 
 The assignment engine is intentionally simple and explainable. It compares:
 
-1. Static A/B test
+1. Static randomized test
 2. Thompson sampling
 3. LinUCB
 4. Contextual bandit with fatigue guardrail
 
 The adaptive strategies use segment-level response estimates, supporter context, channel fit, and fatigue penalties.
 
-It chooses and explains:
+It simulates and explains:
 
 - Which message frame to send
 - Which channel to use
-- Which audience segment is highest priority
 - Expected reward
 - Uncertainty
 - Exploration need
@@ -118,7 +117,7 @@ The Overview tab is designed to feel like a campaign experimentation control roo
 
 The Experiment Design tab answers, "How would we actually run this?" It keeps the demo practical for campaign leadership: available channels, audience data, approved message arms, outcome definitions, sample-size caveats, fatigue guardrails, human approval, and what should not be automated.
 
-The AI tab is a message adaptation review workflow, not an experiment decision engine. A staff-written affordability message is adapted into SMS, email, and door-knocking drafts using approved context. Staff must approve, reject, or replace every draft; nothing is sent automatically.
+The AI Message Review tab is a message adaptation review workflow, not an experiment decision engine. A staff-written affordability message is adapted into SMS, email, and door-knocking drafts using approved context. Staff must approve, reject, or replace every draft; nothing is sent automatically.
 
 ## Run Locally
 
@@ -256,7 +255,7 @@ cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
 
 Most campaign analytics examples focus on prediction. This prototype focuses on decisions: if campaign resources are scarce, which audience should receive which donation message through which channel?
 
-The system simulates a controlled donation-message experiment and shows how an adaptive assignment engine can learn from response patterns while still remaining transparent. The AI tab is deliberately constrained: it retrieves approved templates and segment performance evidence, then generates a short rationale that requires human review.
+The system simulates a controlled donation-message experiment and shows how adaptive allocation strategies can learn from response patterns while still remaining transparent. The AI Message Review tab is deliberately constrained: it retrieves approved context, then generates channel-specific drafts that require human review.
 
 That makes the project easy to explain:
 

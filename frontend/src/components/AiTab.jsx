@@ -17,7 +17,7 @@ export default function AiTab({ recommendation }) {
   return (
     <div className="tab-panel">
       <section className="panel intro-card">
-        <h2>Constrained message adaptation workflow</h2>
+        <h2>AI Message Review</h2>
         <p>{recommendation.explanation}</p>
         <span className="review-pill">Human review required</span>
       </section>
@@ -32,6 +32,7 @@ export default function AiTab({ recommendation }) {
         <div className="context-grid">
           <ContextItem label="Approved issue brief" value={recommendation.retrieved_context.approved_issue_brief} />
           <ContextItem label="Approved tone" value={recommendation.retrieved_context.approved_tone} />
+          <ContextItem label="Channel constraints" value={recommendation.retrieved_context.channel_constraints} />
           <ContextItem label="Prior performance note" value={recommendation.retrieved_context.prior_performance_note} />
         </div>
       </section>

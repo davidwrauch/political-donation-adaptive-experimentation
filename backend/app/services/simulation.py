@@ -23,8 +23,8 @@ CHANNELS = ["email", "SMS", "phone", "digital ad"]
 STRATEGIES = [
     {
         "id": "static_ab",
-        "label": "Static A/B test",
-        "description": "Keeps traffic split evenly across approved message frames as a baseline.",
+        "label": "Static randomized test",
+        "description": "Keeps contacts evenly split across approved message/channel combinations. It is a baseline for comparison against adaptive methods.",
         "exploration_rate": 1.0,
     },
     {
@@ -141,7 +141,7 @@ def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float =
     strategy_priors = {strategy["id"]: defaultdict(lambda: {"alpha": 2.0, "beta": 8.0}) for strategy in STRATEGIES}
     channel_stats = {strategy["id"]: defaultdict(lambda: {"alpha": 2.0, "beta": 8.0}) for strategy in STRATEGIES}
     events = []
-    start_date = date(2026, 5, 1)
+    start_date = date(2026, 2, 1)
 
     for strategy in STRATEGIES:
         priors = strategy_priors[strategy["id"]]
@@ -159,6 +159,7 @@ def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float =
             events.append(
                 {
                     "date": (start_date + timedelta(days=batch - 1)).isoformat(),
+                    "experiment_date": (start_date + timedelta(days=batch - 1)).isoformat(),
                     "batch": batch,
                     "strategy": strategy["id"],
                     "strategy_label": strategy["label"],
@@ -198,9 +199,22 @@ def summarize_experiment(experiment: dict) -> dict:
     supporters = experiment["supporters"]
     strategy_rows = grouped_metrics(events, "strategy", label_key="strategy_label")
     strategy_exploration = {strategy["id"]: strategy["exploration_rate"] for strategy in STRATEGIES}
+    strategy_descriptions = {strategy["id"]: strategy["description"] for strategy in STRATEGIES}
     for row in strategy_rows:
         row["exploration_rate"] = strategy_exploration[row["id"]]
-    best_strategy = max(strategy_rows, key=lambda row: row["net_expected_value"])
+        row["description"] = strategy_descriptions[row["id"]]
+    conversion_winner = max(strategy_rows, key=lambda row: row["conversion_rate"])
+    value_winner = max(strategy_rows, key=lambda row: row["net_expected_value"])
+    best_strategy = value_winner
+    confidence = simulated_bayesian_confidence(strategy_rows, best_strategy["id"])
+    status = recommendation_status(confidence["probability_best"])
+    for row in strategy_rows:
+        winning = []
+        if row["id"] == conversion_winner["id"]:
+            winning.append("Donation conversion rate")
+        if row["id"] == value_winner["id"]:
+            winning.append("Net expected value")
+        row["winning_metrics"] = winning
     best_strategy_events = [event for event in events if event["strategy"] == best_strategy["id"]]
     frame_rows = grouped_metrics(best_strategy_events, "message_frame", label_key="message_label")
     segment_rows = grouped_metrics(events, "segment")
@@ -230,13 +244,17 @@ def summarize_experiment(experiment: dict) -> dict:
             "message_frame_lift_by_segment": best_segment["conversion_rate"] - mean(event["converted"] for event in events),
         },
         "best_strategy": best_strategy,
+        "current_readout": {
+            "leading_strategy": best_strategy,
+            "conversion_winner": conversion_winner,
+            "net_value_winner": value_winner,
+            "bayesian_confidence": confidence,
+            "recommendation_status": status,
+            "confidence_note": "Simulated Bayesian-style confidence based on the current strategy gap in this synthetic demo.",
+        },
         "best_segment": best_segment,
         "best_channel": best_channel,
         "donor_fatigue_warning": fatigue_risk >= 0.34,
-        "recommended_next_allocation": (
-            f"Use {best_strategy['label']} as the leading allocation strategy for the next batch, "
-            f"while preserving exploration and monitoring fatigue in high-contact donor segments."
-        ),
         "leadership_takeaway": (
             "Under the best-performing strategy, some message frames receive more allocation for specific donor segments, "
             "while the system preserves exploration because performance varies by segment and channel."
@@ -391,7 +409,8 @@ def strategy_conversion_timeline(events: list[dict]) -> list[dict]:
         rows.append(
             {
                 "batch": batch,
-                "date": batch_events[0]["date"],
+                "date": batch_events[0]["experiment_date"],
+                "experiment_date": batch_events[0]["experiment_date"],
                 "series": [
                     {"id": strategy["id"], "label": labels[strategy["id"]], "cumulative_conversions": cumulative[strategy["id"]]}
                     for strategy in STRATEGIES
@@ -412,7 +431,8 @@ def message_allocation_shift(events: list[dict]) -> list[dict]:
         rows.append(
             {
                 "batch": batch,
-                "date": batch_events[0]["date"],
+                "date": batch_events[0]["experiment_date"],
+                "experiment_date": batch_events[0]["experiment_date"],
                 "frames": [
                     {
                         "id": frame["id"],
@@ -450,6 +470,28 @@ def build_selection_reason(frame_reason: str, channel_reason: str, supporter: di
         f"Selected because of {frame_reason}, {channel_reason}, issue affinity for "
         f"{supporter['issue_affinity']}, and donor fatigue score {supporter['donor_fatigue_score']}."
     )
+
+
+def simulated_bayesian_confidence(strategy_rows: list[dict], leading_strategy_id: str) -> dict:
+    ordered = sorted(strategy_rows, key=lambda row: row["net_expected_value"], reverse=True)
+    leader = ordered[0]
+    runner_up = ordered[1] if len(ordered) > 1 else ordered[0]
+    gap = max(0.0, leader["net_expected_value"] - runner_up["net_expected_value"])
+    probability = clamp(0.52 + gap * 0.09, 0.52, 0.86)
+    return {
+        "strategy_id": leading_strategy_id,
+        "strategy_label": leader["label"],
+        "probability_best": round(probability, 2),
+        "basis": "simulated",
+    }
+
+
+def recommendation_status(probability_best: float) -> str:
+    if probability_best >= 0.78:
+        return "Ready to scale"
+    if probability_best >= 0.62:
+        return "Promising but keep testing"
+    return "Directional only"
 
 
 def engagement_level(value: float) -> str:
