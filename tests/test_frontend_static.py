@@ -38,16 +38,19 @@ def test_overview_contains_leadership_metrics_and_charts():
         "A New York Democratic campaign is testing donation outreach",
         "Current experiment status",
         "How reliable is the current winner?",
+        "Campaign-wide experiment status",
+        "Current leading strategy performance",
+        "Metrics below refer only to the current leading strategy",
         "Current leading strategy",
         "Adaptive lift vs control",
         "Net donation value per contact",
         "Average donation amount",
         "Total contacts observed",
-        "Control contacts",
+        "Contacts assigned to this strategy",
         "Contacts observed",
         "Probability best",
         "Additional contacts before high-confidence rollout",
-        "Recommendation status",
+        "Rollout confidence status",
         "Do not send 100% of traffic to the current winner unless confidence is high.",
         "High confidence generally means the leading strategy has remained stable",
         "Traditional statistical significance can still be reported in a real",
@@ -58,6 +61,7 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Pause updates",
         "Resume updates",
         "Last updated",
+        "Next update in",
         "Allocation status",
         "Current leader",
         "Donation conversion rate",
@@ -89,7 +93,9 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "strokeWidth={hoveredId === item.id ? \"3.8\" : \"2.55\"}" in overview
     assert "setIsolatedId" in overview
     assert "setVisibleIndex" in overview
+    assert "setNextUpdateIn" in overview
     assert "window.setInterval" in overview
+    assert "}, 10000)" in overview
     assert "chart-tooltip" in overview
     assert "tooltip-popover" in overview
     assert "getBoundingClientRect" in overview
@@ -135,6 +141,13 @@ def test_experiment_design_is_practical_and_guardrailed():
         "Human approval process",
         "Questions for Campaign Leadership",
         "How much exploration is acceptable?",
+        "Potential future inputs",
+        "Social listening APIs",
+        "Google News trend signals",
+        "Issue salience tracking",
+        "Fundraising response shifts after major events",
+        "Earned media sentiment",
+        "Regional issue spikes",
     ]:
         assert text in design
     assert "supporter ID" in design
@@ -161,10 +174,20 @@ def test_ai_tab_is_campaign_synthesis_not_autonomous_persuasion():
         "This section shows ONE example message family",
         "A real campaign would repeat this workflow across multiple issue frames",
         "Message family",
-        "Affordability / cost of living",
-        "Anti-corruption / accountability",
-        "Democracy protection",
-        "Candidate momentum / urgency",
+        "Economic affordability",
+        "Healthcare access",
+        "Democracy/voting rights",
+        "Climate/resiliency",
+        "Public transit/infrastructure",
+        "Reproductive rights",
+        "Fundraising email",
+        "Volunteer call script",
+        "Door knocking script",
+        "Younger donor version",
+        "High-engagement prior donor version",
+        "4 questions",
+        "3 talking points",
+        "Canvasser guidance",
         "Human review required",
     ]:
         assert text in ai
@@ -189,9 +212,17 @@ def test_about_tab_matches_campaign_positioning_and_boundaries():
     assert "prototype" in about
     assert "not an election prediction model" in about
     assert "autonomous persuasion system" in about
-    assert "DNC-style campaign resource allocation" in about
+    assert "Inspired by adaptive experimentation systems, political targeting workflows, and contextual bandit research." in about
+    assert "DNC-style campaign resource allocation" not in about
     assert "Stanford charitable-giving contextual bandit research" in about
     assert "monitoring uncertainty and fatigue" in about
+    assert "Architecture" in about
+    assert "Multi-armed bandit allocation for experiment traffic shifting" in about
+    assert "Contextual personalization features for supporter-level assignment" in about
+    assert "Human-reviewed AI-assisted message adaptation" in about
+    assert "Fatigue-aware outreach constraints" in about
+    assert "preserving" in about
+    assert "exploration and preventing premature lock-in" in about
     assert "David Rauch" in about
     assert "https://github.com/davidwrauch/political-donation-adaptive-experimentation" in about
     assert "https://arxiv.org/abs/2211.12004" in about

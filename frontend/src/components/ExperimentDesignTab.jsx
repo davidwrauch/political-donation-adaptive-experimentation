@@ -41,6 +41,15 @@ const operationalDetails = [
   "Human review and campaign approval remain part of the workflow.",
 ];
 
+const futureInputs = [
+  "Social listening APIs",
+  "Google News trend signals",
+  "Issue salience tracking",
+  "Fundraising response shifts after major events",
+  "Earned media sentiment",
+  "Regional issue spikes",
+];
+
 export default function ExperimentDesignTab() {
   return (
     <div className="tab-panel">
@@ -96,7 +105,7 @@ export default function ExperimentDesignTab() {
           {operationalSteps.map((step, index) => (
             <React.Fragment key={step}>
               <span>{step}</span>
-              {index < operationalSteps.length - 1 && <b aria-hidden="true">→</b>}
+              {index < operationalSteps.length - 1 && <b aria-hidden="true">-&gt;</b>}
             </React.Fragment>
           ))}
         </div>
@@ -105,6 +114,19 @@ export default function ExperimentDesignTab() {
             <li key={detail}>{detail}</li>
           ))}
         </ul>
+      </section>
+
+      <section className="panel">
+        <h2>Potential future inputs</h2>
+        <p>
+          These signals could strengthen operational awareness later, but they are not core model inputs in this
+          lightweight prototype.
+        </p>
+        <div className="guardrail-grid">
+          {futureInputs.map((item) => (
+            <span key={item}>{item}</span>
+          ))}
+        </div>
       </section>
 
       <section className="panel">

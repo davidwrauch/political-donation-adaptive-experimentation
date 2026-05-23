@@ -200,7 +200,6 @@ button {
 .current-readout {
   display: grid;
   gap: 16px;
-  grid-template-columns: 1fr 1.4fr;
 }
 
 .readiness-card {
@@ -213,10 +212,45 @@ button {
   font-size: 1.35rem;
 }
 
+.executive-scope-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.readout-intro {
+  max-width: 850px;
+}
+
+.scope-card {
+  background: #f8faf8;
+  border: 1px solid #d7e5dd;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.scope-card h3 {
+  margin: 0 0 4px;
+}
+
+.scope-card p {
+  color: #526165;
+  font-size: 0.88rem;
+  margin: 0 0 10px;
+}
+
+.leading-scope {
+  background: #ffffff;
+}
+
 .readout-grid {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.readout-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .readout-grid article,
@@ -239,6 +273,7 @@ button {
   display: block;
   font-size: 1rem;
   margin-top: 4px;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .confidence-note {
@@ -285,6 +320,25 @@ button {
   min-height: 156px;
 }
 
+.strategy-metric-card {
+  display: grid;
+  grid-template-rows: minmax(68px, auto) minmax(96px, auto) 1fr;
+}
+
+.strategy-metric-card h3 {
+  font-size: 0.96rem;
+  line-height: 1.15;
+  max-width: 18ch;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.strategy-metric-card p {
+  color: #526165;
+  font-size: 0.86rem;
+  margin: 0;
+}
+
 .leader-card {
   background: #eef8f3;
   border-color: #76b69b;
@@ -296,6 +350,7 @@ button {
   display: flex;
   gap: 8px;
   justify-content: space-between;
+  min-height: 58px;
 }
 
 .leader-pill {
@@ -318,10 +373,13 @@ button {
 .strategy-metric-list {
   display: grid;
   gap: 8px;
+  grid-auto-rows: minmax(42px, auto);
 }
 
 .strategy-metric-list div {
   border-top: 1px solid #e5ece7;
+  display: grid;
+  min-height: 48px;
   padding-top: 8px;
 }
 
@@ -861,7 +919,9 @@ button {
   .channel-grid,
   .template-grid,
   .current-readout,
+  .executive-scope-grid,
   .readout-grid,
+  .readout-grid.compact,
   .card-title-row,
   .bar-row {
     grid-template-columns: 1fr;

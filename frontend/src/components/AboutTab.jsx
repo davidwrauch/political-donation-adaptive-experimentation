@@ -14,10 +14,9 @@ export default function AboutTab() {
 
       <section className="about-grid">
         <article className="panel">
-          <h3>Inspired by campaign data science</h3>
+          <h3>Inspired by adaptive campaign systems</h3>
           <p>
-            Inspired by DNC-style campaign resource allocation: who should be contacted, with which
-            issue frame, through which channel, and with what evidence of impact.
+            Inspired by adaptive experimentation systems, political targeting workflows, and contextual bandit research.
           </p>
         </article>
         <article className="panel">
@@ -45,6 +44,21 @@ export default function AboutTab() {
             experimentation and campaign resource allocation while monitoring uncertainty and fatigue.
           </p>
         </article>
+      </section>
+
+      <section className="panel">
+        <h2>Architecture</h2>
+        <p>This prototype combines:</p>
+        <ul className="plain-list">
+          <li>Multi-armed bandit allocation for experiment traffic shifting</li>
+          <li>Contextual personalization features for supporter-level assignment</li>
+          <li>Human-reviewed AI-assisted message adaptation</li>
+          <li>Fatigue-aware outreach constraints</li>
+        </ul>
+        <p>
+          The allocation system dynamically shifts more traffic toward stronger-performing strategies while preserving
+          exploration and preventing premature lock-in.
+        </p>
       </section>
 
       <section className="panel">

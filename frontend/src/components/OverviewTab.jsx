@@ -9,10 +9,12 @@ const helpText = {
   "Probability best": "Probability best estimates how likely the current leading strategy is to be the best option if the experiment continues. Unlike a p-value, it is expressed directly as a probability.",
   "Additional contacts before high-confidence rollout": "Estimated number of additional outreach contacts needed before the result is reliable enough for broad rollout.",
   "Recommendation status": "Plain-English rollout guidance based on current simulated confidence and whether the campaign should keep learning.",
+  "Rollout confidence status": "Plain-English rollout guidance based on current simulated confidence and whether the campaign should keep learning.",
   "Adaptive lift vs control": "Estimated improvement versus generic non-personalized outreach.",
   "Total contacts observed": "Total simulated supporter contacts included in the current dashboard readout.",
   "Control contacts": "Number of simulated contacts assigned to generic non-personalized outreach.",
   "Contacts observed": "Number of simulated supporter contacts assigned to this strategy so far.",
+  "Contacts assigned to this strategy": "Number of simulated supporter contacts assigned to the current leading strategy.",
   "Net expected value": "Estimated donation value after accounting for response rate, average donation amount, and fatigue effects.",
   "Fatigue risk": "Estimated risk that repeated outreach reduces future response or increases opt-outs.",
   "Exploration rate": "Share of traffic intentionally reserved for learning rather than only using the current winner.",
@@ -53,6 +55,7 @@ const defaultStrategies = [
 export default function OverviewTab({ overview }) {
   const [paused, setPaused] = useState(false);
   const [visibleIndex, setVisibleIndex] = useState(0);
+  const [nextUpdateIn, setNextUpdateIn] = useState(10);
   const snapshots = overview?.strategy_status_timeline ?? [];
   const activeIndex = snapshots.length ? Math.min(visibleIndex, snapshots.length - 1) : 0;
   const snapshot = snapshots[activeIndex];
@@ -70,9 +73,18 @@ export default function OverviewTab({ overview }) {
     if (!overview || paused || !snapshots.length) return undefined;
     const timer = window.setInterval(() => {
       setVisibleIndex((current) => (current >= snapshots.length - 1 ? current : current + 1));
-    }, 3500);
+      setNextUpdateIn(10);
+    }, 10000);
     return () => window.clearInterval(timer);
   }, [overview, paused, snapshots.length]);
+
+  useEffect(() => {
+    if (!overview || paused) return undefined;
+    const countdown = window.setInterval(() => {
+      setNextUpdateIn((current) => (current <= 1 ? 10 : current - 1));
+    }, 1000);
+    return () => window.clearInterval(countdown);
+  }, [overview, paused]);
 
   return (
     <div className="tab-panel">
@@ -87,6 +99,7 @@ export default function OverviewTab({ overview }) {
 
       <ExperimentStatus
         lastUpdated={lastUpdated}
+        nextUpdateIn={nextUpdateIn}
         onTogglePaused={() => setPaused((current) => !current)}
         paused={paused}
         readout={readout}
@@ -137,11 +150,11 @@ export default function OverviewTab({ overview }) {
   );
 }
 
-function ExperimentStatus({ strategies, readout, paused, onTogglePaused, lastUpdated }) {
+function ExperimentStatus({ strategies, readout, paused, onTogglePaused, lastUpdated, nextUpdateIn }) {
   const leadingId = readout?.leading_strategy?.id;
   return (
     <section className="experiment-status" aria-label="Current experiment status">
-      <CurrentReadout lastUpdated={lastUpdated} onTogglePaused={onTogglePaused} paused={paused} readout={readout} />
+      <CurrentReadout lastUpdated={lastUpdated} nextUpdateIn={nextUpdateIn} onTogglePaused={onTogglePaused} paused={paused} readout={readout} />
       <section className="strategy-grid">
         {strategies.map((strategy) => (
           <StrategyStatusCard
@@ -188,7 +201,7 @@ function StrategyStatusCard({ strategy, isLeader }) {
   );
 }
 
-function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated }) {
+function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpdateIn }) {
   if (!readout) {
     return (
       <section className="panel current-readout readiness-card">
@@ -203,7 +216,7 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated }) {
   const contactsNeeded = readout.estimated_additional_contacts_needed;
   return (
     <section className="panel current-readout readiness-card">
-      <div>
+      <div className="readout-intro">
         <p className="eyebrow">Current experiment status</p>
         <h2>How reliable is the current winner?</h2>
         <p>
@@ -211,23 +224,36 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated }) {
           while the campaign is still learning.
         </p>
       </div>
-      <div className="readout-grid">
-        <ReadoutMetric label="Current leading strategy" value={readout.leading_strategy.label} />
-        <ReadoutMetric label="Net donation value per contact" value={formatMoney(readout.leading_strategy.net_expected_value)} />
-        <ReadoutMetric label="Donation conversion rate" value={formatPercent(readout.leading_strategy.conversion_rate)} />
-        <ReadoutMetric label="Average donation amount" value={formatMoney(readout.leading_strategy.expected_donation_amount)} />
-        <ReadoutMetric label="Total contacts observed" value={readout.total_contacts_observed.toLocaleString()} />
-        <ReadoutMetric
-          label="Probability best"
-          value={`${Math.round(readout.bayesian_confidence.probability_best * 100)}% simulated`}
-        />
-        <ReadoutMetric
-          label="Additional contacts before high-confidence rollout"
-          value={contactsNeeded > 0 ? `~${contactsNeeded.toLocaleString()}` : "0"}
-        />
-        <ReadoutMetric label="Recommendation status" value={readout.recommendation_status} valueHelp={helpText[readout.recommendation_status]} />
-        <ReadoutMetric label="Adaptive lift vs control" value={formatMoney(readout.adaptive_lift_vs_control)} />
-        <ReadoutMetric label="Control contacts" value={readout.contacts_by_control.toLocaleString()} />
+      <div className="executive-scope-grid">
+        <section className="scope-card">
+          <h3>Campaign-wide experiment status</h3>
+          <div className="readout-grid compact">
+            <ReadoutMetric label="Total contacts observed" value={readout.total_contacts_observed.toLocaleString()} />
+            <ReadoutMetric label="Current leading strategy" value={readout.leading_strategy.label} />
+            <ReadoutMetric
+              label="Probability best"
+              value={`${Math.round(readout.bayesian_confidence.probability_best * 100)}% simulated`}
+            />
+            <ReadoutMetric label="Rollout confidence status" value={readout.recommendation_status} valueHelp={helpText[readout.recommendation_status]} />
+            <ReadoutMetric
+              label="Additional contacts before high-confidence rollout"
+              value={contactsNeeded > 0 ? `~${contactsNeeded.toLocaleString()}` : "0"}
+            />
+            <ReadoutMetric label="Adaptive lift vs control" value={formatMoney(readout.adaptive_lift_vs_control)} />
+          </div>
+        </section>
+        <section className="scope-card leading-scope">
+          <h3>Current leading strategy performance</h3>
+          <p>Metrics below refer only to the current leading strategy.</p>
+          <div className="readout-grid compact">
+            <ReadoutMetric label="Donation conversion rate" value={formatPercent(readout.leading_strategy.conversion_rate)} />
+            <ReadoutMetric label="Net donation value per contact" value={formatMoney(readout.leading_strategy.net_expected_value)} />
+            <ReadoutMetric label="Average donation amount" value={formatMoney(readout.leading_strategy.expected_donation_amount)} />
+            <ReadoutMetric label="Fatigue risk" value={formatPercent(readout.leading_strategy.fatigue_risk)} />
+            <ReadoutMetric label="Exploration rate" value={formatPercent(readout.leading_strategy.exploration_rate)} />
+            <ReadoutMetric label="Contacts assigned to this strategy" value={readout.leading_strategy.contacts_observed.toLocaleString()} />
+          </div>
+        </section>
       </div>
       <p className="confidence-note">
         High confidence generally means the leading strategy has remained stable over additional traffic and reached
@@ -238,6 +264,7 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated }) {
       <div className="stream-controls">
         <button onClick={onTogglePaused} type="button">{paused ? "Resume updates" : "Pause updates"}</button>
         <span>Last updated: {lastUpdated || "Loading"}</span>
+        <span>{paused ? "Updates paused" : `Next update in ${nextUpdateIn}s`}</span>
       </div>
     </section>
   );
