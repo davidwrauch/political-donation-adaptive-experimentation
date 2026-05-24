@@ -19,13 +19,19 @@ def test_four_tabs_and_campaign_loading_language():
     assert "This live demo compresses a longer campaign experiment into a short simulation" in app
     assert "Loading simulated campaign results, usually 10-15 seconds" in app
     assert "Live data ready" in app
-    assert "Open demo briefing" in app
-    assert "Research grounding" in app
-    assert "Stanford" in app
-    assert "https://arxiv.org/abs/2211.12004" in app
-    assert "Vanguard's simulation study" in app
-    assert "https://www.braze.com/resources/articles/multi-armed-bandit-vs-ab-testing" in app
-    assert "This demo compresses roughly one month of campaign experimentation into about two minutes." in app
+    assert "Project briefing" in app
+    assert "This live demo explores how adaptive experimentation could reshape political fundraising." in app
+    assert "Instead of relying only on polling, fixed scripts, and preplanned messaging calendars" in app
+    assert "Companies like Google, Spotify, Netflix, Amazon, and Meta" in app
+    assert "<strong>12.5% lift</strong>" in app
+    assert "<strong>25%+ improvement</strong>" in app
+    assert "<strong>13.62% higher engagement</strong>" in app
+    assert "<strong>20.79% improvement</strong>" in app
+    assert "onClick={() => setShowBriefing(false)}" in app
+    assert "onClick={(event) => event.stopPropagation()}" in app
+    assert "Research grounding" not in app
+    assert "https://arxiv.org/abs/2211.12004" not in app
+    assert "https://www.braze.com/resources/articles/multi-armed-bandit-vs-ab-testing" not in app
 
 
 def test_app_fetches_actual_fastapi_routes_and_reports_failed_url():
@@ -89,10 +95,9 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Estimated risk that repeated outreach reduces future response or causes opt-outs.",
         "Share of contacts reserved for learning rather than only using the current best-performing option.",
         "Net donation value per contact over time by allocation strategy",
-        "X-axis: dates. Y-axis: net donation value per contact.",
+        "X-axis: dates. Y-axis: net donation value per contact. Line thickness reflects current traffic allocation share.",
+        "Thicker lines indicate higher traffic allocation as the experiment shifts outreach toward stronger-performing strategies.",
         "ticks = [0, 2, 4, 6, 8, 10, 12]",
-        "Traffic allocation over time",
-        "Shows the bandit shifting traffic away from weaker strategies and toward the winner.",
         "Traffic share",
         "Winning strategy traffic share",
         "Fast forward to winner",
@@ -104,6 +109,10 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Message-frame performance within the current leading strategy",
         "Message allocation within the current leading strategy",
         "<h2><LabelWithHelp label={title} help={helpText[title]} /></h2>",
+        "Net value/contact:",
+        "Traffic allocation:",
+        "Probability best:",
+        "function lineWidth",
     ]:
         assert text in overview
     for strategy in [
@@ -117,7 +126,7 @@ def test_overview_contains_leadership_metrics_and_charts():
 
     assert "<polyline" in overview
     assert "leader-card" in overview
-    assert "strokeWidth={hoveredId === item.id ? \"3.8\" : \"2.55\"}" in overview
+    assert "strokeWidth={lineWidth(trafficByStrategy[item.id] ?? 0, hoveredId === item.id)}" in overview
     assert "setIsolatedId" in overview
     assert "setVisibleIndex" in overview
     assert "setNextUpdateIn" in overview
@@ -138,6 +147,7 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "formatAxisDate(row.experiment_date)" in overview
     assert "strategy_performance" in overview
     assert "message_allocation_shift" in overview
+    assert "Traffic allocation over time" not in overview
     assert "Cumulative donation conversions by allocation strategy" not in overview
     assert "Campaign readout" not in overview
     assert "Leading adaptive method" not in overview
@@ -151,6 +161,10 @@ def test_experiment_design_is_practical_and_guardrailed():
     for text in [
         "How we would actually run this",
         "How this would work operationally",
+        "Why campaigns are rethinking outreach",
+        "Many modern political campaigns still rely heavily on polling, fixed messaging calendars, and highly scripted outreach.",
+        "The goal is not to discover one perfect message.",
+        "adaptive allocation into a more responsive campaign operation.",
         "Vendor platforms",
         "Warehouse",
         "Experimentation models",
@@ -222,11 +236,10 @@ def test_ai_tab_is_campaign_synthesis_not_autonomous_persuasion():
         "Door knocking script",
         "Younger donor version",
         "High-engagement prior donor version",
-        "4 questions",
-        "3 talking points",
-        "Intro",
-        "CTA and thank-you",
-        "Canvasser guidance",
+        "Possible conversation directions",
+        "Questions that invite reflection",
+        "Common concerns heard from voters",
+        "Suggested follow-up",
         "Rent is high. Groceries cost more.",
         "Too many people wait to get care",
         "special treatment and regular families feel ignored",
@@ -238,6 +251,13 @@ def test_ai_tab_is_campaign_synthesis_not_autonomous_persuasion():
     ]:
         assert text in ai
     assert "Reject" not in ai
+    for old_label in [
+        "4 questions",
+        "3 talking points",
+        "CTA and thank-you",
+        "Canvasser guidance",
+    ]:
+        assert old_label not in ai
     for medium in ["SMS", "Email", "Door-knocking script"]:
         assert medium in synthesis
     for removed in [

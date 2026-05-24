@@ -70,6 +70,7 @@ export default function OverviewTab({ overview }) {
   const readout = snapshot?.current_readout ?? overview?.current_readout;
   const chartRows = overview?.strategy_rate_timeline?.slice(0, activeIndex + 1) ?? [];
   const allocationRows = overview?.traffic_allocation_timeline?.slice(0, activeIndex + 1) ?? [];
+  const probabilityBest = readout?.bayesian_confidence?.probability_best ?? 0;
   const lastUpdated = snapshot?.experiment_date ? formatAxisDate(snapshot.experiment_date) : "";
   const simulationComplete = Boolean(snapshots.length && activeIndex >= snapshots.length - 1);
   const progress = snapshot?.progress ?? (simulationComplete ? 1 : 0);
@@ -155,8 +156,7 @@ export default function OverviewTab({ overview }) {
         <section className="panel loading">Loading campaign donation experiment results...</section>
       ) : (
         <>
-          <StrategyRateChart rows={chartRows} strategies={strategies} />
-          <TrafficAllocationChart rows={allocationRows} />
+          <StrategyRateChart allocationRows={allocationRows} probabilityBest={probabilityBest} rows={chartRows} strategies={strategies} />
 
           <section className="chart-grid">
             <BarChart
@@ -364,12 +364,18 @@ function StrategyLineChart({ rows }) {
   return <StrategyRateChart rows={rows} strategies={[]} />;
 }
 
-function StrategyRateChart({ rows, strategies }) {
+function StrategyRateChart({ rows, strategies, allocationRows = [], probabilityBest = 0 }) {
   const [hoveredId, setHoveredId] = useState("");
   const [isolatedId, setIsolatedId] = useState("");
   const [pointTooltip, setPointTooltip] = useState(null);
   const series = rows[0]?.series ?? [];
   const trafficByStrategy = Object.fromEntries(strategies.map((strategy) => [strategy.id, strategy.traffic_share]));
+  const trafficByDate = Object.fromEntries(
+    allocationRows.map((row) => [
+      row.experiment_date,
+      Object.fromEntries(row.series.map((point) => [point.id, point.traffic_share])),
+    ])
+  );
   const max = 12;
   const width = 820;
   const height = 300;
@@ -383,7 +389,8 @@ function StrategyRateChart({ rows, strategies }) {
       <div className="chart-heading">
         <div>
           <h2>Net donation value per contact over time by allocation strategy</h2>
-          <p>X-axis: dates. Y-axis: net donation value per contact.</p>
+          <p>X-axis: dates. Y-axis: net donation value per contact. Line thickness reflects current traffic allocation share.</p>
+          <p className="chart-helper">Thicker lines indicate higher traffic allocation as the experiment shifts outreach toward stronger-performing strategies.</p>
         </div>
       </div>
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Net donation value per contact over time by allocation strategy">
@@ -419,7 +426,7 @@ function StrategyRateChart({ rows, strategies }) {
               points={points}
               stroke={lineColors[seriesIndex % lineColors.length]}
               strokeOpacity={lineOpacity(item.id, hoveredId, isolatedId)}
-              strokeWidth={hoveredId === item.id ? "3.8" : "2.55"}
+              strokeWidth={lineWidth(trafficByStrategy[item.id] ?? 0, hoveredId === item.id)}
             />
           );
         })}
@@ -439,7 +446,7 @@ function StrategyRateChart({ rows, strategies }) {
                   setPointTooltip({
                     x: event.clientX,
                     y: event.clientY,
-                    text: `${point.label} - ${formatAxisDate(row.experiment_date)} - ${formatMoney(point.net_expected_value)} net value`,
+                    text: `${point.label}\n${formatAxisDate(row.experiment_date)}\nNet value/contact: ${formatMoney(point.net_expected_value)}\nTraffic allocation: ${formatWholePercent(trafficByDate[row.experiment_date]?.[point.id] ?? trafficByStrategy[point.id] ?? 0)}\nProbability best: ${formatWholePercent(probabilityBest)}`,
                   });
                 }}
                 onMouseLeave={() => {
@@ -473,40 +480,6 @@ function StrategyRateChart({ rows, strategies }) {
         ))}
       </div>
       {pointTooltip && <div className="chart-tooltip" style={chartTooltipStyle(pointTooltip)}>{pointTooltip.text}</div>}
-    </section>
-  );
-}
-
-function TrafficAllocationChart({ rows }) {
-  const series = rows.at(-1)?.series ?? [];
-  return (
-    <section className="panel">
-      <h2>Traffic allocation over time</h2>
-      <p className="panel-copy">Shows the bandit shifting traffic away from weaker strategies and toward the winner.</p>
-      <div className="allocation-timeline">
-        {rows.map((row) => (
-          <div className="allocation-row" key={row.experiment_date}>
-            <span>{formatAxisDate(row.experiment_date)}</span>
-            <div className="stacked-bar">
-              {row.series.map((point, index) => (
-                <i
-                  key={point.id}
-                  style={{ background: lineColors[index % lineColors.length], width: `${point.traffic_share * 100}%` }}
-                  title={`${point.label}: ${formatPercent(point.traffic_share)}`}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="legend">
-        {series.map((item, index) => (
-          <span className="legend-item" key={item.id}>
-            <i style={{ background: lineColors[index % lineColors.length] }} />
-            {item.label} — {formatPercent(item.traffic_share)} traffic
-          </span>
-        ))}
-      </div>
     </section>
   );
 }
@@ -616,9 +589,14 @@ function lineOpacity(id, hoveredId, isolatedId) {
   return 0.84;
 }
 
+function lineWidth(trafficShare, isHovered) {
+  const base = 1.5 + Math.min(trafficShare, 1) * 3.5;
+  return Math.min(5, base + (isHovered ? 0.55 : 0)).toFixed(2);
+}
+
 function chartTooltipStyle(point) {
   const width = 260;
-  const height = 42;
+  const height = 132;
   const margin = 16;
   const left = Math.min(Math.max(point.x + 14, margin), window.innerWidth - width - margin);
   const openAbove = point.y + height + margin > window.innerHeight;

@@ -41,6 +41,14 @@ const operationalDetails = [
   "Human review and campaign approval remain part of the workflow.",
 ];
 
+const rethinkingOutreachCopy = `Many modern political campaigns still rely heavily on polling, fixed messaging calendars, and highly scripted outreach. Those systems can work well for coordination and message discipline, but they are often slow to react when voter sentiment changes or when different audiences respond differently to the same message.
+
+Adaptive experimentation systems are designed to learn continuously while a campaign is already running. Instead of assuming there is one perfect message, the system measures how different audiences respond across channels, issue frames, outreach frequency, and campaign moments.
+
+The goal is not to discover one perfect message. The goal is to continuously learn which messages resonate with which people under changing political conditions.
+
+Recent campaign reporting and voter research also suggest that many voters are increasingly disengaged by generic or overly scripted outreach. Systems like this attempt to combine experimentation, live feedback, qualitative canvassing insight, and adaptive allocation into a more responsive campaign operation.`;
+
 const futureInputs = [
   "Social listening APIs",
   "Google News trend signals",
@@ -114,6 +122,11 @@ export default function ExperimentDesignTab() {
             <li key={detail}>{detail}</li>
           ))}
         </ul>
+      </section>
+
+      <section className="panel">
+        <h2>Why campaigns are rethinking outreach</h2>
+        <div className="base-message">{rethinkingOutreachCopy}</div>
       </section>
 
       <section className="panel">

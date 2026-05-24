@@ -213,25 +213,23 @@ function renderVariant(type, frame) {
   if (type === "Door knocking script") {
     return (
       <div>
-        <strong>Intro</strong>
-        <p>Hi, I am with the campaign. We are checking in with neighbors and listening first.</p>
-        <strong>4 questions</strong>
+        <strong>Possible conversation directions</strong>
+        <p>Open with a neighborly introduction, then follow the voter's concerns instead of forcing a fixed pitch.</p>
+        <strong>Questions that invite reflection</strong>
         <ol>
           <li>What issue feels most urgent in your neighborhood right now?</li>
           <li>How has this issue affected your family or daily life?</li>
           <li>What would you want elected leaders to do first?</li>
           <li>Would you like information about supporting the campaign?</li>
         </ol>
-        <strong>3 talking points</strong>
+        <strong>Common concerns heard from voters</strong>
         <ul>
-          <li>The campaign is listening first.</li>
-          <li>The focus today is {frame}.</li>
-          <li>Small donations help reach more voters.</li>
+          <li>People want to feel heard before they are asked for money.</li>
+          <li>Many voters connect {frame} to local stress in their own lives.</li>
+          <li>Some supporters want a clear explanation of how donations expand outreach.</li>
         </ul>
-        <strong>CTA and thank-you</strong>
-        <p>If the voter is interested, offer a donation link or follow-up card. Thank them for their time either way.</p>
-        <strong>Canvasser guidance</strong>
-        <p>Ask before making a donation request. Keep the conversation local and respectful.</p>
+        <strong>Suggested follow-up</strong>
+        <p>If the voter is interested, offer a donation link or follow-up card. Thank them for their time either way, and note which concern shaped the conversation.</p>
       </div>
     );
   }
@@ -255,7 +253,7 @@ function lengthFor(type) {
 }
 
 function reasonFor(type) {
-  if (type === "Door knocking script") return "Door conversations should start with questions, not a hard donation ask.";
+  if (type === "Door knocking script") return "Door conversations should stay adaptive, listening-oriented, and grounded in what the voter raises first.";
   if (type === "SMS") return "SMS needs a short ask that is easy to read quickly.";
   if (type === "Fundraising email") return "Email can carry more context and a clearer donation rationale.";
   if (type === "Younger donor version") return "Younger donors often respond to future-oriented stakes and low-friction asks.";

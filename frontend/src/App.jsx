@@ -49,39 +49,21 @@ export default function App() {
           This dashboard compares donation allocation strategies, tracks whether adaptive methods beat Control,
           and keeps confidence/readiness visible for leadership.
         </span>
-        <button className="briefing-button" onClick={() => setShowBriefing(true)} type="button">Open demo briefing</button>
+        <button className="briefing-button" onClick={() => setShowBriefing(true)} type="button">Project briefing</button>
       </section>
 
       {showBriefing && (
-        <section className="briefing-overlay" role="dialog" aria-modal="true" aria-labelledby="briefing-title">
-          <div className="briefing-panel">
+        <section className="briefing-overlay" onClick={() => setShowBriefing(false)} role="dialog" aria-modal="true" aria-labelledby="briefing-title">
+          <div className="briefing-panel" onClick={(event) => event.stopPropagation()}>
             <div className="briefing-head">
               <p className="eyebrow">Executive briefing</p>
               <h2 id="briefing-title">Adaptive campaign donation simulation</h2>
               <p>
-                This demo compresses roughly one month of campaign experimentation into about two minutes.
-                Watch allocation, confidence, and net donation value update as the bandit learns.
+                This live demo explores how adaptive experimentation could reshape political fundraising. Most modern campaigns already segment outreach, but contextual bandits go further by continuously learning which messages resonate with which voters and dynamically reallocating traffic while the campaign is still running. Instead of relying only on polling, fixed scripts, and preplanned messaging calendars, adaptive systems can learn from real voter behavior and adjust outreach as conditions change.
               </p>
-            </div>
-            <h3 className="research-title">Research grounding</h3>
-            <div className="research-grid">
-              <article>
-                <span>Stanford</span>
-                <h3>Charitable giving + contextual bandits</h3>
-                <p>Donation appeals can be assigned adaptively using supporter context and observed response.</p>
-                <a href="https://arxiv.org/abs/2211.12004" target="_blank" rel="noreferrer">Read paper</a>
-              </article>
-              <article>
-                <span>Vanguard Tech</span>
-                <h3>A/B vs multi-armed bandits</h3>
-                <p>Vanguard's simulation study found that well-powered A/B tests can be faster for three or fewer variants, but multi-armed bandits tend to perform better for four or more variants and reduce regret/business value loss.</p>
-              </article>
-              <article>
-                <span>Braze</span>
-                <h3>A/B for certainty; bandits for real-time optimization</h3>
-                <p>Braze frames A/B testing as stronger for certainty and auditability, while bandits reallocate traffic in real time to reduce wasted exposure and optimize short-window campaigns.</p>
-                <a href="https://www.braze.com/resources/articles/multi-armed-bandit-vs-ab-testing" target="_blank" rel="noreferrer">Read article</a>
-              </article>
+              <p>
+                Companies like Google, Spotify, Netflix, Amazon, and Meta use systems like these because they reduce wasted exposure to underperforming experiences and improve personalization at scale. Yahoo Research reported a <strong>12.5% lift</strong> from contextual-bandit personalization, Spotify reported <strong>25%+ improvement</strong> from better personalized recommendations, and Optimizely documented gains including <strong>13.62% higher engagement</strong> and <strong>20.79% improvement</strong> in validation experiments. This prototype simulates a campaign feedback loop where vendor response data streams into a warehouse and the system continuously updates targeting, messaging, and channel allocation in real time.
+              </p>
             </div>
             <div className="briefing-actions">
               <button className={overview ? "ready-action" : ""} onClick={() => setShowBriefing(false)} type="button">

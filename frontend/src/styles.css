@@ -209,8 +209,13 @@ button {
   color: #526165;
   font-size: 1.06rem;
   line-height: 1.65;
-  margin: 0;
+  margin: 0 0 18px;
   max-width: 760px;
+}
+
+.briefing-head strong {
+  color: #14282c;
+  font-weight: 900;
 }
 
 .research-grid {
@@ -856,6 +861,11 @@ button {
   margin: 4px 0 0;
 }
 
+.chart-helper {
+  color: #748084;
+  font-size: 0.88rem;
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -945,8 +955,10 @@ button {
   color: white;
   font-size: 0.82rem;
   font-weight: 800;
+  line-height: 1.5;
   padding: 10px 12px;
   position: fixed;
+  white-space: pre-line;
   z-index: 999;
 }
 
