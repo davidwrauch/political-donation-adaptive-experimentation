@@ -41,13 +41,11 @@ const operationalDetails = [
   "Human review and campaign approval remain part of the workflow.",
 ];
 
-const rethinkingOutreachCopy = `Many modern political campaigns still rely heavily on polling, fixed messaging calendars, and highly scripted outreach. Those systems can work well for coordination and message discipline, but they are often slow to react when voter sentiment changes or when different audiences respond differently to the same message.
+const rethinkingOutreachCopy = `Modern campaigns already segment voters and tailor outreach, but many still rely heavily on polling snapshots, preplanned messaging calendars, and scripts that barely change once the campaign begins. This demo explores whether campaigns can become more responsive to real voter behavior instead of relying entirely on polling, scripted messaging, and static media strategies.
 
-Adaptive experimentation systems are designed to learn continuously while a campaign is already running. Instead of assuming there is one perfect message, the system measures how different audiences respond across channels, issue frames, outreach frequency, and campaign moments.
+Adaptive experimentation allows campaigns to learn while outreach is still running. Instead of waiting until after Election Day to understand what worked, the system continuously updates allocation based on observed behavior, message response, fatigue risk, changing issue salience, and real-world feedback from voters themselves.
 
-The goal is not to discover one perfect message. The goal is to continuously learn which messages resonate with which people under changing political conditions.
-
-Recent campaign reporting and voter research also suggest that many voters are increasingly disengaged by generic or overly scripted outreach. Systems like this attempt to combine experimentation, live feedback, qualitative canvassing insight, and adaptive allocation into a more responsive campaign operation.`;
+The idea is not to replace organizers or human judgment. In fact, many voters increasingly respond to campaigns that sound more honest, adaptive, and genuinely responsive to local concerns rather than overly focus-grouped national scripts. The goal is to create faster feedback loops so strategy can evolve alongside the people campaigns are actually trying to reach.`;
 
 const futureInputs = [
   "Social listening APIs",
@@ -124,7 +122,7 @@ export default function ExperimentDesignTab() {
         </ul>
       </section>
 
-      <section className="panel">
+      <section className="editorial-briefing">
         <h2>Why campaigns are rethinking outreach</h2>
         <div className="base-message">{rethinkingOutreachCopy}</div>
       </section>
