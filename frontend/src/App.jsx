@@ -38,7 +38,17 @@ export default function App() {
         </div>
         <div className="hero-card">
           <span>Primary metric</span>
-          <strong>Net donation value per contact</strong>
+          <strong className="hero-primary-metric">
+            Net donation value per contact
+            <span className="hero-help-wrap">
+              <button aria-label="Primary metric help" className="help-icon" type="button">?</button>
+              <span className="tooltip-popover hero-tooltip" role="tooltip">
+                Average expected dollars raised per person contacted after accounting for donation conversion rate,
+                average donation amount, and fatigue risk. This is the primary optimization metric used to compare
+                allocation strategies.
+              </span>
+            </span>
+          </strong>
           <small>Secondary metrics: donation conversion rate, average donation amount, fatigue risk, and exploration rate.</small>
         </div>
       </header>

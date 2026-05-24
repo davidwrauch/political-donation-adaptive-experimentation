@@ -15,6 +15,9 @@ def test_four_tabs_and_campaign_loading_language():
         assert tab in app
     assert "OverviewTab overview={overview}" in app
     assert "Net donation value per contact" in app
+    assert "Primary metric help" in app
+    assert "Average expected dollars raised per person contacted after accounting for donation conversion rate" in app
+    assert "This is the primary optimization metric used to compare" in app
     assert "Secondary metrics: donation conversion rate, average donation amount, fatigue risk, and exploration rate." in app
     assert "p-value" not in app
     assert "This live demo compresses a longer campaign experiment into a short simulation" in app
@@ -79,6 +82,7 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Traditional statistical significance can still be reported in a real",
         "Probability best estimates how likely the current leading strategy is to outperform the others",
         "Average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
+        "Primary optimization metric. Measures expected donation dollars generated per contact after accounting for conversion rate, donation amount, and fatigue penalties.",
         "Directional only means the current leader is promising",
         "Pause updates",
         "Resume updates",

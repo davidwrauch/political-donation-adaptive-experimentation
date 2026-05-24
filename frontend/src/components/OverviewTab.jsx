@@ -26,7 +26,7 @@ const helpText = {
   "Promising but keep testing": "The current winner looks encouraging, but the campaign should keep learning before shifting most traffic.",
   "Ready to scale": "The leading strategy has remained strong enough in the simulation to justify broader rollout with monitoring.",
   "Overall donation conversion rate by strategy": "Compares the share of contacts that convert into donations for each allocation strategy.",
-  "Net donation value per contact by strategy": "Compares average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
+  "Net donation value per contact by strategy": "Primary optimization metric. Measures expected donation dollars generated per contact after accounting for conversion rate, donation amount, and fatigue penalties.",
   "Fatigue risk by strategy": "Compares the estimated risk that repeated outreach lowers future response or increases opt-outs.",
   "Message-frame performance within the current leading strategy": "Shows which approved donation frames are converting within the strategy currently leading on net donation value per contact.",
   "Statistically significant?": "Traditional statistical significance asks whether the observed winner is unlikely to be ahead because of random chance. This prototype also uses probability-best because live adaptive experiments need readable decision signals before final confirmation.",
