@@ -27,7 +27,7 @@ const helpText = {
   "Net donation value per contact by strategy": "Compares average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
   "Fatigue risk by strategy": "Compares the estimated risk that repeated outreach lowers future response or increases opt-outs.",
   "Message-frame performance within the current leading strategy": "Shows which approved donation frames are converting within the strategy currently leading on net donation value per contact.",
-  "Frequentist check": "A traditional p-value check compares whether the current leader's observed results are unlikely to be due to random chance. Many teams still expect this alongside Bayesian probability best.",
+  "Frequentist check": "A traditional p-value check compares whether the current leader's observed results are unlikely to be due to random chance. This prototype keeps Bayesian probability best as the main live decision signal because adaptive systems often need readable confidence before a final fixed-horizon significance test.",
 };
 const defaultStrategies = [
   {
@@ -68,6 +68,7 @@ export default function OverviewTab({ overview }) {
   const readout = snapshot?.current_readout ?? overview?.current_readout;
   const chartRows = overview?.strategy_rate_timeline?.slice(0, activeIndex + 1) ?? [];
   const lastUpdated = snapshot?.experiment_date ? formatAxisDate(snapshot.experiment_date) : "";
+  const simulationComplete = Boolean(snapshots.length && activeIndex >= snapshots.length - 1);
 
   useEffect(() => {
     if (!overview) return undefined;
@@ -110,6 +111,12 @@ export default function OverviewTab({ overview }) {
         onTogglePaused={() => setPaused((current) => !current)}
         paused={paused}
         readout={readout}
+        onReplay={() => {
+          setVisibleIndex(Math.min(1, Math.max(0, snapshots.length - 1)));
+          setPaused(false);
+          setNextUpdateIn(5);
+        }}
+        simulationComplete={simulationComplete}
         strategies={strategies}
       />
 
@@ -157,11 +164,19 @@ export default function OverviewTab({ overview }) {
   );
 }
 
-function ExperimentStatus({ strategies, readout, paused, onTogglePaused, lastUpdated, nextUpdateIn }) {
+function ExperimentStatus({ strategies, readout, paused, onTogglePaused, lastUpdated, nextUpdateIn, onReplay, simulationComplete }) {
   const leadingId = readout?.leading_strategy?.id;
   return (
     <section className="experiment-status" aria-label="Current experiment status">
-      <CurrentReadout lastUpdated={lastUpdated} nextUpdateIn={nextUpdateIn} onTogglePaused={onTogglePaused} paused={paused} readout={readout} />
+      <CurrentReadout
+        lastUpdated={lastUpdated}
+        nextUpdateIn={nextUpdateIn}
+        onReplay={onReplay}
+        onTogglePaused={onTogglePaused}
+        paused={paused}
+        readout={readout}
+        simulationComplete={simulationComplete}
+      />
       <section className="strategy-grid">
         {strategies.map((strategy) => (
           <StrategyStatusCard
@@ -208,7 +223,7 @@ function StrategyStatusCard({ strategy, isLeader }) {
   );
 }
 
-function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpdateIn }) {
+function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpdateIn, onReplay, simulationComplete }) {
   if (!readout) {
     return (
       <section className="panel current-readout readiness-card">
@@ -224,7 +239,14 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
     <section className="panel current-readout readiness-card">
       <div className="readout-intro">
         <p className="eyebrow">Current experiment status</p>
-        <LiveSimulationStatus paused={paused} lastUpdated={lastUpdated} nextUpdateIn={nextUpdateIn} onTogglePaused={onTogglePaused} />
+        <LiveSimulationStatus
+          lastUpdated={lastUpdated}
+          nextUpdateIn={nextUpdateIn}
+          onReplay={onReplay}
+          onTogglePaused={onTogglePaused}
+          paused={paused}
+          simulationComplete={simulationComplete}
+        />
       </div>
       <div className="executive-scope-grid">
         <section className="scope-card">
@@ -238,7 +260,6 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
           </div>
           <div className="readout-grid compact">
             <ReadoutMetric label="Total contacts observed" value={readout.total_contacts_observed.toLocaleString()} />
-            <ReadoutMetric label="Current leading strategy" value={readout.leading_strategy.label} />
             <ReadoutMetric
               label="Additional contacts before high-confidence rollout"
               value={contactsNeeded > 0 ? `~${contactsNeeded.toLocaleString()}` : "0"}
@@ -250,6 +271,10 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
         <section className="scope-card leading-scope">
           <h3>Current leading strategy performance</h3>
           <p>Metrics below refer only to the current leading strategy.</p>
+          <article className="winner-focus">
+            <span><LabelWithHelp label="Current leading strategy" help={helpText["Current leading strategy"]} /></span>
+            <strong>{readout.leading_strategy.label}</strong>
+          </article>
           <div className="readout-grid compact">
             <ReadoutMetric label="Donation conversion rate" value={formatPercent(readout.leading_strategy.conversion_rate)} />
             <ReadoutMetric label="Net donation value per contact" value={formatMoney(readout.leading_strategy.net_expected_value)} />
@@ -273,15 +298,19 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
   );
 }
 
-function LiveSimulationStatus({ paused, onTogglePaused, lastUpdated, nextUpdateIn }) {
+function LiveSimulationStatus({ paused, onTogglePaused, lastUpdated, nextUpdateIn, simulationComplete, onReplay }) {
   return (
     <div className={paused ? "live-status paused" : "live-status running"}>
       <div>
-        <strong>{paused ? "Simulation paused" : "Live simulation running"}</strong>
+        <strong>{simulationComplete ? "Simulation complete" : paused ? "Simulation paused" : "Live simulation running"}</strong>
         <span>Last updated: {lastUpdated || "Loading"}</span>
-        <span>{paused ? "Updates paused" : `Next update in ${nextUpdateIn}s`}</span>
+        <span>{simulationComplete ? "Winner locked in" : paused ? "Updates paused" : `Next update in ${nextUpdateIn}s`}</span>
       </div>
-      <button onClick={onTogglePaused} type="button">{paused ? "Resume updates" : "Pause updates"}</button>
+      {simulationComplete ? (
+        <button onClick={onReplay} type="button">Replay simulation</button>
+      ) : (
+        <button onClick={onTogglePaused} type="button">{paused ? "Resume updates" : "Pause updates"}</button>
+      )}
     </div>
   );
 }
@@ -500,7 +529,7 @@ function formatWholePercent(value) {
 
 function formatFrequentistCheck(check) {
   if (!check) return "Loading";
-  return `p vs control ${check.p_value_vs_control.toFixed(3)}; p vs runner-up ${check.p_value_vs_runner_up.toFixed(3)}; significant: ${check.statistically_significant ? "Yes" : "No"}`;
+  return check.statistically_significant ? "Reached" : "Not yet";
 }
 
 function lineOpacity(id, hoveredId, isolatedId) {
