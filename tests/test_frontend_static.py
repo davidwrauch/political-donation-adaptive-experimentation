@@ -11,9 +11,10 @@ def read(path: str) -> str:
 def test_four_tabs_and_campaign_loading_language():
     app = read("frontend/src/App.jsx")
 
-    for tab in ["Overview", "Experiment Design", "AI Message Review", "About"]:
+    for tab in ["Overview", "Experiment Design", "What If", "AI Message Review", "About"]:
         assert tab in app
     assert "OverviewTab overview={overview}" in app
+    assert "WhatIfTab apiBase={API_BASE}" in app
     assert "Net donation value per contact" in app
     assert "Primary metric help" in app
     assert "Average expected dollars raised per person contacted after accounting for donation conversion rate" in app
@@ -46,6 +47,59 @@ def test_app_fetches_actual_fastapi_routes_and_reports_failed_url():
     assert "fetchJson(overviewUrl" in app
     assert "fetchJson(aiRecommendationUrl" in app
     assert "Unable to load ${label} from ${url}" in app
+
+
+def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
+    app = read("frontend/src/App.jsx")
+    what_if = read("frontend/src/components/WhatIfTab.jsx")
+    styles = read("frontend/src/styles.css")
+    main = read("backend/app/main.py")
+
+    assert "What If" in app
+    assert "/api/policy-simulator" in what_if
+    assert "/api/policy-simulator" in main
+    for text in [
+        "What If?",
+        "Counterfactual policy simulator",
+        "Explore how changing campaign priorities reshapes persuasion, fundraising, fatigue, and audience reach.",
+        "Offline policy simulation, not causal proof.",
+        "Current logged policy",
+        "Adjusted priority policy",
+        "What this means",
+        "The bandit does not decide what \"good\" means on its own.",
+        "Overlap and reliability",
+        "Donation value",
+        "Conversion",
+        "High-dollar donors",
+        "Persuasion and trust",
+        "Fatigue penalty",
+        "Contact-risk penalty",
+        "Urgency or negative-frame penalty",
+        "Local/community boost",
+        "Exploration diversity",
+        "Audience diversity",
+        "Top affected audience segment",
+    ]:
+        assert text in what_if
+    for metric in [
+        "Estimated net value per contact under adjusted policy",
+        "Conversion rate",
+        "Average donation amount",
+        "High-dollar share",
+        "Message diversity",
+        "Local/community share",
+        "Urgency/negative share",
+    ]:
+        assert metric in what_if
+    for style in [
+        "what-if-hero",
+        "what-if-impact",
+        "simulator-layout",
+        "control-surface",
+        "comparison-surface",
+        "soft-pill",
+    ]:
+        assert style in styles
 
 
 def test_overview_contains_leadership_metrics_and_charts():

@@ -157,7 +157,7 @@ button {
   box-shadow: 0 18px 45px rgba(28, 43, 40, 0.06);
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   margin: 24px 0;
   padding: 7px;
 }
@@ -446,6 +446,290 @@ button {
 .primary-metric {
   background: #eaf5f1;
   border-color: #cbe3da;
+}
+
+.what-if-tab {
+  gap: 34px;
+}
+
+.what-if-hero {
+  align-items: stretch;
+  background:
+    radial-gradient(circle at 78% 12%, rgba(79, 162, 143, 0.2), transparent 24rem),
+    linear-gradient(145deg, rgba(20, 36, 39, 0.98), rgba(40, 62, 59, 0.9));
+  border-radius: 28px;
+  box-shadow: 0 34px 90px rgba(24, 42, 43, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #fff;
+  display: grid;
+  gap: 32px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  overflow: hidden;
+  padding: 46px;
+}
+
+.what-if-hero h2 {
+  font-size: clamp(2.6rem, 5vw, 5.2rem);
+  letter-spacing: -0.055em;
+  line-height: 0.94;
+  margin: 8px 0 18px;
+  max-width: 820px;
+}
+
+.what-if-hero p {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 1.12rem;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 760px;
+}
+
+.what-if-hero small {
+  color: rgba(255, 255, 255, 0.58);
+  display: block;
+  line-height: 1.5;
+  margin-top: 18px;
+  max-width: 720px;
+}
+
+.what-if-impact {
+  align-self: end;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 24px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  padding: 28px;
+}
+
+.what-if-impact span,
+.policy-summary span,
+.what-if-metrics span,
+.strategy-slider small,
+.overlap-panel dt {
+  color: #627175;
+  font-size: 0.78rem;
+  font-weight: 760;
+}
+
+.what-if-impact span {
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.what-if-impact strong {
+  display: block;
+  font-size: clamp(3.2rem, 7vw, 6rem);
+  letter-spacing: -0.065em;
+  line-height: 0.92;
+  margin: 14px 0 12px;
+}
+
+.what-if-impact small {
+  color: #a9dfcf;
+  margin: 0;
+}
+
+.simulator-layout {
+  display: grid;
+  gap: 30px;
+  grid-template-columns: minmax(300px, 0.82fr) minmax(0, 1.18fr);
+}
+
+.control-surface,
+.comparison-surface,
+.what-if-metrics article,
+.meaning-panel,
+.overlap-panel {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(219, 229, 224, 0.34);
+  border-radius: 24px;
+  box-shadow: 0 24px 64px rgba(37, 54, 50, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.control-surface {
+  padding: 28px;
+}
+
+.control-heading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.control-heading h3,
+.meaning-panel h3,
+.overlap-panel h3 {
+  font-size: 1.6rem;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+.control-heading button {
+  background: rgba(20, 40, 44, 0.08);
+  border-radius: 999px;
+  color: #19363b;
+  font-size: 0.82rem;
+  font-weight: 760;
+  padding: 0.55rem 0.78rem;
+}
+
+.slider-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.strategy-slider {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr auto;
+}
+
+.strategy-slider span {
+  display: grid;
+  gap: 4px;
+}
+
+.strategy-slider strong {
+  color: #1b2528;
+  font-size: 0.98rem;
+}
+
+.strategy-slider em {
+  color: #17694f;
+  font-size: 0.9rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.strategy-slider input {
+  accent-color: #17694f;
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.policy-readout {
+  display: grid;
+  gap: 24px;
+}
+
+.comparison-surface {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 0.86fr 1.14fr;
+  padding: 18px;
+}
+
+.policy-summary {
+  border-radius: 22px;
+  padding: 24px;
+}
+
+.policy-summary.muted {
+  background: rgba(247, 250, 248, 0.82);
+}
+
+.policy-summary.adjusted {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(79, 162, 143, 0.14), transparent 16rem),
+    rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 42px rgba(46, 143, 127, 0.09);
+}
+
+.policy-summary strong {
+  color: #102c29;
+  display: block;
+  font-size: clamp(2.4rem, 4.8vw, 4.5rem);
+  letter-spacing: -0.06em;
+  line-height: 0.94;
+  margin: 12px 0;
+}
+
+.policy-summary div {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.policy-summary em {
+  color: #17694f;
+  font-size: 0.88rem;
+  font-style: normal;
+  font-weight: 820;
+}
+
+.policy-summary p {
+  color: #526165;
+  margin: 18px 0 0;
+}
+
+.what-if-metrics {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.what-if-metrics article {
+  padding: 18px;
+}
+
+.what-if-metrics strong {
+  color: #18282b;
+  display: block;
+  font-size: 1.55rem;
+  letter-spacing: -0.04em;
+  margin: 8px 0 4px;
+}
+
+.what-if-metrics small {
+  color: #17694f;
+  font-weight: 760;
+}
+
+.what-if-bottom {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+}
+
+.meaning-panel,
+.overlap-panel {
+  padding: 30px;
+}
+
+.meaning-panel p,
+.overlap-panel p {
+  color: #526165;
+  font-size: 1.03rem;
+  line-height: 1.7;
+  margin: 12px 0 0;
+}
+
+.soft-pill {
+  background: rgba(226, 246, 236, 0.9);
+  border-radius: 999px;
+  color: #17694f;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 820;
+  margin-bottom: 16px;
+  padding: 0.42rem 0.62rem;
+}
+
+.warning-pill {
+  background: rgba(255, 242, 207, 0.9);
+  color: #765400;
+}
+
+.overlap-panel dl {
+  display: grid;
+  gap: 6px 12px;
+  grid-template-columns: 1fr 1fr;
+  margin: 18px 0 0;
+}
+
+.overlap-panel dd {
+  color: #18282b;
+  font-weight: 820;
+  margin: 0;
 }
 
 .intro-card p {
@@ -1393,6 +1677,11 @@ button {
 
 @media (max-width: 780px) {
   .hero,
+  .what-if-hero,
+  .simulator-layout,
+  .comparison-surface,
+  .what-if-metrics,
+  .what-if-bottom,
   .strategy-legend,
   .strategy-grid,
   .chart-grid,

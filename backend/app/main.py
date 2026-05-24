@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .services.ai_synthesis import synthesize_recommendation
+from .services.policy_simulator import DEFAULT_WEIGHTS, simulate_policy
 from .services.simulation import generate_experiment, summarize_experiment
 
 
@@ -63,3 +64,8 @@ def sample_supporters(limit: int = 12) -> dict:
 @app.get("/api/ai/recommendation")
 def ai_recommendation() -> dict:
     return synthesize_recommendation(demo_summary())
+
+
+@app.post("/api/policy-simulator")
+def policy_simulator(weights: dict[str, float] | None = None) -> dict:
+    return simulate_policy(demo_experiment(), weights or DEFAULT_WEIGHTS)
