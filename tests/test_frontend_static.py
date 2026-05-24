@@ -15,7 +15,8 @@ def test_four_tabs_and_campaign_loading_language():
         assert tab in app
     assert "OverviewTab overview={overview}" in app
     assert "Net donation value per contact" in app
-    assert "Secondary metrics: donation conversion rate, average donation amount, fatigue risk, exploration rate, and p-value check." in app
+    assert "Secondary metrics: donation conversion rate, average donation amount, fatigue risk, and exploration rate." in app
+    assert "p-value" not in app
     assert "This live demo compresses a longer campaign experiment into a short simulation" in app
     assert "Loading simulated campaign results, usually 10-15 seconds" in app
     assert "Live data ready" in app
@@ -67,10 +68,11 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Probability best",
         "Additional contacts before high-confidence rollout",
         "Rollout confidence status",
-        "Frequentist check",
-        "Reached",
+        "Statistically significant?",
+        "Yes",
         "Not yet",
-        "A traditional p-value check compares whether the current leader",
+        "Traditional statistical significance asks whether the observed winner",
+        "This prototype also uses probability-best",
         "Do not send 100% of traffic to the current winner unless confidence is high.",
         "High confidence generally means",
         "the leading strategy has remained stable",
@@ -108,11 +110,17 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Fatigue risk by strategy",
         "Message-frame performance within the current leading strategy",
         "Message allocation within the current leading strategy",
-        "<h2><LabelWithHelp label={title} help={helpText[title]} /></h2>",
+        "primary-chart-card",
+        "primary-pill",
+        "Primary metric",
+        "chart-title-row",
         "Net value/contact:",
         "Traffic allocation:",
         "Probability best:",
         "function lineWidth",
+        "rotate(-38)",
+        "x-axis-label",
+        "const height = 316",
     ]:
         assert text in overview
     for strategy in [
@@ -152,7 +160,10 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "Campaign readout" not in overview
     assert "Leading adaptive method" not in overview
     assert "Use Contextual bandit with fatigue guardrail as the leading allocation strategy" not in overview
+    assert "Frequentist check" not in overview
+    assert "p-value" not in overview
     assert "winning message" not in overview.lower()
+    assert overview.index('title="Net donation value per contact by strategy"') < overview.index('title="Overall donation conversion rate by strategy"')
 
 
 def test_experiment_design_is_practical_and_guardrailed():

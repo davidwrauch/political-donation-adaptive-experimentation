@@ -39,7 +39,7 @@ export default function App() {
         <div className="hero-card">
           <span>Primary metric</span>
           <strong>Net donation value per contact</strong>
-          <small>Secondary metrics: donation conversion rate, average donation amount, fatigue risk, exploration rate, and p-value check.</small>
+          <small>Secondary metrics: donation conversion rate, average donation amount, fatigue risk, and exploration rate.</small>
         </div>
       </header>
 

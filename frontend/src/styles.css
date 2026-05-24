@@ -178,7 +178,7 @@ button {
   display: flex;
   inset: 0;
   justify-content: center;
-  padding: 22px;
+  padding: 18px;
   position: fixed;
   z-index: 2000;
 }
@@ -191,11 +191,11 @@ button {
   border-radius: 28px;
   box-shadow: 0 36px 120px rgba(8, 20, 22, 0.26);
   display: grid;
-  gap: 18px;
+  gap: 14px;
   max-height: min(92vh, 980px);
   max-width: 980px;
   overflow-y: auto;
-  padding: 30px 32px;
+  padding: 24px 28px;
 }
 
 .briefing-head .eyebrow {
@@ -203,17 +203,17 @@ button {
 }
 
 .briefing-head h2 {
-  font-size: clamp(3rem, 5vw, 5.1rem);
+  font-size: clamp(2.45rem, 4.25vw, 4.35rem);
   letter-spacing: -0.04em;
   line-height: 0.95;
-  margin: 4px 0 13px;
+  margin: 3px 0 10px;
 }
 
 .briefing-head p {
   color: #526165;
-  font-size: 1.02rem;
-  line-height: 1.45;
-  margin: 0 0 14px;
+  font-size: 0.98rem;
+  line-height: 1.39;
+  margin: 0 0 11px;
   max-width: 800px;
 }
 
@@ -272,7 +272,7 @@ button {
   border-radius: 999px;
   color: white;
   font-weight: 760;
-  padding: 0.8rem 1.1rem;
+  padding: 0.68rem 1rem;
 }
 
 .briefing-actions .ready-action {
@@ -281,27 +281,27 @@ button {
 
 @media (max-height: 900px) {
   .briefing-overlay {
-    padding: 18px;
+    padding: 14px;
   }
 
   .briefing-panel {
-    gap: 14px;
-    padding: 24px 28px;
+    gap: 12px;
+    padding: 20px 24px;
   }
 
   .briefing-head h2 {
-    font-size: clamp(2.55rem, 4.35vw, 4.2rem);
-    margin-bottom: 11px;
+    font-size: clamp(2.25rem, 3.8vw, 3.7rem);
+    margin-bottom: 9px;
   }
 
   .briefing-head p {
-    font-size: 0.99rem;
-    line-height: 1.43;
-    margin-bottom: 12px;
+    font-size: 0.94rem;
+    line-height: 1.36;
+    margin-bottom: 9px;
   }
 
   .briefing-actions button {
-    padding: 0.72rem 1rem;
+    padding: 0.62rem 0.92rem;
   }
 }
 
@@ -580,12 +580,12 @@ button {
 
 .live-status {
   align-items: center;
-  border-radius: 18px;
+  border-radius: 14px;
   display: flex;
-  gap: 14px;
+  gap: 10px;
   grid-template-columns: 1fr auto;
   justify-content: space-between;
-  padding: 16px 18px;
+  padding: 8px 11px;
   position: sticky;
   top: 12px;
   z-index: 800;
@@ -608,7 +608,7 @@ button {
 .live-status div {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  gap: 5px 10px;
 }
 
 .live-actions {
@@ -617,7 +617,7 @@ button {
 
 .live-status strong,
 .live-status span {
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: 650;
 }
 
@@ -627,15 +627,16 @@ button {
   border-radius: 999px;
   box-shadow: 0 10px 22px rgba(20, 40, 44, 0.14);
   color: white;
+  font-size: 0.78rem;
   font-weight: 700;
-  padding: 0.7rem 1rem;
+  padding: 0.45rem 0.7rem;
 }
 
 .simulation-progress {
   background: rgba(255, 255, 255, 0.58);
   border-radius: 999px;
-  flex: 0 1 180px;
-  height: 6px;
+  flex: 0 1 132px;
+  height: 4px;
   overflow: hidden;
 }
 
@@ -903,6 +904,10 @@ button {
   text-anchor: middle;
 }
 
+.x-axis-label {
+  text-anchor: end;
+}
+
 .y-axis-label {
   text-anchor: end;
 }
@@ -935,6 +940,36 @@ button {
 .chart-helper {
   color: #748084;
   font-size: 0.88rem;
+}
+
+.chart-title-row {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.chart-title-row h2 {
+  margin: 0;
+}
+
+.primary-chart-card {
+  background:
+    radial-gradient(circle at 16% 0%, rgba(79, 162, 143, 0.13), transparent 18rem),
+    rgba(255, 255, 255, 0.96);
+  border-color: rgba(79, 162, 143, 0.24);
+  box-shadow: 0 20px 52px rgba(34, 84, 73, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.primary-pill {
+  background: rgba(23, 105, 79, 0.1);
+  border: 1px solid rgba(23, 105, 79, 0.16);
+  border-radius: 999px;
+  color: #17694f;
+  flex: 0 0 auto;
+  font-size: 0.74rem;
+  font-weight: 820;
+  padding: 0.35rem 0.56rem;
 }
 
 .legend {

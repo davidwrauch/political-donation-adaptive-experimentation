@@ -29,7 +29,7 @@ const helpText = {
   "Net donation value per contact by strategy": "Compares average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
   "Fatigue risk by strategy": "Compares the estimated risk that repeated outreach lowers future response or increases opt-outs.",
   "Message-frame performance within the current leading strategy": "Shows which approved donation frames are converting within the strategy currently leading on net donation value per contact.",
-  "Frequentist check": "A traditional p-value check compares whether the current leader's observed results are unlikely to be due to random chance. This prototype keeps Bayesian probability best as the main live decision signal because adaptive systems often need readable confidence before a final fixed-horizon significance test.",
+  "Statistically significant?": "Traditional statistical significance asks whether the observed winner is unlikely to be ahead because of random chance. This prototype also uses probability-best because live adaptive experiments need readable decision signals before final confirmation.",
 };
 const defaultStrategies = [
   {
@@ -160,16 +160,17 @@ export default function OverviewTab({ overview }) {
 
           <section className="chart-grid">
             <BarChart
-              title="Overall donation conversion rate by strategy"
-              rows={strategies}
-              valueKey="conversion_rate"
-              formatter={formatPercent}
-            />
-            <BarChart
+              isPrimary
               title="Net donation value per contact by strategy"
               rows={strategies}
               valueKey="net_expected_value"
               formatter={formatMoney}
+            />
+            <BarChart
+              title="Overall donation conversion rate by strategy"
+              rows={strategies}
+              valueKey="conversion_rate"
+              formatter={formatPercent}
             />
           </section>
 
@@ -292,7 +293,7 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
               value={contactsNeeded > 0 ? `~${contactsNeeded.toLocaleString()}` : "0"}
             />
             <ReadoutMetric label="Adaptive lift vs control" value={formatMoney(readout.adaptive_lift_vs_control)} />
-            <ReadoutMetric label="Frequentist check" value={formatFrequentistCheck(readout.frequentist_check)} />
+            <ReadoutMetric label="Statistically significant?" value={formatSignificanceCheck(readout.frequentist_check)} />
             <ReadoutMetric label="Winning strategy traffic share" value={formatPercent(readout.current_leading_strategy_traffic_share)} />
           </div>
         </section>
@@ -378,8 +379,8 @@ function StrategyRateChart({ rows, strategies, allocationRows = [], probabilityB
   );
   const max = 12;
   const width = 820;
-  const height = 300;
-  const padding = { top: 34, right: 36, bottom: 54, left: 86 };
+  const height = 316;
+  const padding = { top: 34, right: 36, bottom: 74, left: 86 };
   const ticks = [0, 2, 4, 6, 8, 10, 12];
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
@@ -394,7 +395,7 @@ function StrategyRateChart({ rows, strategies, allocationRows = [], probabilityB
         </div>
       </div>
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Net donation value per contact over time by allocation strategy">
-        <text className="axis-title" x={padding.left + chartWidth / 2} y={height - 8}>Date</text>
+        <text className="axis-title" x={padding.left + chartWidth / 2} y={height - 10}>Date</text>
         <text className="axis-title y-title" x="20" y={padding.top + chartHeight / 2}>Net value</text>
         <line x1={padding.left} y1={height - padding.bottom} x2={width - padding.right} y2={height - padding.bottom} className="axis" />
         <line x1={padding.left} y1={padding.top} x2={padding.left} y2={height - padding.bottom} className="axis" />
@@ -461,7 +462,11 @@ function StrategyRateChart({ rows, strategies, allocationRows = [], probabilityB
         )}
         {rows.map((row, index) => {
           const x = padding.left + (index / Math.max(1, rows.length - 1)) * chartWidth;
-          return <text className="axis-label" key={row.experiment_date} x={x} y={height - 32}>{formatAxisDate(row.experiment_date)}</text>;
+          return (
+            <text className="axis-label x-axis-label" key={row.experiment_date} transform={`translate(${x}, ${height - 32}) rotate(-38)`}>
+              {formatAxisDate(row.experiment_date)}
+            </text>
+          );
         })}
       </svg>
       <div className="legend">
@@ -525,11 +530,14 @@ function Metric({ label, value, help }) {
   );
 }
 
-function BarChart({ title, rows, valueKey, formatter, note }) {
+function BarChart({ title, rows, valueKey, formatter, note, isPrimary = false }) {
   const max = Math.max(...rows.map((row) => Math.abs(row[valueKey])), 0.01);
   return (
-    <section className="panel">
-      <h2><LabelWithHelp label={title} help={helpText[title]} /></h2>
+    <section className={isPrimary ? "panel primary-chart-card" : "panel"}>
+      <div className="chart-title-row">
+        <h2><LabelWithHelp label={title} help={helpText[title]} /></h2>
+        {isPrimary && <span className="primary-pill">Primary metric</span>}
+      </div>
       {note && <p className="panel-copy">{note}</p>}
       <div className="bar-list">
         {rows.map((row) => (
@@ -574,9 +582,9 @@ function formatWholePercent(value) {
   return `${Math.round(value * 100)}%`;
 }
 
-function formatFrequentistCheck(check) {
+function formatSignificanceCheck(check) {
   if (!check) return "Loading";
-  return check.statistically_significant ? "Reached" : "Not yet";
+  return check.statistically_significant ? "Yes" : "Not yet";
 }
 
 function lineOpacity(id, hoveredId, isolatedId) {
