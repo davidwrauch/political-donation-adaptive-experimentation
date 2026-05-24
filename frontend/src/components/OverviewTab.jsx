@@ -15,6 +15,8 @@ const helpText = {
   "Control contacts": "Number of simulated contacts assigned to generic non-personalized outreach.",
   "Contacts observed": "Number of simulated supporter contacts assigned to this strategy so far.",
   "Contacts assigned to this strategy": "Number of simulated supporter contacts assigned to the current leading strategy.",
+  "Traffic share": "Current share of simulated outreach traffic allocated to this strategy.",
+  "Winning strategy traffic share": "Current share of simulated outreach traffic allocated to the leading strategy.",
   "Net expected value": "Estimated donation value after accounting for response rate, average donation amount, and fatigue effects.",
   "Fatigue risk": "Estimated risk that repeated outreach reduces future response or increases opt-outs.",
   "Exploration rate": "Share of traffic intentionally reserved for learning rather than only using the current winner.",
@@ -67,8 +69,10 @@ export default function OverviewTab({ overview }) {
   const strategies = snapshot?.strategy_performance ?? overview?.strategy_performance ?? defaultStrategies;
   const readout = snapshot?.current_readout ?? overview?.current_readout;
   const chartRows = overview?.strategy_rate_timeline?.slice(0, activeIndex + 1) ?? [];
+  const allocationRows = overview?.traffic_allocation_timeline?.slice(0, activeIndex + 1) ?? [];
   const lastUpdated = snapshot?.experiment_date ? formatAxisDate(snapshot.experiment_date) : "";
   const simulationComplete = Boolean(snapshots.length && activeIndex >= snapshots.length - 1);
+  const progress = snapshot?.progress ?? (simulationComplete ? 1 : 0);
 
   useEffect(() => {
     if (!overview) return undefined;
@@ -105,11 +109,38 @@ export default function OverviewTab({ overview }) {
         </p>
       </section>
 
+      {readout && (
+        <LiveSimulationStatus
+          lastUpdated={lastUpdated}
+          nextUpdateIn={nextUpdateIn}
+          onFastForward={() => {
+            setVisibleIndex(Math.max(0, snapshots.length - 1));
+            setPaused(true);
+            setNextUpdateIn(0);
+          }}
+          onReplay={() => {
+            setVisibleIndex(Math.min(1, Math.max(0, snapshots.length - 1)));
+            setPaused(false);
+            setNextUpdateIn(5);
+          }}
+          onTogglePaused={() => setPaused((current) => !current)}
+          paused={paused}
+          progress={progress}
+          simulationComplete={simulationComplete}
+        />
+      )}
+
       <ExperimentStatus
         lastUpdated={lastUpdated}
         nextUpdateIn={nextUpdateIn}
+        onFastForward={() => {
+          setVisibleIndex(Math.max(0, snapshots.length - 1));
+          setPaused(true);
+          setNextUpdateIn(0);
+        }}
         onTogglePaused={() => setPaused((current) => !current)}
         paused={paused}
+        progress={progress}
         readout={readout}
         onReplay={() => {
           setVisibleIndex(Math.min(1, Math.max(0, snapshots.length - 1)));
@@ -124,7 +155,8 @@ export default function OverviewTab({ overview }) {
         <section className="panel loading">Loading campaign donation experiment results...</section>
       ) : (
         <>
-          <StrategyRateChart rows={chartRows} />
+          <StrategyRateChart rows={chartRows} strategies={strategies} />
+          <TrafficAllocationChart rows={allocationRows} />
 
           <section className="chart-grid">
             <BarChart
@@ -164,16 +196,18 @@ export default function OverviewTab({ overview }) {
   );
 }
 
-function ExperimentStatus({ strategies, readout, paused, onTogglePaused, lastUpdated, nextUpdateIn, onReplay, simulationComplete }) {
+function ExperimentStatus({ strategies, readout, paused, onTogglePaused, lastUpdated, nextUpdateIn, onReplay, simulationComplete, onFastForward, progress }) {
   const leadingId = readout?.leading_strategy?.id;
   return (
     <section className="experiment-status" aria-label="Current experiment status">
       <CurrentReadout
         lastUpdated={lastUpdated}
         nextUpdateIn={nextUpdateIn}
+        onFastForward={onFastForward}
         onReplay={onReplay}
         onTogglePaused={onTogglePaused}
         paused={paused}
+        progress={progress}
         readout={readout}
         simulationComplete={simulationComplete}
       />
@@ -202,6 +236,7 @@ function StrategyStatusCard({ strategy, isLeader }) {
         <Metric label="Donation conversion rate" value={formatMaybePercent(strategy.conversion_rate)} />
         <Metric label="Net donation value per contact" value={formatMaybeMoney(strategy.net_expected_value)} />
         <Metric label="Average donation amount" value={formatMaybeMoney(strategy.expected_donation_amount)} />
+        <Metric label="Traffic share" value={formatMaybePercent(strategy.traffic_share)} />
         <Metric label="Contacts observed" value={formatMaybeNumber(strategy.contacts_observed)} />
         <Metric
           label="Fatigue risk"
@@ -223,7 +258,7 @@ function StrategyStatusCard({ strategy, isLeader }) {
   );
 }
 
-function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpdateIn, onReplay, simulationComplete }) {
+function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpdateIn, onReplay, simulationComplete, onFastForward, progress }) {
   if (!readout) {
     return (
       <section className="panel current-readout readiness-card">
@@ -239,14 +274,6 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
     <section className="panel current-readout readiness-card">
       <div className="readout-intro">
         <p className="eyebrow">Current experiment status</p>
-        <LiveSimulationStatus
-          lastUpdated={lastUpdated}
-          nextUpdateIn={nextUpdateIn}
-          onReplay={onReplay}
-          onTogglePaused={onTogglePaused}
-          paused={paused}
-          simulationComplete={simulationComplete}
-        />
       </div>
       <div className="executive-scope-grid">
         <section className="scope-card">
@@ -266,6 +293,7 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
             />
             <ReadoutMetric label="Adaptive lift vs control" value={formatMoney(readout.adaptive_lift_vs_control)} />
             <ReadoutMetric label="Frequentist check" value={formatFrequentistCheck(readout.frequentist_check)} />
+            <ReadoutMetric label="Winning strategy traffic share" value={formatPercent(readout.current_leading_strategy_traffic_share)} />
           </div>
         </section>
         <section className="scope-card leading-scope">
@@ -298,18 +326,25 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
   );
 }
 
-function LiveSimulationStatus({ paused, onTogglePaused, lastUpdated, nextUpdateIn, simulationComplete, onReplay }) {
+function LiveSimulationStatus({ paused, onTogglePaused, lastUpdated, nextUpdateIn, simulationComplete, onReplay, onFastForward, progress }) {
   return (
     <div className={paused ? "live-status paused" : "live-status running"}>
       <div>
         <strong>{simulationComplete ? "Simulation complete" : paused ? "Simulation paused" : "Live simulation running"}</strong>
         <span>Last updated: {lastUpdated || "Loading"}</span>
         <span>{simulationComplete ? "Winner locked in" : paused ? "Updates paused" : `Next update in ${nextUpdateIn}s`}</span>
+        <span>Simulation progress: {formatWholePercent(progress)}</span>
+      </div>
+      <div className="simulation-progress" aria-label={`Simulation progress ${formatWholePercent(progress)}`}>
+        <i style={{ width: `${Math.round(progress * 100)}%` }} />
       </div>
       {simulationComplete ? (
         <button onClick={onReplay} type="button">Replay simulation</button>
       ) : (
-        <button onClick={onTogglePaused} type="button">{paused ? "Resume updates" : "Pause updates"}</button>
+        <div className="live-actions">
+          <button onClick={onTogglePaused} type="button">{paused ? "Resume updates" : "Pause updates"}</button>
+          <button onClick={onFastForward} type="button">Fast forward to winner</button>
+        </div>
       )}
     </div>
   );
@@ -326,19 +361,20 @@ function ReadoutMetric({ label, value, valueHelp }) {
 }
 
 function StrategyLineChart({ rows }) {
-  return <StrategyRateChart rows={rows} />;
+  return <StrategyRateChart rows={rows} strategies={[]} />;
 }
 
-function StrategyRateChart({ rows }) {
+function StrategyRateChart({ rows, strategies }) {
   const [hoveredId, setHoveredId] = useState("");
   const [isolatedId, setIsolatedId] = useState("");
   const [pointTooltip, setPointTooltip] = useState(null);
   const series = rows[0]?.series ?? [];
-  const max = Math.max(0.4, ...rows.flatMap((row) => row.series.map((point) => point.conversion_rate)));
+  const trafficByStrategy = Object.fromEntries(strategies.map((strategy) => [strategy.id, strategy.traffic_share]));
+  const max = 12;
   const width = 820;
   const height = 300;
   const padding = { top: 34, right: 36, bottom: 54, left: 86 };
-  const ticks = [0.2, 0.25, 0.3, 0.35, 0.4].filter((tick) => tick <= Math.max(0.4, max + 0.05));
+  const ticks = [0, 2, 4, 6, 8, 10, 12];
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
@@ -346,13 +382,13 @@ function StrategyRateChart({ rows }) {
     <section className="panel line-panel">
       <div className="chart-heading">
         <div>
-          <h2>Donation conversion rate over time by allocation strategy</h2>
-          <p>X-axis: dates. Y-axis: conversion rate percentage by experiment date.</p>
+          <h2>Net donation value per contact over time by allocation strategy</h2>
+          <p>X-axis: dates. Y-axis: net donation value per contact.</p>
         </div>
       </div>
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Donation conversion rate over time by allocation strategy">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Net donation value per contact over time by allocation strategy">
         <text className="axis-title" x={padding.left + chartWidth / 2} y={height - 8}>Date</text>
-        <text className="axis-title y-title" x="20" y={padding.top + chartHeight / 2}>Conversion rate</text>
+        <text className="axis-title y-title" x="20" y={padding.top + chartHeight / 2}>Net value</text>
         <line x1={padding.left} y1={height - padding.bottom} x2={width - padding.right} y2={height - padding.bottom} className="axis" />
         <line x1={padding.left} y1={padding.top} x2={padding.left} y2={height - padding.bottom} className="axis" />
         {ticks.map((tick) => {
@@ -360,14 +396,14 @@ function StrategyRateChart({ rows }) {
           return (
             <g key={tick}>
               <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} className="grid-line" />
-              <text className="axis-label y-axis-label" x={padding.left - 12} y={y + 4}>{formatWholePercent(tick)}</text>
+              <text className="axis-label y-axis-label" x={padding.left - 12} y={y + 4}>{formatMoneyNoDecimals(tick)}</text>
             </g>
           );
         })}
         {series.map((item, seriesIndex) => {
           const points = rows
             .map((row, rowIndex) => {
-              const value = row.series.find((point) => point.id === item.id)?.conversion_rate ?? 0;
+              const value = row.series.find((point) => point.id === item.id)?.net_expected_value ?? 0;
               const x = padding.left + (rowIndex / Math.max(1, rows.length - 1)) * chartWidth;
               const y = height - padding.bottom - (value / max) * chartHeight;
               return `${x},${y}`;
@@ -390,7 +426,7 @@ function StrategyRateChart({ rows }) {
         {rows.flatMap((row, rowIndex) =>
           row.series.map((point, seriesIndex) => {
             const x = padding.left + (rowIndex / Math.max(1, rows.length - 1)) * chartWidth;
-            const y = height - padding.bottom - (point.conversion_rate / max) * chartHeight;
+            const y = height - padding.bottom - (point.net_expected_value / max) * chartHeight;
             return (
               <circle
                 className="chart-point"
@@ -403,7 +439,7 @@ function StrategyRateChart({ rows }) {
                   setPointTooltip({
                     x: event.clientX,
                     y: event.clientY,
-                    text: `${point.label} - ${formatAxisDate(row.experiment_date)} - ${formatPercent(point.conversion_rate)}`,
+                    text: `${point.label} - ${formatAxisDate(row.experiment_date)} - ${formatMoney(point.net_expected_value)} net value`,
                   });
                 }}
                 onMouseLeave={() => {
@@ -432,11 +468,45 @@ function StrategyRateChart({ rows }) {
             type="button"
           >
             <i style={{ background: lineColors[index % lineColors.length] }} />
-            {item.label}
+            {item.label} — {formatPercent(trafficByStrategy[item.id] ?? 0)} traffic
           </button>
         ))}
       </div>
       {pointTooltip && <div className="chart-tooltip" style={chartTooltipStyle(pointTooltip)}>{pointTooltip.text}</div>}
+    </section>
+  );
+}
+
+function TrafficAllocationChart({ rows }) {
+  const series = rows.at(-1)?.series ?? [];
+  return (
+    <section className="panel">
+      <h2>Traffic allocation over time</h2>
+      <p className="panel-copy">Shows the bandit shifting traffic away from weaker strategies and toward the winner.</p>
+      <div className="allocation-timeline">
+        {rows.map((row) => (
+          <div className="allocation-row" key={row.experiment_date}>
+            <span>{formatAxisDate(row.experiment_date)}</span>
+            <div className="stacked-bar">
+              {row.series.map((point, index) => (
+                <i
+                  key={point.id}
+                  style={{ background: lineColors[index % lineColors.length], width: `${point.traffic_share * 100}%` }}
+                  title={`${point.label}: ${formatPercent(point.traffic_share)}`}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="legend">
+        {series.map((item, index) => (
+          <span className="legend-item" key={item.id}>
+            <i style={{ background: lineColors[index % lineColors.length] }} />
+            {item.label} — {formatPercent(item.traffic_share)} traffic
+          </span>
+        ))}
+      </div>
     </section>
   );
 }
@@ -509,6 +579,10 @@ function formatPercent(value) {
 
 function formatMoney(value) {
   return `$${Number(value).toFixed(2)}`;
+}
+
+function formatMoneyNoDecimals(value) {
+  return `$${Number(value).toFixed(0)}`;
 }
 
 function formatMaybePercent(value) {

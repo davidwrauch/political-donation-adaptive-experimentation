@@ -18,7 +18,14 @@ def test_four_tabs_and_campaign_loading_language():
     assert "Secondary metrics: donation conversion rate, average donation amount, fatigue risk, exploration rate, and p-value check." in app
     assert "This live demo compresses a longer campaign experiment into a short simulation" in app
     assert "Loading simulated campaign results, usually 10-15 seconds" in app
-    assert "Data ready" in app
+    assert "Live data ready" in app
+    assert "Open demo briefing" in app
+    assert "Research grounding" in app
+    assert "Stanford" in app
+    assert "https://arxiv.org/abs/2211.12004" in app
+    assert "Vanguard's simulation study" in app
+    assert "https://www.braze.com/resources/articles/multi-armed-bandit-vs-ab-testing" in app
+    assert "This demo compresses roughly one month of campaign experimentation into about two minutes." in app
 
 
 def test_app_fetches_actual_fastapi_routes_and_reports_failed_url():
@@ -81,9 +88,16 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Exploration rate",
         "Estimated risk that repeated outreach reduces future response or causes opt-outs.",
         "Share of contacts reserved for learning rather than only using the current best-performing option.",
-        "Donation conversion rate over time by allocation strategy",
-        "X-axis: dates. Y-axis: conversion rate percentage by experiment date.",
-        "ticks = [0.2, 0.25, 0.3, 0.35, 0.4]",
+        "Net donation value per contact over time by allocation strategy",
+        "X-axis: dates. Y-axis: net donation value per contact.",
+        "ticks = [0, 2, 4, 6, 8, 10, 12]",
+        "Traffic allocation over time",
+        "Shows the bandit shifting traffic away from weaker strategies and toward the winner.",
+        "Traffic share",
+        "Winning strategy traffic share",
+        "Fast forward to winner",
+        "Simulation progress:",
+        "Winner locked in",
         "Overall donation conversion rate by strategy",
         "Net donation value per contact by strategy",
         "Fatigue risk by strategy",
@@ -118,8 +132,9 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "getBoundingClientRect" in overview
     assert "window.addEventListener(\"resize\"" in overview
     assert "window.addEventListener(\"scroll\"" in overview
-    assert "formatWholePercent(tick)" in overview
+    assert "formatMoneyNoDecimals(tick)" in overview
     assert "strategy_rate_timeline" in overview
+    assert "traffic_allocation_timeline" in overview
     assert "formatAxisDate(row.experiment_date)" in overview
     assert "strategy_performance" in overview
     assert "message_allocation_shift" in overview

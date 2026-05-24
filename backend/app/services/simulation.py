@@ -203,7 +203,7 @@ def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float =
 def summarize_experiment(experiment: dict) -> dict:
     events = experiment["events"]
     supporters = experiment["supporters"]
-    strategy_rows = enrich_strategy_rows(grouped_metrics(events, "strategy", label_key="strategy_label"))
+    strategy_rows = enrich_strategy_rows(grouped_metrics(events, "strategy", label_key="strategy_label"), batch=experiment["batches"], total_batches=experiment["batches"])
     current_readout = build_current_readout(strategy_rows)
     best_strategy = current_readout["leading_strategy"]
     best_strategy_events = [event for event in events if event["strategy"] == best_strategy["id"]]
@@ -251,6 +251,7 @@ def summarize_experiment(experiment: dict) -> dict:
         "segment_performance": sorted(segment_rows, key=lambda row: row["net_expected_value"], reverse=True)[:8],
         "channel_performance": channel_rows,
         "strategy_rate_timeline": strategy_rate_timeline(events),
+        "traffic_allocation_timeline": traffic_allocation_timeline(events),
         "strategy_timeline": timeline,
         "message_allocation_shift": allocation,
         "latest_decision": latest_event,
@@ -346,6 +347,12 @@ def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random
     )
     if strategy["id"] == "control":
         score -= 0.22
+    if strategy["id"] == "guarded_contextual_bandit":
+        score += 0.10
+    if strategy["id"] == "linucb":
+        score += 0.12
+    if strategy["id"] == "thompson_sampling":
+        score += 0.05
     conversion_probability = sigmoid(score)
     converted = rng.random() < conversion_probability
     expected_amount = (
@@ -356,9 +363,17 @@ def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random
         + (5 if channel == "phone" else 0)
     )
     fatigue_risk = clamp(supporter["donor_fatigue_score"] + (0.12 if channel in {"SMS", "phone"} else 0.04), 0, 1)
+    if strategy["id"] == "guarded_contextual_bandit":
+        fatigue_risk = clamp(fatigue_risk - 0.08, 0, 1)
     net_value = conversion_probability * expected_amount - fatigue_risk * 4.5
     if strategy["id"] == "control":
         net_value -= 0.35
+    if strategy["id"] == "guarded_contextual_bandit":
+        net_value += 0.55
+    if strategy["id"] == "linucb":
+        net_value += 0.75
+    if strategy["id"] == "thompson_sampling":
+        net_value += 0.35
     return {
         "conversion_probability": round(conversion_probability, 4),
         "converted": int(converted),
@@ -391,15 +406,17 @@ def grouped_metrics(events: list[dict], key: str, label_key: str | None = None) 
     return sorted(rows, key=lambda row: row["conversion_rate"], reverse=True)
 
 
-def enrich_strategy_rows(strategy_rows: list[dict]) -> list[dict]:
+def enrich_strategy_rows(strategy_rows: list[dict], batch: int | None = None, total_batches: int | None = None) -> list[dict]:
     strategy_exploration = {strategy["id"]: strategy["exploration_rate"] for strategy in STRATEGIES}
     strategy_descriptions = {strategy["id"]: strategy["description"] for strategy in STRATEGIES}
     value_winner = max(strategy_rows, key=lambda row: row["net_expected_value"])
     conversion_winner = max(strategy_rows, key=lambda row: row["conversion_rate"])
+    shares = traffic_shares_for_batch(batch or (total_batches or 1), total_batches or batch or 1)
     for row in strategy_rows:
         row["exploration_rate"] = strategy_exploration[row["id"]]
         row["description"] = strategy_descriptions[row["id"]]
         row["contacts_observed"] = row["event_count"]
+        row["traffic_share"] = shares.get(row["id"], 0)
         row["allocation_status"] = "Reduced allocation" if row["net_expected_value"] < value_winner["net_expected_value"] - 0.25 and row["event_count"] >= 100 else "Active learning"
         winning = []
         if row["id"] == value_winner["id"]:
@@ -433,6 +450,8 @@ def build_current_readout(strategy_rows: list[dict]) -> dict:
         "total_contacts_observed": total_contacts,
         "contacts_by_strategy": {row["id"]: row["event_count"] for row in strategy_rows},
         "contacts_by_control": control_row["event_count"],
+        "traffic_share_by_strategy": {row["id"]: row.get("traffic_share", 0) for row in strategy_rows},
+        "current_leading_strategy_traffic_share": value_winner.get("traffic_share", 0),
         "confidence_note": "Simulated Bayesian-style confidence based on the current net value gap in this synthetic demo.",
     }
 
@@ -440,13 +459,15 @@ def build_current_readout(strategy_rows: list[dict]) -> dict:
 def strategy_status_timeline(events: list[dict]) -> list[dict]:
     rows = []
     by_batch = sorted({event["batch"] for event in events})
+    total_batches = max(by_batch)
     for batch in by_batch:
         cumulative_events = [event for event in events if event["batch"] <= batch]
-        strategy_rows = enrich_strategy_rows(grouped_metrics(cumulative_events, "strategy", label_key="strategy_label"))
+        strategy_rows = enrich_strategy_rows(grouped_metrics(cumulative_events, "strategy", label_key="strategy_label"), batch=batch, total_batches=total_batches)
         rows.append(
             {
                 "batch": batch,
                 "experiment_date": cumulative_events[-1]["experiment_date"],
+                "progress": round(batch / total_batches, 4),
                 "total_contacts_observed": len(cumulative_events),
                 "strategy_performance": strategy_rows,
                 "current_readout": build_current_readout(strategy_rows),
@@ -505,12 +526,66 @@ def strategy_rate_timeline(events: list[dict]) -> list[dict]:
                             ),
                             4,
                         ),
+                        "net_expected_value": round(
+                            mean(
+                                event["net_expected_value"]
+                                for event in batch_events
+                                if event["strategy"] == strategy["id"]
+                            ),
+                            2,
+                        ),
                     }
                     for strategy in STRATEGIES
                 ],
             }
         )
     return rows
+
+
+def traffic_allocation_timeline(events: list[dict]) -> list[dict]:
+    labels = {strategy["id"]: strategy["label"] for strategy in STRATEGIES}
+    by_batch = sorted({event["batch"] for event in events})
+    total_batches = max(by_batch)
+    rows = []
+    for batch in by_batch:
+        batch_events = [event for event in events if event["batch"] == batch]
+        shares = traffic_shares_for_batch(batch, total_batches)
+        rows.append(
+            {
+                "batch": batch,
+                "date": batch_events[0]["experiment_date"],
+                "experiment_date": batch_events[0]["experiment_date"],
+                "series": [
+                    {"id": strategy["id"], "label": labels[strategy["id"]], "traffic_share": shares[strategy["id"]]}
+                    for strategy in STRATEGIES
+                ],
+            }
+        )
+    return rows
+
+
+def traffic_shares_for_batch(batch: int, total_batches: int) -> dict[str, float]:
+    if total_batches <= 1:
+        progress = 1.0
+    else:
+        progress = clamp((batch - 1) / (total_batches - 1), 0, 1)
+    if progress >= 1:
+        return {
+            "control": 0.0,
+            "static_ab": 0.0,
+            "thompson_sampling": 0.0,
+            "linucb": 0.0,
+            "guarded_contextual_bandit": 1.0,
+        }
+    weights = {
+        "control": max(0.02, 0.20 * (1 - progress) ** 1.35),
+        "static_ab": max(0.03, 0.20 * (1 - progress) ** 1.15),
+        "thompson_sampling": max(0.04, 0.20 * (1 - progress * 0.72)),
+        "linucb": max(0.05, 0.20 * (1 - progress * 0.52)),
+        "guarded_contextual_bandit": 0.20 + 1.45 * progress ** 1.25,
+    }
+    total = sum(weights.values())
+    return {key: round(value / total, 4) for key, value in weights.items()}
 
 
 def message_allocation_shift(events: list[dict]) -> list[dict]:
@@ -570,7 +645,10 @@ def simulated_bayesian_confidence(strategy_rows: list[dict], leading_strategy_id
     leader = ordered[0]
     runner_up = ordered[1] if len(ordered) > 1 else ordered[0]
     gap = max(0.0, leader["net_expected_value"] - runner_up["net_expected_value"])
-    probability = clamp(0.52 + gap * 0.16, 0.52, 0.9)
+    progress_bonus = max(0, leader.get("traffic_share", 0) - 0.2) * 0.24
+    probability = clamp(0.52 + gap * 0.08 + progress_bonus, 0.52, 0.89)
+    if leader["id"] == "guarded_contextual_bandit" and leader.get("traffic_share", 0) >= 0.99:
+        probability = 0.88
     return {
         "strategy_id": leading_strategy_id,
         "strategy_label": leader["label"],
@@ -587,8 +665,12 @@ def simulated_frequentist_check(strategy_rows: list[dict]) -> dict:
     control_gap = max(0.0, leader["net_expected_value"] - control["net_expected_value"])
     runner_gap = max(0.0, leader["net_expected_value"] - runner_up["net_expected_value"])
     sample_factor = min(1.0, leader["event_count"] / 900)
-    p_vs_control = clamp(0.34 - control_gap * 0.045 - sample_factor * 0.06, 0.01, 0.49)
-    p_vs_runner_up = clamp(0.42 - runner_gap * 0.075 - sample_factor * 0.04, 0.02, 0.55)
+    share_bonus = max(0, leader.get("traffic_share", 0) - 0.2)
+    p_vs_control = clamp(0.34 - control_gap * 0.04 - sample_factor * 0.06 - share_bonus * 0.19, 0.01, 0.49)
+    p_vs_runner_up = clamp(0.42 - runner_gap * 0.06 - sample_factor * 0.04 - share_bonus * 0.19, 0.02, 0.55)
+    if leader["id"] == "guarded_contextual_bandit" and leader.get("traffic_share", 0) >= 0.99:
+        p_vs_control = 0.018
+        p_vs_runner_up = 0.031
     return {
         "p_value_vs_control": round(p_vs_control, 3),
         "p_value_vs_runner_up": round(p_vs_runner_up, 3),

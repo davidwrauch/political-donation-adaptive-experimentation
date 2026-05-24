@@ -158,6 +158,118 @@ button {
   55%, 100% { transform: translateX(100%); }
 }
 
+.load-banner .briefing-button {
+  background: rgba(20, 40, 44, 0.92);
+  border-radius: 999px;
+  color: white;
+  font-size: 0.84rem;
+  font-weight: 720;
+  justify-self: start;
+  margin-top: 6px;
+  padding: 0.62rem 0.9rem;
+  position: relative;
+  z-index: 1;
+}
+
+.briefing-overlay {
+  align-items: center;
+  background: rgba(15, 22, 23, 0.36);
+  backdrop-filter: blur(18px);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 2000;
+}
+
+.briefing-panel {
+  background:
+    radial-gradient(circle at top right, rgba(123, 180, 158, 0.18), transparent 24rem),
+    rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 28px;
+  box-shadow: 0 36px 120px rgba(8, 20, 22, 0.26);
+  display: grid;
+  gap: 24px;
+  max-height: calc(100vh - 48px);
+  max-width: 980px;
+  overflow-y: auto;
+  padding: 34px;
+}
+
+.briefing-head h2 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  letter-spacing: -0.05em;
+  line-height: 0.96;
+  margin: 8px 0 16px;
+}
+
+.briefing-head p {
+  color: #526165;
+  font-size: 1.06rem;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 760px;
+}
+
+.research-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.research-title {
+  margin: 0;
+}
+
+.research-grid article {
+  background: rgba(248, 250, 248, 0.74);
+  border: 1px solid rgba(229, 236, 231, 0.5);
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.research-grid span {
+  color: #627175;
+  font-size: 0.78rem;
+  font-weight: 760;
+}
+
+.research-grid h3 {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+  margin: 8px 0;
+}
+
+.research-grid p {
+  color: #526165;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.research-grid a {
+  color: #17694f;
+  font-weight: 760;
+}
+
+.briefing-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.briefing-actions button {
+  background: #14282c;
+  border-radius: 999px;
+  color: white;
+  font-weight: 760;
+  padding: 0.8rem 1.1rem;
+}
+
+.briefing-actions .ready-action {
+  background: #17694f;
+}
+
 .load-banner.ready {
   background: linear-gradient(135deg, rgba(231, 247, 239, 0.95), rgba(246, 249, 246, 0.95));
   border-color: rgba(185, 220, 205, 0.55);
@@ -395,8 +507,12 @@ button {
   border-radius: 18px;
   display: flex;
   gap: 14px;
+  grid-template-columns: 1fr auto;
   justify-content: space-between;
   padding: 16px 18px;
+  position: sticky;
+  top: 12px;
+  z-index: 800;
 }
 
 .live-status.running {
@@ -419,6 +535,10 @@ button {
   gap: 8px 14px;
 }
 
+.live-actions {
+  justify-content: flex-end;
+}
+
 .live-status strong,
 .live-status span {
   font-size: 0.9rem;
@@ -433,6 +553,21 @@ button {
   color: white;
   font-weight: 700;
   padding: 0.7rem 1rem;
+}
+
+.simulation-progress {
+  background: rgba(255, 255, 255, 0.58);
+  border-radius: 999px;
+  flex: 0 1 180px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.simulation-progress i {
+  background: linear-gradient(90deg, #4fa28f, #17694f);
+  display: block;
+  height: 100%;
+  transition: width 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .live-status.paused button {
@@ -726,6 +861,39 @@ button {
   flex-wrap: wrap;
   gap: 10px 18px;
   margin-top: 12px;
+}
+
+.allocation-timeline {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+.allocation-row {
+  align-items: center;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 64px 1fr;
+}
+
+.allocation-row span {
+  color: #627175;
+  font-size: 0.76rem;
+  font-weight: 680;
+}
+
+.stacked-bar {
+  background: rgba(231, 236, 232, 0.74);
+  border-radius: 999px;
+  display: flex;
+  height: 12px;
+  overflow: hidden;
+}
+
+.stacked-bar i {
+  display: block;
+  min-width: 1px;
+  transition: width 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.25s ease;
 }
 
 .legend span {
@@ -1106,6 +1274,10 @@ button {
   .live-status {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .research-grid {
+    grid-template-columns: 1fr;
   }
 
   .leader-pill {
