@@ -15,11 +15,22 @@ const defaultWeights = {
 
 const presets = {
   "Current policy": defaultWeights,
-  "Prioritize big donors": {
+  "Prioritize big donations": {
     ...defaultWeights,
     donation_value_weight: 1.55,
+    conversion_weight: 0.85,
     high_dollar_donor_weight: 1.35,
     fatigue_penalty: 0.65,
+    exploration_diversity_weight: 0.12,
+    fairness_audience_diversity_weight: 0.12,
+  },
+  "Prioritize small donations": {
+    ...defaultWeights,
+    donation_value_weight: 0.55,
+    conversion_weight: 1.45,
+    persuasion_trust_proxy_weight: 0.9,
+    local_community_message_boost: 1.0,
+    negative_urgency_message_penalty: 1.0,
   },
   "More positive campaign": {
     ...defaultWeights,
@@ -30,6 +41,7 @@ const presets = {
   "Learn aggressively": {
     ...defaultWeights,
     donation_value_weight: 0.6,
+    conversion_weight: 0.65,
     exploration_diversity_weight: 1.45,
     fairness_audience_diversity_weight: 1.25,
   },
@@ -38,12 +50,14 @@ const presets = {
     persuasion_trust_proxy_weight: 1.45,
     fatigue_penalty: 1.25,
     unsubscribe_penalty: 1.2,
+    negative_urgency_message_penalty: 1.25,
     fairness_audience_diversity_weight: 1.05,
   },
   "Local/community focus": {
     ...defaultWeights,
     local_community_message_boost: 1.55,
     persuasion_trust_proxy_weight: 1.05,
+    negative_urgency_message_penalty: 0.95,
   },
   "Optimize net value": {
     ...defaultWeights,
@@ -53,21 +67,19 @@ const presets = {
     fatigue_penalty: 0.8,
     unsubscribe_penalty: 0.75,
     negative_urgency_message_penalty: 0.65,
-    message_diversity_weight: 0.25,
+    exploration_diversity_weight: 0.28,
+    fairness_audience_diversity_weight: 0.28,
   },
 };
 
 const controls = [
   ["donation_value_weight", "Donation value", "Prioritize expected dollars raised per contact."],
   ["conversion_weight", "Conversion", "Prioritize the chance that a contacted supporter donates."],
-  ["high_dollar_donor_weight", "High-dollar donors", "Give more weight to contacts likely to produce larger donations."],
-  ["persuasion_trust_proxy_weight", "Persuasion/trust", "Favor messages that build credibility and civic trust."],
-  ["fatigue_penalty", "Fatigue penalty", "Reduce priority for contacts likely to feel over-contacted."],
-  ["unsubscribe_penalty", "Contact-risk penalty", "Use fatigue, channel pressure, and urgency as an opt-out risk proxy."],
-  ["negative_urgency_message_penalty", "Urgency/negative penalty", "Reduce reliance on urgent or accountability-heavy frames."],
-  ["local_community_message_boost", "Local/community boost", "Favor local investment and everyday-affordability frames."],
-  ["exploration_diversity_weight", "Exploration diversity", "Preserve learning across message and channel options."],
-  ["fairness_audience_diversity_weight", "Audience diversity", "Avoid concentrating the adjusted policy on only one supporter type."],
+  ["persuasion_trust_proxy_weight", "Persuasion/trust", "Favor messages that build confidence, credibility, and longer-term trust."],
+  ["fatigue_guardrail", "Fatigue guardrail", "Reduce priority for contacts likely to feel over-contacted or less responsive after repeated outreach."],
+  ["positive_tone", "Positive tone", "Reduce reliance on urgent, negative, or pressure-heavy message frames."],
+  ["local_community_message_boost", "Local/community", "Favor local investment, community benefit, and everyday-affordability frames."],
+  ["learning_diversity", "Learning/diversity", "Preserve exploration across messages, audiences, and channels so the campaign keeps learning."],
 ];
 
 export default function WhatIfTab({ apiBase }) {
@@ -105,13 +117,12 @@ export default function WhatIfTab({ apiBase }) {
 
   function updateWeight(key, value) {
     setActivePreset("Custom");
-    setWeights((current) => ({ ...current, [key]: Number(value) }));
+    setWeights((current) => applyControlValue(current, key, Number(value)));
   }
 
   const adjusted = result?.adjusted_policy;
   const baseline = result?.baseline_policy;
   const deltas = result?.deltas;
-  const neutral = !deltas || Math.abs(deltas.estimated_net_value_per_contact) < 0.005;
 
   return (
     <div className="tab-panel what-if-tab">
@@ -123,12 +134,6 @@ export default function WhatIfTab({ apiBase }) {
           <p>What If lets campaign leadership test how changing priorities would have changed estimated outcomes on the simulated campaign log.</p>
           <small className="quiet-caveat">Offline simulation, not causal proof. Estimates are strongest when the historical policy explored similar actions.</small>
         </div>
-        <article className="what-if-impact">
-          <span>Estimated net value per contact</span>
-          <strong>{adjusted ? formatMoney(adjusted.estimated_net_value_per_contact) : "Loading"}</strong>
-          <small>Adjusted policy vs current policy</small>
-          <em className={neutral ? "neutral-delta" : deltaClass(deltas?.estimated_net_value_per_contact)}>{deltas ? `${signedMoney(deltas.estimated_net_value_per_contact)} vs current policy` : "Calculating"}</em>
-        </article>
       </section>
 
       <section className="default-note">
@@ -146,6 +151,7 @@ export default function WhatIfTab({ apiBase }) {
         ))}
       </section>
 
+      <p className="console-note">Hover over each control to see what it changes.</p>
       <section className="strategy-console" aria-label="Policy weight controls">
         {controls.map(([key, label, description]) => (
           <Knob
@@ -153,10 +159,11 @@ export default function WhatIfTab({ apiBase }) {
             key={key}
             label={label}
             onChange={(value) => updateWeight(key, value)}
-            value={weights[key]}
+            value={controlValue(weights, key)}
           />
         ))}
       </section>
+      <p className="console-note tradeoff-note">These controls are not independent causal levers. They change the scoring rule, so improving one priority can move other outcomes.</p>
 
       <section className="compact-policy-grid">
         <PolicySummaryCard title="Current policy" metrics={baseline} />
@@ -175,9 +182,9 @@ export default function WhatIfTab({ apiBase }) {
         <article className="meaning-panel">
           <h3>What this means</h3>
           <p>
-            The bandit does not decide what "good" means on its own. Humans define the reward, constraints, and
-            tradeoffs. This simulator shows how changing those priorities can shift estimated outcomes across
-            donations, persuasion, fatigue, and audience coverage.
+            Contextual bandits (adaptive experimentation) do not decide what "good" means on their own. Humans define
+            the reward, constraints, and tradeoffs. This simulator shows how changing those priorities can shift
+            estimated outcomes across donations, trust, fatigue, and audience coverage.
           </p>
         </article>
         <article className="overlap-panel">
@@ -197,6 +204,30 @@ export default function WhatIfTab({ apiBase }) {
       </section>
     </div>
   );
+}
+
+function controlValue(weights, key) {
+  if (key === "fatigue_guardrail") return average(weights.fatigue_penalty, weights.unsubscribe_penalty);
+  if (key === "positive_tone") return weights.negative_urgency_message_penalty;
+  if (key === "learning_diversity") return average(weights.exploration_diversity_weight, weights.fairness_audience_diversity_weight);
+  return weights[key];
+}
+
+function applyControlValue(current, key, value) {
+  if (key === "fatigue_guardrail") {
+    return { ...current, fatigue_penalty: value, unsubscribe_penalty: value };
+  }
+  if (key === "positive_tone") {
+    return { ...current, negative_urgency_message_penalty: value };
+  }
+  if (key === "learning_diversity") {
+    return { ...current, exploration_diversity_weight: value, fairness_audience_diversity_weight: value };
+  }
+  return { ...current, [key]: value };
+}
+
+function average(left, right) {
+  return (left + right) / 2;
 }
 
 function Knob({ label, description, value, onChange }) {
@@ -225,6 +256,7 @@ function PolicySummaryCard({ title, metrics }) {
     <article className="policy-summary compact">
       <span>{title}</span>
       <strong>{formatMoney(metrics?.estimated_net_value_per_contact)}</strong>
+      <small>Net value/contact</small>
       <dl>
         <dt>Conversion</dt>
         <dd>{formatPercent(metrics?.donation_conversion_rate)}</dd>
