@@ -24,18 +24,20 @@ def simulate_policy(experiment: dict[str, Any], weights: dict[str, float] | None
     events = experiment["events"]
     merged_weights = normalize_weights(weights or {})
     baseline = aggregate_metrics(events)
+    default_policy = is_default_policy(merged_weights)
     scored_events = [(event, event_score(event, merged_weights)) for event in events]
-    adjusted = weighted_aggregate(scored_events)
+    adjusted = baseline if default_policy else weighted_aggregate(scored_events)
     baseline_segment_shares = share_by(events, "segment")
-    adjusted_segment_shares = weighted_share_by(scored_events, "segment")
+    adjusted_segment_shares = baseline_segment_shares if default_policy else weighted_share_by(scored_events, "segment")
     top_segment = max(
         adjusted_segment_shares,
         key=lambda segment: adjusted_segment_shares[segment] - baseline_segment_shares.get(segment, 0),
     )
-    overlap = overlap_diagnostics(scored_events)
+    overlap = current_policy_overlap() if default_policy else overlap_diagnostics(scored_events)
 
     return {
         "weights": merged_weights,
+        "default_matches_current_policy": default_policy,
         "method": "Propensity-aware retrospective scoring over the simulated campaign log",
         "caveat": (
             "Offline policy simulation, not causal proof. Estimates are strongest where the historical policy explored "
@@ -43,7 +45,7 @@ def simulate_policy(experiment: dict[str, Any], weights: dict[str, float] | None
         ),
         "baseline_policy": baseline,
         "adjusted_policy": adjusted,
-        "deltas": metric_deltas(baseline, adjusted),
+        "deltas": zero_deltas(baseline) if default_policy else metric_deltas(baseline, adjusted),
         "assignment_probability_available": any("assignment_probability" in event for event in events),
         "overlap": overlap,
         "top_affected_audience_segment": {
@@ -54,7 +56,7 @@ def simulate_policy(experiment: dict[str, Any], weights: dict[str, float] | None
         },
         "message_mix": {
             "baseline": share_by(events, "message_label"),
-            "adjusted": weighted_share_by(scored_events, "message_label"),
+            "adjusted": share_by(events, "message_label") if default_policy else weighted_share_by(scored_events, "message_label"),
         },
         "plain_english": (
             "Changing the reward definition changes what the bandit learns to favor. This estimate shows how a "
@@ -69,6 +71,10 @@ def normalize_weights(weights: dict[str, float]) -> dict[str, float]:
         if key in weights:
             merged[key] = clamp(float(weights[key]), 0, 2)
     return merged
+
+
+def is_default_policy(weights: dict[str, float]) -> bool:
+    return all(abs(weights[key] - DEFAULT_WEIGHTS[key]) < 0.0001 for key in DEFAULT_WEIGHTS)
 
 
 def event_score(event: dict[str, Any], weights: dict[str, float]) -> float:
@@ -162,9 +168,27 @@ def overlap_diagnostics(scored_events: list[tuple[dict[str, Any], float]]) -> di
     }
 
 
+def current_policy_overlap() -> dict[str, Any]:
+    return {
+        "warning": False,
+        "level": "Current policy",
+        "mean_assignment_probability_top_weighted_actions": 1.0,
+        "effective_sample_size": 0,
+        "explanation": "Default settings match the logged policy, so no off-policy overlap adjustment is needed.",
+    }
+
+
 def metric_deltas(baseline: dict[str, Any], adjusted: dict[str, Any]) -> dict[str, float]:
     return {
         key: round(adjusted[key] - baseline[key], 4)
+        for key in baseline
+        if isinstance(baseline[key], (int, float)) and key != "contacts"
+    }
+
+
+def zero_deltas(baseline: dict[str, Any]) -> dict[str, float]:
+    return {
+        key: 0
         for key in baseline
         if isinstance(baseline[key], (int, float)) and key != "contacts"
     }

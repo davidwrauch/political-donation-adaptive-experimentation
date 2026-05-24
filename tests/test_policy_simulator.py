@@ -15,6 +15,10 @@ def test_policy_simulator_returns_baseline_adjusted_and_deltas():
 
     assert result["baseline_policy"]["estimated_net_value_per_contact"] > 0
     assert result["adjusted_policy"]["estimated_net_value_per_contact"] > 0
+    assert result["default_matches_current_policy"] is True
+    assert result["adjusted_policy"] == result["baseline_policy"]
+    assert result["deltas"]["estimated_net_value_per_contact"] == 0
+    assert result["deltas"]["fatigue_risk"] == 0
     assert "estimated_net_value_per_contact" in result["deltas"]
     assert result["assignment_probability_available"] is True
     assert "not causal proof" in result["caveat"]
@@ -28,6 +32,7 @@ def test_policy_simulator_weights_change_adjusted_estimate():
 
     assert value_first["adjusted_policy"]["estimated_net_value_per_contact"] != fatigue_first["adjusted_policy"]["estimated_net_value_per_contact"]
     assert fatigue_first["adjusted_policy"]["fatigue_risk"] <= value_first["adjusted_policy"]["fatigue_risk"]
+    assert value_first["default_matches_current_policy"] is False
 
 
 def test_policy_simulator_overlap_warning_when_propensity_is_sparse():
