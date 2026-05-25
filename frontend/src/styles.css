@@ -735,8 +735,8 @@ button {
 .what-if-hero.compact {
   align-items: center;
   display: grid;
-  gap: 24px;
-  grid-template-columns: 0.82fr 1.18fr;
+  gap: 20px;
+  grid-template-columns: 0.72fr 1.2fr auto;
   padding: 16px 20px;
 }
 
@@ -759,6 +759,29 @@ button {
 .what-if-hero-left {
   display: grid;
   gap: 4px;
+}
+
+.what-if-hero.compact h2 .help-icon {
+  margin-left: 8px;
+}
+
+.hero-audience-select {
+  color: rgba(255, 255, 255, 0.68);
+  display: grid;
+  font-size: 0.72rem;
+  font-weight: 820;
+  gap: 6px;
+  justify-self: end;
+  min-width: 120px;
+}
+
+.hero-audience-select select {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  color: #19363b;
+  font: inherit;
+  padding: 0.38rem 0.58rem;
 }
 
 .quiet-caveat {
@@ -933,7 +956,7 @@ button {
 .compact-policy-grid {
   display: grid;
   gap: 8px;
-  grid-template-columns: 1fr 1fr 0.78fr;
+  grid-template-columns: 1fr 1fr;
 }
 
 .policy-summary.compact,
@@ -981,7 +1004,7 @@ button {
 .policy-summary.compact dl {
   display: grid;
   gap: 2px 8px;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   margin: 0;
 }
 
@@ -1075,6 +1098,7 @@ button {
   gap: 10px;
   justify-content: space-between;
   padding: 7px 10px;
+  text-align: left;
 }
 
 .impact-row {
@@ -1116,10 +1140,22 @@ button {
 .projected-impact-card strong {
   color: #102c29;
   display: block;
-  font-size: 1.28rem;
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
   letter-spacing: -0.045em;
   line-height: 1;
   margin: 3px 0;
+}
+
+.projected-impact-card strong.impact-positive {
+  color: #17694f;
+}
+
+.projected-impact-card strong.impact-negative {
+  color: #9a5b00;
+}
+
+.projected-impact-card strong.impact-neutral {
+  color: #526165;
 }
 
 .projected-impact-card label {
@@ -1161,7 +1197,7 @@ button {
 .what-if-label-help {
   align-items: center;
   display: inline-flex;
-  gap: 4px;
+  gap: 5px;
 }
 
 .methodology-note {
@@ -1193,9 +1229,7 @@ button {
   gap: 8px;
 }
 
-.methodology-actions button,
-.methodology-actions a,
-.methodology-modal-head button {
+.methodology-actions a {
   background: #14282c;
   border-radius: 999px;
   color: white;
@@ -1203,60 +1237,6 @@ button {
   font-weight: 760;
   padding: 0.54rem 0.78rem;
   text-decoration: none;
-}
-
-.methodology-actions a {
-  background: rgba(20, 40, 44, 0.08);
-  color: #19363b;
-}
-
-.methodology-overlay {
-  align-items: center;
-  background: rgba(15, 22, 23, 0.38);
-  backdrop-filter: blur(14px);
-  display: flex;
-  inset: 0;
-  justify-content: center;
-  padding: 18px;
-  position: fixed;
-  z-index: 2100;
-}
-
-.methodology-modal {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 24px;
-  box-shadow: 0 34px 110px rgba(8, 20, 22, 0.28);
-  display: grid;
-  gap: 12px;
-  max-height: 92vh;
-  max-width: 1180px;
-  padding: 18px;
-  width: min(1180px, calc(100vw - 32px));
-}
-
-.methodology-modal-head {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-}
-
-.methodology-modal-head h2 {
-  margin: 0;
-}
-
-.methodology-modal iframe {
-  background: #f8faf8;
-  border: 1px solid rgba(219, 229, 224, 0.55);
-  border-radius: 16px;
-  height: 80vh;
-  width: 100%;
-}
-
-.methodology-modal p {
-  color: #526165;
-  font-size: 0.86rem;
-  margin: 0;
 }
 
 .what-if-help-wrap {
@@ -1716,9 +1696,14 @@ button {
   font-size: 0.82rem;
   font-weight: 650;
   line-height: 1.35;
+  max-width: min(340px, calc(100vw - 32px));
+  overflow-wrap: anywhere;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 10px 12px;
   position: fixed;
+  white-space: normal;
+  word-break: normal;
   z-index: 1000;
 }
 

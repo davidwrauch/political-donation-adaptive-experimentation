@@ -64,14 +64,12 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Use this as a strategy mixing board",
         "Offline estimate, not proof.",
         "This uses the simulated campaign log to estimate what might have happened under different priorities.",
-        "Default settings match the current logged policy.",
-        "The default policy reflects the current reward settings used by the simulated adaptive campaign",
         "Current policy",
         "Adjusted policy",
         "$0.00",
-        "Change vs current policy",
         "What this means",
         "Current policy",
+        "optimize net donation value per contact while applying guardrails for fatigue, exploration, and audience coverage",
         "Prioritize big donations",
         "Prioritize small donations",
         "More positive campaign",
@@ -85,8 +83,6 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Local/community",
         "Learning/diversity",
         "Hover over each control to see what it changes.",
-        "Some strategies raise dollars per contact.",
-        "Turning every knob up does not mean every outcome improves",
         "Contextual bandits (adaptive experimentation) do not decide what \"good\" means on their own.",
         "donations, volunteering, trust, fatigue, and audience coverage.",
         "Projected campaign impact",
@@ -96,10 +92,8 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Research grounding",
         "This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy",
         "research white paper explains why this approach is useful",
-        "View research white paper",
-        "Download white paper",
-        "#view=FitH",
-        "/adaptive-experimentation-methodology.pdf",
+        "Open research white paper",
+        "https://docs.google.com/document/d/1FY-S6agsHNKv1Y4vivfYlge8rKT1Ii9I/edit",
         "Why this works",
         "evaluation. It is not perfect causal proof",
         "Reliable demo estimate",
@@ -128,7 +122,6 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Donation conversion",
         "Volunteer conversion",
         "Fatigue",
-        "Diversity",
     ]:
         assert metric in what_if
     assert '<section className="what-if-metrics compact">' not in what_if
@@ -148,7 +141,14 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
     assert "flex-wrap: wrap" in styles
     assert "overflow-x: auto" not in styles
     assert "grid-template-columns: repeat(4, minmax(0, 1fr))" in styles
-    assert "height: 80vh" in styles
+    assert "methodology-modal" not in styles
+    assert "iframe" not in what_if
+    assert "DeltaCard" not in what_if
+    assert "Change vs current policy" not in what_if
+    assert "Default settings match the current logged policy." not in what_if
+    assert "Some strategies raise dollars per contact." not in what_if
+    assert "Diversity" not in what_if
+    assert "/adaptive-experimentation-methodology.pdf" not in what_if
 
 
 def test_overview_contains_leadership_metrics_and_charts():
@@ -400,10 +400,12 @@ def test_about_tab_matches_campaign_positioning_and_boundaries():
     assert "Research grounding" in about
     assert "This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy" in about
     assert "research white paper explains why this approach is useful" in about
-    assert "View research white paper" in about
-    assert "Download white paper" in about
-    assert "#view=FitH" in about
-    assert "/adaptive-experimentation-methodology.pdf" in about
+    assert "Open research white paper" in about
+    assert "https://docs.google.com/document/d/1FY-S6agsHNKv1Y4vivfYlge8rKT1Ii9I/edit" in about
+    assert "Download white paper" not in about
+    assert "#view=FitH" not in about
+    assert "/adaptive-experimentation-methodology.pdf" not in about
+    assert "iframe" not in about
     assert "Methodology note" not in about
     assert "methodology note" not in about
     assert "Adapted from my adaptive experimentation platform" not in about

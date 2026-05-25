@@ -66,7 +66,7 @@ const presets = {
 };
 
 const presetExplanations = {
-  "Current policy": "Uses the same reward settings as the current logged policy. Choose this when you want the simulator to match the campaign's existing allocation logic.",
+  "Current policy": "Uses the same reward settings as the current logged policy. Choose this when you want the simulator to match the campaign's existing allocation logic: optimize net donation value per contact while applying guardrails for fatigue, exploration, and audience coverage.",
   "Prioritize big donations": "Increases weight on expected dollars per contact and larger gift potential. This may raise total value, but can concentrate outreach among already-likely donors.",
   "Prioritize small donations": "Increases weight on broader conversion and lower-friction giving. This may grow participation and list engagement, but average donation size may fall.",
   "More positive campaign": "Rewards trust-building and reduces reliance on urgent or pressure-heavy frames. This may reduce fatigue and improve long-term engagement, but short-term donation value may be lower.",
@@ -98,7 +98,6 @@ export default function WhatIfTab({ apiBase }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showMethodology, setShowMethodology] = useState(false);
   const [audienceSize, setAudienceSize] = useState(250000);
   const requestKey = useMemo(() => JSON.stringify(weights), [weights]);
 
@@ -156,11 +155,14 @@ export default function WhatIfTab({ apiBase }) {
           <p>Test how different campaign priorities would change the system's recommendations.</p>
           <p>Use this as a strategy mixing board: shift the reward settings, compare the result to the current policy, and see the tradeoffs before changing how outreach is allocated.</p>
         </div>
-      </section>
-
-      <section className="default-note">
-        <strong>Default settings match the current logged policy.</strong>
-        <span>The default policy reflects the current reward settings used by the simulated adaptive campaign: optimize net donation value per contact while applying guardrails for fatigue, exploration, and audience coverage.</span>
+        <label className="hero-audience-select">
+          Audience size
+          <select onChange={(event) => setAudienceSize(Number(event.target.value))} value={String(audienceSize)}>
+            {audienceOptions.map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </label>
       </section>
 
       {error && <div className="alert">{error}</div>}
@@ -190,39 +192,26 @@ export default function WhatIfTab({ apiBase }) {
           />
         ))}
       </section>
-      <p className="console-note tradeoff-note">
-        Some strategies raise dollars per contact. Others may produce more volunteers, trust, or long-term engagement. This tab is meant to show those tradeoffs before changing campaign priorities.
-        <HelpTooltip text="These controls are weights, not independent improvement levers. Turning every knob up does not mean every outcome improves; it changes the scoring rule and can create tradeoffs between money, trust, fatigue, and learning." />
-      </p>
 
       <section className="compact-policy-grid">
         <PolicySummaryCard title="Current policy" metrics={baseline} />
         <PolicySummaryCard baseline={baseline} metrics={adjusted} reliabilityNeedsMore={reliabilityNeedsMore} title="Adjusted policy" />
-        <DeltaCard deltas={deltas} />
       </section>
 
       <section className="impact-row">
         <article className="projected-impact-card">
           <div>
             <span><LabelWithHelp label="Projected campaign impact" help="This extrapolates the estimated per-contact change across a larger campaign audience. Real-world results would vary." /></span>
-            <strong>{formatImpactMoney(projectedImpact)}</strong>
+            <strong className={impactClass(projectedImpact)}>{formatImpactMoney(projectedImpact)}</strong>
             <small>{signedMoney(deltas?.estimated_net_value_per_contact ?? 0)}/contact over {audienceSize.toLocaleString()} contacts</small>
             <p>Estimated difference if this policy had been used across the selected outreach volume.</p>
           </div>
-          <label>
-            Audience size
-            <select onChange={(event) => setAudienceSize(Number(event.target.value))} value={String(audienceSize)}>
-              {audienceOptions.map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </label>
         </article>
 
         <article className="projected-impact-card volunteer-impact-card">
           <div>
             <span><LabelWithHelp label="Projected volunteer signups" help="Estimated additional volunteer actions across the selected audience size based on the volunteer conversion change." /></span>
-            <strong>{formatSignedWholeNumber(projectedVolunteerSignups)}</strong>
+            <strong className={impactClass(projectedVolunteerSignups)}>{formatSignedWholeNumber(projectedVolunteerSignups)}</strong>
             <small>{formatDeltaPercent(deltas?.volunteer_conversion_rate)} over {audienceSize.toLocaleString()} contacts</small>
             <p>Estimated additional volunteer, canvassing, phonebanking, event, or civic-participation actions.</p>
           </div>
@@ -260,12 +249,11 @@ export default function WhatIfTab({ apiBase }) {
           </p>
         </div>
         <div className="methodology-actions">
-          <button onClick={() => setShowMethodology(true)} type="button">View research white paper</button>
-          <a download href="/adaptive-experimentation-methodology.pdf">Download white paper</a>
+          <a href="https://docs.google.com/document/d/1FY-S6agsHNKv1Y4vivfYlge8rKT1Ii9I/edit?usp=sharing&ouid=106737948019924007884&rtpof=true&sd=true" target="_blank" rel="noreferrer">
+            Open research white paper
+          </a>
         </div>
       </section>
-
-      {showMethodology && <MethodologyModal onClose={() => setShowMethodology(false)} />}
     </div>
   );
 }
@@ -297,7 +285,7 @@ function average(left, right) {
 function Knob({ label, description, value, onChange }) {
   const angle = value * 135 - 135;
   return (
-    <label className="strategy-knob" title={description}>
+    <label className="strategy-knob">
       <span><LabelWithHelp label={label} help={description} /></span>
       <input
         aria-label={label}
@@ -333,8 +321,6 @@ function PolicySummaryCard({ title, metrics, baseline, reliabilityNeedsMore = fa
             <dd className={deltaValueClass(metrics?.volunteer_conversion_rate, baseline?.volunteer_conversion_rate)}>{formatPercent(metrics?.volunteer_conversion_rate)}</dd>
             <dt><LabelWithHelp label="Fatigue" help="Estimated risk that outreach reduces future response or increases opt-outs." /></dt>
             <dd className={deltaValueClass(baseline?.fatigue_risk, metrics?.fatigue_risk)}>{formatPercent(metrics?.fatigue_risk)}</dd>
-            <dt><LabelWithHelp label="Diversity" help="How evenly the policy keeps message frames represented instead of collapsing to one option." /></dt>
-            <dd className={deltaValueClass(metrics?.message_diversity, baseline?.message_diversity)}>{formatPercent(metrics?.message_diversity)}</dd>
           </dl>
         </div>
       </div>
@@ -377,7 +363,7 @@ function HelpTooltip({ text }) {
       left = Math.min(Math.max(left, margin), window.innerWidth - width - margin);
       const openAbove = rect.bottom + estimatedHeight + margin > window.innerHeight;
       const top = openAbove ? rect.top - estimatedHeight - 8 : rect.bottom + 8;
-      setStyle({ left, top: Math.max(margin, top), width });
+      setStyle({ left, maxHeight: `calc(100vh - ${margin * 2}px)`, top: Math.max(margin, top), width });
     }
     position();
     window.addEventListener("resize", position);
@@ -408,29 +394,6 @@ function HelpTooltip({ text }) {
 function deltaValueClass(value, comparison) {
   if (typeof value !== "number" || typeof comparison !== "number" || Math.abs(value - comparison) < 0.0001) return "neutral-value";
   return value > comparison ? "positive-value" : "tradeoff-value";
-}
-
-function DeltaCard({ deltas }) {
-  const value = deltas?.estimated_net_value_per_contact ?? 0;
-  return (
-    <article className={`delta-card ${deltaClass(value)}`}>
-      <span>Change vs current policy</span>
-      <strong>{deltas ? signedMoney(value) : "Calculating"}</strong>
-      <p>
-        {Math.abs(value) < 0.005
-          ? "Neutral: this setting matches the logged policy."
-          : value > 0
-            ? "Improvement: higher estimated net value with current guardrails."
-            : "Tradeoff: lower net value, possibly buying down risk or broadening reach."}
-      </p>
-    </article>
-  );
-}
-
-function deltaClass(value = 0) {
-  if (value > 0.005) return "positive";
-  if (value < -0.005) return "tradeoff";
-  return "neutral";
 }
 
 function formatMoney(value) {
@@ -476,19 +439,7 @@ function formatDeltaPercent(value, lowerIsBetter = false) {
   return `${sign}${(value * 100).toFixed(1)} pts${direction}`;
 }
 
-function MethodologyModal({ onClose }) {
-  return (
-    <section className="methodology-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Research white paper">
-      <div className="methodology-modal" onClick={(event) => event.stopPropagation()}>
-        <div className="methodology-modal-head">
-          <h2>Research white paper</h2>
-          <button onClick={onClose} type="button">Close</button>
-        </div>
-        <iframe src="/adaptive-experimentation-methodology.pdf#view=FitH" title="Adaptive experimentation research white paper" />
-        <p>
-          If the embedded preview is unavailable, use Download white paper to open the PDF directly.
-        </p>
-      </div>
-    </section>
-  );
+function impactClass(value) {
+  if (typeof value !== "number" || Math.abs(value) < 0.5) return "impact-neutral";
+  return value > 0 ? "impact-positive" : "impact-negative";
 }

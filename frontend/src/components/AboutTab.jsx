@@ -1,8 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 
 export default function AboutTab() {
-  const [showMethodology, setShowMethodology] = useState(false);
-
   return (
     <div className="tab-panel">
       <section className="panel about">
@@ -24,8 +22,9 @@ export default function AboutTab() {
           </p>
         </div>
         <div className="methodology-actions">
-          <button onClick={() => setShowMethodology(true)} type="button">View research white paper</button>
-          <a download href="/adaptive-experimentation-methodology.pdf">Download white paper</a>
+          <a href="https://docs.google.com/document/d/1FY-S6agsHNKv1Y4vivfYlge8rKT1Ii9I/edit?usp=sharing&ouid=106737948019924007884&rtpof=true&sd=true" target="_blank" rel="noreferrer">
+            Open research white paper
+          </a>
         </div>
       </section>
 
@@ -107,25 +106,6 @@ export default function AboutTab() {
           LinkedIn: https://www.linkedin.com/in/davidwrauch/
         </a>
       </section>
-
-      {showMethodology && <MethodologyModal onClose={() => setShowMethodology(false)} />}
     </div>
-  );
-}
-
-function MethodologyModal({ onClose }) {
-  return (
-    <section className="methodology-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Research white paper">
-      <div className="methodology-modal" onClick={(event) => event.stopPropagation()}>
-        <div className="methodology-modal-head">
-          <h2>Research white paper</h2>
-          <button onClick={onClose} type="button">Close</button>
-        </div>
-        <iframe src="/adaptive-experimentation-methodology.pdf#view=FitH" title="Adaptive experimentation research white paper" />
-        <p>
-          If the embedded preview is unavailable, use Download white paper to open the PDF directly.
-        </p>
-      </div>
-    </section>
   );
 }
