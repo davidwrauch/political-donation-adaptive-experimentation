@@ -967,7 +967,7 @@ button {
 .policy-summary.compact dl {
   display: grid;
   gap: 2px 8px;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   margin: 0;
 }
 
@@ -1017,7 +1017,7 @@ button {
 }
 
 .what-if-metrics.compact {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 

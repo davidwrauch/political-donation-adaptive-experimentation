@@ -15,6 +15,8 @@ def test_policy_simulator_returns_baseline_adjusted_and_deltas():
 
     assert result["baseline_policy"]["estimated_net_value_per_contact"] > 0
     assert result["adjusted_policy"]["estimated_net_value_per_contact"] > 0
+    assert result["baseline_policy"]["volunteer_conversion_rate"] > 0
+    assert result["adjusted_policy"]["volunteer_conversion_rate"] > 0
     assert result["default_matches_current_policy"] is True
     assert result["adjusted_policy"] == result["baseline_policy"]
     assert result["deltas"]["estimated_net_value_per_contact"] == 0
@@ -33,6 +35,29 @@ def test_policy_simulator_weights_change_adjusted_estimate():
     assert value_first["adjusted_policy"]["estimated_net_value_per_contact"] != fatigue_first["adjusted_policy"]["estimated_net_value_per_contact"]
     assert fatigue_first["adjusted_policy"]["fatigue_risk"] <= value_first["adjusted_policy"]["fatigue_risk"]
     assert value_first["default_matches_current_policy"] is False
+
+
+def test_policy_simulator_models_volunteer_tradeoff():
+    experiment = generate_experiment(seed=35, n=420)
+    donation_first = simulate_policy(
+        experiment,
+        {"donation_value_weight": 1.8, "volunteer_conversion_weight": 0.0, "local_community_message_boost": 0.1},
+    )
+    volunteer_first = simulate_policy(
+        experiment,
+        {
+            "donation_value_weight": 0.45,
+            "conversion_weight": 0.75,
+            "volunteer_conversion_weight": 1.75,
+            "persuasion_trust_proxy_weight": 1.35,
+            "negative_urgency_message_penalty": 1.35,
+            "local_community_message_boost": 1.35,
+            "fatigue_penalty": 1.05,
+        },
+    )
+
+    assert volunteer_first["adjusted_policy"]["volunteer_conversion_rate"] > donation_first["adjusted_policy"]["volunteer_conversion_rate"]
+    assert "volunteer_conversion_rate" in volunteer_first["deltas"]
 
 
 def test_policy_simulator_overlap_warning_when_propensity_is_sparse():
@@ -65,6 +90,7 @@ def test_policy_simulator_api_endpoint_accepts_weights():
     payload = policy_simulator({"donation_value_weight": 1.6, "fatigue_penalty": 0.2})
 
     assert payload["weights"]["donation_value_weight"] == 1.6
+    assert "volunteer_conversion_rate" in payload["adjusted_policy"]
     assert payload["baseline_policy"]["contacts"] > 0
     assert payload["adjusted_policy"]["contacts"] > 0
     assert "overlap" in payload

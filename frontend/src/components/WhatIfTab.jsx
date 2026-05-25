@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 const defaultWeights = {
   donation_value_weight: 1.0,
   conversion_weight: 0.7,
+  volunteer_conversion_weight: 0.2,
   high_dollar_donor_weight: 0.35,
   persuasion_trust_proxy_weight: 0.25,
   fatigue_penalty: 0.55,
@@ -53,16 +54,29 @@ const presets = {
     negative_urgency_message_penalty: 1.25,
     fairness_audience_diversity_weight: 1.05,
   },
-  "Optimize net value": {
+  "Balance donations + volunteers": {
     ...defaultWeights,
-    donation_value_weight: 1.75,
-    conversion_weight: 1.05,
-    high_dollar_donor_weight: 0.85,
-    fatigue_penalty: 0.8,
-    unsubscribe_penalty: 0.75,
-    negative_urgency_message_penalty: 0.65,
-    exploration_diversity_weight: 0.28,
-    fairness_audience_diversity_weight: 0.28,
+    donation_value_weight: 1.15,
+    conversion_weight: 0.85,
+    volunteer_conversion_weight: 1.05,
+    persuasion_trust_proxy_weight: 1.1,
+    local_community_message_boost: 1.05,
+    negative_urgency_message_penalty: 1.0,
+    fatigue_penalty: 0.9,
+    unsubscribe_penalty: 0.85,
+  },
+  "Prioritize volunteering": {
+    ...defaultWeights,
+    donation_value_weight: 0.45,
+    conversion_weight: 0.75,
+    volunteer_conversion_weight: 1.75,
+    persuasion_trust_proxy_weight: 1.45,
+    local_community_message_boost: 1.45,
+    negative_urgency_message_penalty: 1.35,
+    fatigue_penalty: 1.1,
+    unsubscribe_penalty: 1.05,
+    exploration_diversity_weight: 0.75,
+    fairness_audience_diversity_weight: 0.8,
   },
 };
 
@@ -73,15 +87,16 @@ const presetExplanations = {
   "More positive campaign": "Rewards trust-building and reduces reliance on urgent or pressure-heavy frames. This may reduce fatigue and improve long-term engagement, but short-term donation value may be lower.",
   "Learn aggressively": "Preserves more exploration across audiences, messages, and channels. This can improve learning and avoid premature lock-in, but may sacrifice near-term fundraising efficiency.",
   "Long-term trust": "Prioritizes credibility, lower fatigue, and broader audience coverage. This is useful when the campaign cares about durable engagement, not just immediate dollars.",
-  "Optimize net value": "Searches for the highest estimated net donation value per contact while respecting guardrails. This is the closest setting to a simulated optimum, not the default policy.",
+  "Balance donations + volunteers": "Keeps donation value important while increasing weight on volunteering, trust-building, local relevance, and fatigue guardrails.",
+  "Prioritize volunteering": "Raises the value of volunteer signups and civic participation. Donation value may fall, but the campaign could build more durable organizing capacity.",
 };
 
 const controls = [
   ["donation_value_weight", "Donation value", "Prioritize expected dollars raised per contact."],
   ["conversion_weight", "Conversion", "Prioritize the chance that a contacted supporter donates."],
-  ["persuasion_trust_proxy_weight", "Persuasion/trust", "Favor messages that build confidence, credibility, and longer-term trust."],
+  ["volunteer_conversion_weight", "Volunteer conversion", "Prioritize contacts and messages more likely to produce volunteer signups or civic participation, not just donations."],
+  ["trust_positive_tone", "Trust/positive tone", "Favor messages that build confidence, credibility, and longer-term trust while reducing pressure-heavy frames."],
   ["fatigue_guardrail", "Fatigue guardrail", "Reduce priority for contacts likely to feel over-contacted or less responsive after repeated outreach."],
-  ["positive_tone", "Positive tone", "Reduce reliance on urgent, negative, or pressure-heavy message frames."],
   ["local_community_message_boost", "Local/community", "Favor local investment, community benefit, and everyday-affordability frames."],
   ["learning_diversity", "Learning/diversity", "Preserve exploration across messages, audiences, and channels so the campaign keeps learning."],
 ];
@@ -138,6 +153,7 @@ export default function WhatIfTab({ apiBase }) {
   const deltas = result?.deltas;
   const reliabilityNeedsMore = result?.overlap?.warning || activePreset === "Learn aggressively";
   const projectedImpact = (deltas?.estimated_net_value_per_contact ?? 0) * audienceSize;
+  const projectedVolunteerSignups = (deltas?.volunteer_conversion_rate ?? 0) * audienceSize;
 
   return (
     <div className="tab-panel what-if-tab">
@@ -189,7 +205,7 @@ export default function WhatIfTab({ apiBase }) {
         ))}
       </section>
       <p className="console-note tradeoff-note">
-        These controls are not independent causal levers.
+        Some strategies raise dollars per contact. Others may produce more volunteers, trust, or long-term engagement. This tab is meant to show those tradeoffs before changing campaign priorities.
         <HelpTooltip text="These controls are weights, not independent improvement levers. Turning every knob up does not mean every outcome improves; it changes the scoring rule and can create tradeoffs between money, trust, fatigue, and learning." />
       </p>
 
@@ -216,12 +232,22 @@ export default function WhatIfTab({ apiBase }) {
         </label>
       </section>
 
+      <section className="projected-impact-card volunteer-impact-card">
+        <div>
+          <span><LabelWithHelp label="Projected volunteer signups" help="Estimated additional volunteer actions across the selected audience size based on the volunteer conversion change." /></span>
+          <strong>{formatSignedWholeNumber(projectedVolunteerSignups)}</strong>
+          <small>{formatDeltaPercent(deltas?.volunteer_conversion_rate)} over {audienceSize.toLocaleString()} contacts</small>
+          <p>Estimated additional volunteer, canvassing, phonebanking, event, or civic-participation actions.</p>
+        </div>
+      </section>
+
       <section className="what-if-metrics compact">
         <h3>Secondary metrics</h3>
-        <MetricTile label="Conversion" value={formatPercent(adjusted?.donation_conversion_rate)} delta={formatDeltaPercent(deltas?.donation_conversion_rate)} />
+        <MetricTile label="Volunteer conversion" value={formatPercent(adjusted?.volunteer_conversion_rate)} delta={formatDeltaPercent(deltas?.volunteer_conversion_rate)} />
         <MetricTile label="Average donation" value={formatMoney(adjusted?.average_donation_amount)} delta={signedMoney(deltas?.average_donation_amount)} />
         <MetricTile label="Fatigue" value={formatPercent(adjusted?.fatigue_risk)} delta={formatDeltaPercent(deltas?.fatigue_risk, true)} />
         <MetricTile label="Message diversity" value={formatPercent(adjusted?.message_diversity)} delta={formatDeltaPercent(deltas?.message_diversity)} />
+        <MetricTile label="Projected campaign impact" value={formatImpactMoney(projectedImpact)} delta={`${audienceSize.toLocaleString()} contacts`} />
       </section>
 
       <section className="what-if-bottom compact">
@@ -230,7 +256,7 @@ export default function WhatIfTab({ apiBase }) {
           <p>
             Contextual bandits (adaptive experimentation) do not decide what "good" means on their own. Humans define
             the reward, constraints, and tradeoffs. This simulator shows how changing those priorities can shift
-            estimated outcomes across donations, trust, fatigue, and audience coverage.
+            estimated outcomes across donations, volunteering, trust, fatigue, and audience coverage.
           </p>
         </article>
         <article className="meaning-panel quiet-method">
@@ -250,7 +276,7 @@ export default function WhatIfTab({ apiBase }) {
 
 function controlValue(weights, key) {
   if (key === "fatigue_guardrail") return average(weights.fatigue_penalty, weights.unsubscribe_penalty);
-  if (key === "positive_tone") return weights.negative_urgency_message_penalty;
+  if (key === "trust_positive_tone") return average(weights.persuasion_trust_proxy_weight, weights.negative_urgency_message_penalty);
   if (key === "learning_diversity") return average(weights.exploration_diversity_weight, weights.fairness_audience_diversity_weight);
   return weights[key];
 }
@@ -259,8 +285,8 @@ function applyControlValue(current, key, value) {
   if (key === "fatigue_guardrail") {
     return { ...current, fatigue_penalty: value, unsubscribe_penalty: value };
   }
-  if (key === "positive_tone") {
-    return { ...current, negative_urgency_message_penalty: value };
+  if (key === "trust_positive_tone") {
+    return { ...current, persuasion_trust_proxy_weight: value, negative_urgency_message_penalty: value };
   }
   if (key === "learning_diversity") {
     return { ...current, exploration_diversity_weight: value, fairness_audience_diversity_weight: value };
@@ -305,8 +331,10 @@ function PolicySummaryCard({ title, metrics, baseline, reliabilityNeedsMore = fa
         <div className="summary-secondary">
           <span>Secondary metrics</span>
           <dl>
-            <dt><LabelWithHelp label="Conversion" help="Share of contacted supporters expected to donate." /></dt>
+            <dt><LabelWithHelp label="Donation conversion" help="Share of contacted supporters expected to donate." /></dt>
             <dd className={deltaValueClass(metrics?.donation_conversion_rate, baseline?.donation_conversion_rate)}>{formatPercent(metrics?.donation_conversion_rate)}</dd>
+            <dt><LabelWithHelp label="Volunteer conversion" help="Estimated share of contacted supporters who would take a non-donation campaign action, such as volunteering, canvassing, phonebanking, or event signup." /></dt>
+            <dd className={deltaValueClass(metrics?.volunteer_conversion_rate, baseline?.volunteer_conversion_rate)}>{formatPercent(metrics?.volunteer_conversion_rate)}</dd>
             <dt><LabelWithHelp label="Fatigue" help="Estimated risk that outreach reduces future response or increases opt-outs." /></dt>
             <dd className={deltaValueClass(baseline?.fatigue_risk, metrics?.fatigue_risk)}>{formatPercent(metrics?.fatigue_risk)}</dd>
             <dt><LabelWithHelp label="Diversity" help="How evenly the policy keeps message frames represented instead of collapsing to one option." /></dt>
@@ -438,6 +466,15 @@ function formatImpactMoney(value) {
   if (rounded < 0) return `-$${absolute}`;
   if (rounded > 0) return `+$${absolute}`;
   return "$0";
+}
+
+function formatSignedWholeNumber(value) {
+  if (typeof value !== "number") return "Calculating";
+  const rounded = Math.round(value);
+  const absolute = Math.abs(rounded).toLocaleString();
+  if (rounded < 0) return `-${absolute}`;
+  if (rounded > 0) return `+${absolute}`;
+  return "0";
 }
 
 function formatPercent(value) {

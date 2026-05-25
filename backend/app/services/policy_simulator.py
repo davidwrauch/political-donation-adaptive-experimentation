@@ -9,6 +9,7 @@ from typing import Any
 DEFAULT_WEIGHTS = {
     "donation_value_weight": 1.0,
     "conversion_weight": 0.7,
+    "volunteer_conversion_weight": 0.2,
     "high_dollar_donor_weight": 0.35,
     "persuasion_trust_proxy_weight": 0.25,
     "fatigue_penalty": 0.55,
@@ -80,6 +81,7 @@ def is_default_policy(weights: dict[str, float]) -> bool:
 def event_score(event: dict[str, Any], weights: dict[str, float]) -> float:
     value = safe_scale(event["net_expected_value"], -4, 12)
     conversion = float(event["conversion_probability"])
+    volunteer = volunteer_conversion_proxy(event)
     high_dollar = 1.0 if event["expected_donation_amount"] >= 42 else 0.0
     trust = trust_proxy(event)
     fatigue = float(event["fatigue_risk"])
@@ -91,6 +93,7 @@ def event_score(event: dict[str, Any], weights: dict[str, float]) -> float:
     score = (
         weights["donation_value_weight"] * value
         + weights["conversion_weight"] * conversion
+        + weights["volunteer_conversion_weight"] * volunteer
         + weights["high_dollar_donor_weight"] * high_dollar
         + weights["persuasion_trust_proxy_weight"] * trust
         + weights["local_community_message_boost"] * local
@@ -107,6 +110,7 @@ def aggregate_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "estimated_net_value_per_contact": round(mean(event["net_expected_value"] for event in events), 2),
         "donation_conversion_rate": round(mean(event["converted"] for event in events), 4),
+        "volunteer_conversion_rate": round(mean(volunteer_conversion_proxy(event) for event in events), 4),
         "average_donation_amount": round(mean(event["expected_donation_amount"] for event in events), 2),
         "high_dollar_donation_share": round(mean(1 if event["expected_donation_amount"] >= 42 else 0 for event in events), 4),
         "fatigue_risk": round(mean(event["fatigue_risk"] for event in events), 4),
@@ -125,6 +129,7 @@ def weighted_aggregate(scored_events: list[tuple[dict[str, Any], float]]) -> dic
     return {
         "estimated_net_value_per_contact": round(weighted_mean([event["net_expected_value"] for event in events], weights), 2),
         "donation_conversion_rate": round(weighted_mean([event["converted"] for event in events], weights), 4),
+        "volunteer_conversion_rate": round(weighted_mean([volunteer_conversion_proxy(event) for event in events], weights), 4),
         "average_donation_amount": round(weighted_mean([event["expected_donation_amount"] for event in events], weights), 2),
         "high_dollar_donation_share": round(weighted_mean([1 if event["expected_donation_amount"] >= 42 else 0 for event in events], weights), 4),
         "fatigue_risk": round(weighted_mean([event["fatigue_risk"] for event in events], weights), 4),
@@ -201,6 +206,18 @@ def trust_proxy(event: dict[str, Any]) -> float:
     if frame in {"affordability", "economic_fairness"}:
         return 0.62
     return 0.38
+
+
+def volunteer_conversion_proxy(event: dict[str, Any]) -> float:
+    trust = trust_proxy(event)
+    local = 0.1 if is_local_frame(event) else 0.0
+    positive_tone = 0.08 if not urgency_or_negative_proxy(event) else -0.06
+    learning = 0.04 if event.get("uncertainty", 0.2) > 0.35 else 0.0
+    high_dollar_drag = 0.06 if event["expected_donation_amount"] >= 48 else 0.0
+    fatigue_drag = float(event["fatigue_risk"]) * 0.16
+    donation_dominance_drag = safe_scale(event["net_expected_value"], 6, 12) * 0.05
+    base = 0.055 + trust * 0.09 + local + positive_tone + learning
+    return clamp(base - high_dollar_drag - fatigue_drag - donation_dominance_drag, 0.015, 0.32)
 
 
 def unsubscribe_proxy(event: dict[str, Any]) -> float:
