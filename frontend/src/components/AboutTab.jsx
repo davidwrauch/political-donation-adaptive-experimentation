@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function AboutTab() {
+  const [showMethodology, setShowMethodology] = useState(false);
+
   return (
     <div className="tab-panel">
       <section className="panel about">
@@ -10,6 +12,21 @@ export default function AboutTab() {
           The system simulates how campaigns can allocate scarce outreach resources across messages,
           audiences, and channels while monitoring donation conversion, expected value, and fatigue risk.
         </p>
+      </section>
+
+      <section className="methodology-note">
+        <div>
+          <h3>Research grounding</h3>
+          <p>
+            This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy
+            simulation. The methodology note explains why this approach is useful, what assumptions it requires, and
+            why it should be read as decision support rather than causal proof.
+          </p>
+        </div>
+        <div className="methodology-actions">
+          <button onClick={() => setShowMethodology(true)} type="button">View methodology note</button>
+          <a download href="/adaptive-experimentation-methodology.pdf">Download PDF</a>
+        </div>
       </section>
 
       <section className="about-grid">
@@ -90,6 +107,25 @@ export default function AboutTab() {
           LinkedIn: https://www.linkedin.com/in/davidwrauch/
         </a>
       </section>
+
+      {showMethodology && <MethodologyModal onClose={() => setShowMethodology(false)} />}
     </div>
+  );
+}
+
+function MethodologyModal({ onClose }) {
+  return (
+    <section className="methodology-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Methodology note">
+      <div className="methodology-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="methodology-modal-head">
+          <h2>Methodology note</h2>
+          <button onClick={onClose} type="button">Close</button>
+        </div>
+        <iframe src="/adaptive-experimentation-methodology.pdf" title="Adaptive experimentation methodology note" />
+        <p>
+          If the embedded preview is unavailable, use Download PDF to open the methodology note directly.
+        </p>
+      </div>
+    </section>
   );
 }

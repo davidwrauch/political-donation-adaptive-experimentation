@@ -76,7 +76,6 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Prioritize small donations",
         "More positive campaign",
         "Learn aggressively",
-        "Long-term trust",
         "Balance donations + volunteers",
         "Prioritize volunteering",
         "Donation value",
@@ -95,6 +94,11 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Projected volunteer signups",
         "Estimated additional volunteer actions across the selected audience size based on the volunteer conversion change.",
         "Estimated difference if this policy had been used across the selected outreach volume.",
+        "Research grounding",
+        "This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy",
+        "View methodology note",
+        "Download PDF",
+        "/adaptive-experimentation-methodology.pdf",
         "Why this works",
         "evaluation. It is not perfect causal proof",
         "Reliable demo estimate",
@@ -112,6 +116,7 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Audience diversity",
         "Local/community focus",
         "Optimize net value",
+        "Long-term trust",
         "Overlap and reliability",
         "Top affected audience segment",
     ]:
@@ -120,18 +125,20 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Net value/contact",
         "Donation conversion",
         "Volunteer conversion",
-        "Average donation",
         "Fatigue",
-        "Message diversity",
+        "Diversity",
     ]:
         assert metric in what_if
+    assert '<section className="what-if-metrics compact">' not in what_if
+    assert "impact-row" in what_if
     for style in [
         "what-if-hero",
         "compact-policy-grid",
         "strategy-console",
         "strategy-knob",
         "preset-row",
-        "soft-pill",
+        "impact-row",
+        "methodology-note",
     ]:
         assert style in styles
 
@@ -170,7 +177,6 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Traditional statistical significance can still be reported in a real",
         "Probability best estimates how likely the current leading strategy is to outperform the others",
         "Average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
-        "Primary optimization metric. Measures expected donation dollars generated per contact after accounting for conversion rate, donation amount, and fatigue penalties.",
         "Directional only means the current leader is promising",
         "Pause updates",
         "Resume updates",
@@ -201,15 +207,6 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Fast forward to winner",
         "Simulation progress:",
         "Winner locked in",
-        "Overall donation conversion rate by strategy",
-        "Net donation value per contact by strategy",
-        "Fatigue risk by strategy",
-        "Message-frame performance within the current leading strategy",
-        "Message allocation within the current leading strategy",
-        "primary-chart-card",
-        "primary-pill",
-        "Primary metric",
-        "chart-title-row",
         "Net value/contact:",
         "Traffic allocation:",
         "Probability best:",
@@ -224,7 +221,6 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Static randomized test",
         "Thompson sampling",
         "LinUCB",
-        "Contextual bandit with fatigue guardrail",
     ]:
         assert strategy in simulation
 
@@ -250,19 +246,24 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "traffic_allocation_timeline" in overview
     assert "formatAxisDate(row.experiment_date)" in overview
     assert "strategy_performance" in overview
-    assert "message_allocation_shift" in overview
+    assert "message_allocation_shift" not in overview
     assert "Traffic allocation over time" not in overview
+    assert "Overall donation conversion rate by strategy" not in overview
+    assert "Net donation value per contact by strategy" not in overview
+    assert "Fatigue risk by strategy" not in overview
+    assert "Message-frame performance within the current leading strategy" not in overview
+    assert "Message allocation within the current leading strategy" not in overview
+    assert "Contextual bandit with fatigue guardrail" not in overview
+    assert "guarded_contextual_bandit" not in overview
     assert "Cumulative donation conversions by allocation strategy" not in overview
     assert "Campaign readout" not in overview
     assert "Leading adaptive method" not in overview
     assert "Leading metric" not in overview
     assert "Winning strategy traffic share" not in overview
     assert 'label="Exploration rate"' not in overview
-    assert "Use Contextual bandit with fatigue guardrail as the leading allocation strategy" not in overview
     assert "Frequentist check" not in overview
     assert "p-value" not in overview
     assert "winning message" not in overview.lower()
-    assert overview.index('title="Net donation value per contact by strategy"') < overview.index('title="Overall donation conversion rate by strategy"')
 
 
 def test_experiment_design_is_practical_and_guardrailed():
@@ -388,6 +389,11 @@ def test_about_tab_matches_campaign_positioning_and_boundaries():
     assert "https://github.com/davidwrauch/political-donation-adaptive-experimentation" in about
     assert "https://www.linkedin.com/in/davidwrauch/" in about
     assert "https://arxiv.org/abs/2211.12004" in about
+    assert "Research grounding" in about
+    assert "This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy" in about
+    assert "View methodology note" in about
+    assert "Download PDF" in about
+    assert "/adaptive-experimentation-methodology.pdf" in about
     assert "Adapted from my adaptive experimentation platform" not in about
     assert "Product-focused data scientist" in about
     for guardrail in [

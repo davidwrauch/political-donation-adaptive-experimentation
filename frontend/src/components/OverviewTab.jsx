@@ -23,10 +23,6 @@ const helpText = {
   "Directional only": "Directional only means the current leader is promising, but the evidence is not strong enough to shift all traffic to it yet.",
   "Promising but keep testing": "The current winner looks encouraging, but the campaign should keep learning before shifting most traffic.",
   "Ready to scale": "The leading strategy has remained strong enough in the simulation to justify broader rollout with monitoring.",
-  "Overall donation conversion rate by strategy": "Compares the share of contacts that convert into donations for each allocation strategy.",
-  "Net donation value per contact by strategy": "Primary optimization metric. Measures expected donation dollars generated per contact after accounting for conversion rate, donation amount, and fatigue penalties.",
-  "Fatigue risk by strategy": "Compares the estimated risk that repeated outreach lowers future response or increases opt-outs.",
-  "Message-frame performance within the current leading strategy": "Shows which approved donation frames are converting within the strategy currently leading on net donation value per contact.",
   "Statistically significant?": "Traditional statistical significance asks whether the observed winner is unlikely to be ahead because of random chance. This prototype also uses probability-best because live adaptive experiments need readable decision signals before final confirmation.",
 };
 const defaultStrategies = [
@@ -49,11 +45,6 @@ const defaultStrategies = [
     id: "linucb",
     label: "LinUCB",
     description: "Uses supporter context such as issue affinity, engagement, channel preference, and donation history to personalize assignments.",
-  },
-  {
-    id: "guarded_contextual_bandit",
-    label: "Contextual bandit with fatigue guardrail",
-    description: "Personalizes outreach while reducing exposure for high-fatigue supporters and preserving a small exploration budget.",
   },
 ];
 
@@ -101,7 +92,7 @@ export default function OverviewTab({ overview }) {
       <section className="panel intro-card">
         <p>
           A New York Democratic campaign is testing donation outreach before scaling donation outreach.
-          This dashboard compares Control plus four allocation strategies to see which approach allocates limited contacts most
+          This dashboard compares Control plus three allocation strategies to see which approach allocates limited contacts most
           effectively across messages, audience segments, and channels. It does not declare one global best message
           because adaptive campaigns assign different messages to different people. The simulation updates quickly so
           the tradeoff between learning and scaling is visible during a short demo.
@@ -155,40 +146,6 @@ export default function OverviewTab({ overview }) {
       ) : (
         <>
           <StrategyRateChart allocationRows={allocationRows} probabilityBest={probabilityBest} rows={chartRows} strategies={strategies} />
-
-          <section className="chart-grid">
-            <BarChart
-              isPrimary
-              title="Net donation value per contact by strategy"
-              rows={strategies}
-              valueKey="net_expected_value"
-              formatter={formatMoney}
-            />
-            <BarChart
-              title="Overall donation conversion rate by strategy"
-              rows={strategies}
-              valueKey="conversion_rate"
-              formatter={formatPercent}
-            />
-          </section>
-
-          <section className="chart-grid">
-            <BarChart
-              title="Fatigue risk by strategy"
-              rows={strategies}
-              valueKey="fatigue_risk"
-              formatter={formatPercent}
-            />
-            <BarChart
-              title="Message-frame performance within the current leading strategy"
-              rows={overview.message_performance}
-              valueKey="conversion_rate"
-              formatter={formatPercent}
-              note={`Using ${overview.current_readout.leading_strategy.label}. Message-frame performance is secondary to the allocation strategy comparison.`}
-            />
-          </section>
-
-          <MessageAllocationChart rows={overview.message_allocation_shift} strategy={overview.current_readout.leading_strategy.label} />
         </>
       )}
     </div>
@@ -481,68 +438,12 @@ function StrategyRateChart({ rows, strategies, allocationRows = [], probabilityB
   );
 }
 
-function MessageAllocationChart({ rows, strategy }) {
-  const latest = rows.at(-1)?.frames ?? [];
-  const first = rows[0]?.frames ?? [];
-  return (
-    <section className="panel">
-      <h2>Message allocation within the current leading strategy</h2>
-      <p className="panel-copy">
-        <strong>Current leading strategy: {strategy}.</strong>
-      </p>
-      <p className="panel-copy">
-        This secondary view shows how the current leading strategy distributes outreach across message frames while
-        preserving some exploration.
-      </p>
-      <div className="allocation-grid">
-        {latest.map((frame) => {
-          const starting = first.find((item) => item.id === frame.id)?.allocation_share ?? 0;
-          return (
-            <article key={frame.id}>
-              <strong>{frame.label}</strong>
-              <span>Latest batch allocation: {formatPercent(frame.allocation_share)}</span>
-              <small>Started at {formatPercent(starting)}</small>
-              <div className="bar-track">
-                <div className="bar-fill" style={{ width: `${Math.max(4, frame.allocation_share * 100)}%` }} />
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 function Metric({ label, value, help, className = "" }) {
   return (
     <div className={className}>
       <span><LabelWithHelp label={label} help={help} /></span>
       <strong>{value}</strong>
     </div>
-  );
-}
-
-function BarChart({ title, rows, valueKey, formatter, note, isPrimary = false }) {
-  const max = Math.max(...rows.map((row) => Math.abs(row[valueKey])), 0.01);
-  return (
-    <section className={isPrimary ? "panel primary-chart-card" : "panel"}>
-      <div className="chart-title-row">
-        <h2><LabelWithHelp label={title} help={helpText[title]} /></h2>
-        {isPrimary && <span className="primary-pill">Primary metric</span>}
-      </div>
-      {note && <p className="panel-copy">{note}</p>}
-      <div className="bar-list">
-        {rows.map((row) => (
-          <div className="bar-row" key={row.id}>
-            <span>{row.label}</span>
-            <div className="bar-track">
-              <div className="bar-fill" style={{ width: `${Math.max(4, (Math.abs(row[valueKey]) / max) * 100)}%` }} />
-            </div>
-            <strong>{formatter(row[valueKey])}</strong>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 

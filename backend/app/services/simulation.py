@@ -45,12 +45,6 @@ STRATEGIES = [
         "description": "Uses supporter context such as issue affinity, engagement, channel preference, and donation history to personalize assignments.",
         "exploration_rate": 0.14,
     },
-    {
-        "id": "guarded_contextual_bandit",
-        "label": "Contextual bandit with fatigue guardrail",
-        "description": "Personalizes outreach while reducing exposure for high-fatigue supporters and preserving a small exploration budget.",
-        "exploration_rate": 0.10,
-    },
 ]
 
 MESSAGE_FRAMES = [
@@ -347,8 +341,6 @@ def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random
     )
     if strategy["id"] == "control":
         score -= 0.22
-    if strategy["id"] == "guarded_contextual_bandit":
-        score += 0.10
     if strategy["id"] == "linucb":
         score += 0.12
     if strategy["id"] == "thompson_sampling":
@@ -363,13 +355,9 @@ def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random
         + (5 if channel == "phone" else 0)
     )
     fatigue_risk = clamp(supporter["donor_fatigue_score"] + (0.12 if channel in {"SMS", "phone"} else 0.04), 0, 1)
-    if strategy["id"] == "guarded_contextual_bandit":
-        fatigue_risk = clamp(fatigue_risk - 0.08, 0, 1)
     net_value = conversion_probability * expected_amount - fatigue_risk * 4.5
     if strategy["id"] == "control":
         net_value -= 0.35
-    if strategy["id"] == "guarded_contextual_bandit":
-        net_value += 0.55
     if strategy["id"] == "linucb":
         net_value += 0.75
     if strategy["id"] == "thompson_sampling":
@@ -574,15 +562,13 @@ def traffic_shares_for_batch(batch: int, total_batches: int) -> dict[str, float]
             "control": 0.0,
             "static_ab": 0.0,
             "thompson_sampling": 0.0,
-            "linucb": 0.0,
-            "guarded_contextual_bandit": 1.0,
+            "linucb": 1.0,
         }
     weights = {
-        "control": max(0.02, 0.20 * (1 - progress) ** 1.35),
-        "static_ab": max(0.03, 0.20 * (1 - progress) ** 1.15),
-        "thompson_sampling": max(0.04, 0.20 * (1 - progress * 0.72)),
-        "linucb": max(0.05, 0.20 * (1 - progress * 0.52)),
-        "guarded_contextual_bandit": 0.20 + 1.45 * progress ** 1.25,
+        "control": max(0.03, 0.25 * (1 - progress) ** 1.25),
+        "static_ab": max(0.05, 0.25 * (1 - progress) ** 1.05),
+        "thompson_sampling": max(0.08, 0.25 * (1 - progress * 0.55)),
+        "linucb": 0.25 + 1.15 * progress ** 1.18,
     }
     total = sum(weights.values())
     return {key: round(value / total, 4) for key, value in weights.items()}
@@ -647,7 +633,7 @@ def simulated_bayesian_confidence(strategy_rows: list[dict], leading_strategy_id
     gap = max(0.0, leader["net_expected_value"] - runner_up["net_expected_value"])
     progress_bonus = max(0, leader.get("traffic_share", 0) - 0.2) * 0.24
     probability = clamp(0.52 + gap * 0.08 + progress_bonus, 0.52, 0.89)
-    if leader["id"] == "guarded_contextual_bandit" and leader.get("traffic_share", 0) >= 0.99:
+    if leader["id"] == "linucb" and leader.get("traffic_share", 0) >= 0.85:
         probability = 0.88
     return {
         "strategy_id": leading_strategy_id,
@@ -668,7 +654,7 @@ def simulated_frequentist_check(strategy_rows: list[dict]) -> dict:
     share_bonus = max(0, leader.get("traffic_share", 0) - 0.2)
     p_vs_control = clamp(0.34 - control_gap * 0.04 - sample_factor * 0.06 - share_bonus * 0.19, 0.01, 0.49)
     p_vs_runner_up = clamp(0.42 - runner_gap * 0.06 - sample_factor * 0.04 - share_bonus * 0.19, 0.02, 0.55)
-    if leader["id"] == "guarded_contextual_bandit" and leader.get("traffic_share", 0) >= 0.99:
+    if leader["id"] == "linucb" and leader.get("traffic_share", 0) >= 0.85:
         p_vs_control = 0.018
         p_vs_runner_up = 0.031
     return {

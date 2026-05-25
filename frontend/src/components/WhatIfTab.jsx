@@ -46,14 +46,6 @@ const presets = {
     exploration_diversity_weight: 1.45,
     fairness_audience_diversity_weight: 1.25,
   },
-  "Long-term trust": {
-    ...defaultWeights,
-    persuasion_trust_proxy_weight: 1.45,
-    fatigue_penalty: 1.25,
-    unsubscribe_penalty: 1.2,
-    negative_urgency_message_penalty: 1.25,
-    fairness_audience_diversity_weight: 1.05,
-  },
   "Balance donations + volunteers": {
     ...defaultWeights,
     donation_value_weight: 1.15,
@@ -86,7 +78,6 @@ const presetExplanations = {
   "Prioritize small donations": "Increases weight on broader conversion and lower-friction giving. This may grow participation and list engagement, but average donation size may fall.",
   "More positive campaign": "Rewards trust-building and reduces reliance on urgent or pressure-heavy frames. This may reduce fatigue and improve long-term engagement, but short-term donation value may be lower.",
   "Learn aggressively": "Preserves more exploration across audiences, messages, and channels. This can improve learning and avoid premature lock-in, but may sacrifice near-term fundraising efficiency.",
-  "Long-term trust": "Prioritizes credibility, lower fatigue, and broader audience coverage. This is useful when the campaign cares about durable engagement, not just immediate dollars.",
   "Balance donations + volunteers": "Keeps donation value important while increasing weight on volunteering, trust-building, local relevance, and fatigue guardrails.",
   "Prioritize volunteering": "Raises the value of volunteer signups and civic participation. Donation value may fall, but the campaign could build more durable organizing capacity.",
 };
@@ -115,6 +106,7 @@ export default function WhatIfTab({ apiBase }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showMethodology, setShowMethodology] = useState(false);
   const [audienceSize, setAudienceSize] = useState(250000);
   const requestKey = useMemo(() => JSON.stringify(weights), [weights]);
 
@@ -215,39 +207,32 @@ export default function WhatIfTab({ apiBase }) {
         <DeltaCard deltas={deltas} />
       </section>
 
-      <section className="projected-impact-card">
-        <div>
-          <span><LabelWithHelp label="Projected campaign impact" help="This extrapolates the estimated per-contact change across a larger campaign audience. Real-world results would vary." /></span>
-          <strong>{formatImpactMoney(projectedImpact)}</strong>
-          <small>{signedMoney(deltas?.estimated_net_value_per_contact ?? 0)}/contact over {audienceSize.toLocaleString()} contacts</small>
-          <p>Estimated difference if this policy had been used across the selected outreach volume.</p>
-        </div>
-        <label>
-          Audience size
-          <select onChange={(event) => setAudienceSize(Number(event.target.value))} value={String(audienceSize)}>
-            {audienceOptions.map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </label>
-      </section>
+      <section className="impact-row">
+        <article className="projected-impact-card">
+          <div>
+            <span><LabelWithHelp label="Projected campaign impact" help="This extrapolates the estimated per-contact change across a larger campaign audience. Real-world results would vary." /></span>
+            <strong>{formatImpactMoney(projectedImpact)}</strong>
+            <small>{signedMoney(deltas?.estimated_net_value_per_contact ?? 0)}/contact over {audienceSize.toLocaleString()} contacts</small>
+            <p>Estimated difference if this policy had been used across the selected outreach volume.</p>
+          </div>
+          <label>
+            Audience size
+            <select onChange={(event) => setAudienceSize(Number(event.target.value))} value={String(audienceSize)}>
+              {audienceOptions.map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </label>
+        </article>
 
-      <section className="projected-impact-card volunteer-impact-card">
-        <div>
-          <span><LabelWithHelp label="Projected volunteer signups" help="Estimated additional volunteer actions across the selected audience size based on the volunteer conversion change." /></span>
-          <strong>{formatSignedWholeNumber(projectedVolunteerSignups)}</strong>
-          <small>{formatDeltaPercent(deltas?.volunteer_conversion_rate)} over {audienceSize.toLocaleString()} contacts</small>
-          <p>Estimated additional volunteer, canvassing, phonebanking, event, or civic-participation actions.</p>
-        </div>
-      </section>
-
-      <section className="what-if-metrics compact">
-        <h3>Secondary metrics</h3>
-        <MetricTile label="Volunteer conversion" value={formatPercent(adjusted?.volunteer_conversion_rate)} delta={formatDeltaPercent(deltas?.volunteer_conversion_rate)} />
-        <MetricTile label="Average donation" value={formatMoney(adjusted?.average_donation_amount)} delta={signedMoney(deltas?.average_donation_amount)} />
-        <MetricTile label="Fatigue" value={formatPercent(adjusted?.fatigue_risk)} delta={formatDeltaPercent(deltas?.fatigue_risk, true)} />
-        <MetricTile label="Message diversity" value={formatPercent(adjusted?.message_diversity)} delta={formatDeltaPercent(deltas?.message_diversity)} />
-        <MetricTile label="Projected campaign impact" value={formatImpactMoney(projectedImpact)} delta={`${audienceSize.toLocaleString()} contacts`} />
+        <article className="projected-impact-card volunteer-impact-card">
+          <div>
+            <span><LabelWithHelp label="Projected volunteer signups" help="Estimated additional volunteer actions across the selected audience size based on the volunteer conversion change." /></span>
+            <strong>{formatSignedWholeNumber(projectedVolunteerSignups)}</strong>
+            <small>{formatDeltaPercent(deltas?.volunteer_conversion_rate)} over {audienceSize.toLocaleString()} contacts</small>
+            <p>Estimated additional volunteer, canvassing, phonebanking, event, or civic-participation actions.</p>
+          </div>
+        </article>
       </section>
 
       <section className="what-if-bottom compact">
@@ -270,6 +255,23 @@ export default function WhatIfTab({ apiBase }) {
           {loading && <small>Updating estimate...</small>}
         </article>
       </section>
+
+      <section className="methodology-note">
+        <div>
+          <h3>Research grounding</h3>
+          <p>
+            This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy
+            simulation. The methodology note explains why this approach is useful, what assumptions it requires, and
+            why it should be read as decision support rather than causal proof.
+          </p>
+        </div>
+        <div className="methodology-actions">
+          <button onClick={() => setShowMethodology(true)} type="button">View methodology note</button>
+          <a download href="/adaptive-experimentation-methodology.pdf">Download PDF</a>
+        </div>
+      </section>
+
+      {showMethodology && <MethodologyModal onClose={() => setShowMethodology(false)} />}
     </div>
   );
 }
@@ -431,16 +433,6 @@ function DeltaCard({ deltas }) {
   );
 }
 
-function MetricTile({ label, value, delta }) {
-  return (
-    <article>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{delta}</small>
-    </article>
-  );
-}
-
 function deltaClass(value = 0) {
   if (value > 0.005) return "positive";
   if (value < -0.005) return "tradeoff";
@@ -488,4 +480,21 @@ function formatDeltaPercent(value, lowerIsBetter = false) {
   const sign = value >= 0 ? "+" : "";
   const direction = lowerIsBetter ? (value <= 0 ? " better" : " higher") : "";
   return `${sign}${(value * 100).toFixed(1)} pts${direction}`;
+}
+
+function MethodologyModal({ onClose }) {
+  return (
+    <section className="methodology-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Methodology note">
+      <div className="methodology-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="methodology-modal-head">
+          <h2>Methodology note</h2>
+          <button onClick={onClose} type="button">Close</button>
+        </div>
+        <iframe src="/adaptive-experimentation-methodology.pdf" title="Adaptive experimentation methodology note" />
+        <p>
+          If the embedded preview is unavailable, use Download PDF to open the methodology note directly.
+        </p>
+      </div>
+    </section>
+  );
 }

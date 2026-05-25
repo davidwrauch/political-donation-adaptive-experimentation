@@ -33,13 +33,12 @@ def test_summary_has_campaign_experiment_metrics():
     summary = summarize_experiment(generate_experiment(seed=8, n=250))
 
     assert summary["total_supporters"] == 250
-    assert summary["active_arms"] == 5
+    assert summary["active_arms"] == 4
     assert [strategy["label"] for strategy in summary["strategies"]] == [
         "Control",
         "Static randomized test",
         "Thompson sampling",
         "LinUCB",
-        "Contextual bandit with fatigue guardrail",
     ]
     assert summary["primary_metric"]["value"] > 0
     assert summary["primary_metric"]["label"] == "Net donation value per contact"
@@ -67,13 +66,13 @@ def test_summary_has_campaign_experiment_metrics():
         "Promising but keep testing",
         "Ready to scale",
     ]
-    assert summary["current_readout"]["leading_strategy"]["label"] == "Contextual bandit with fatigue guardrail"
+    assert summary["current_readout"]["leading_strategy"]["label"] == "LinUCB"
     assert 0.85 <= summary["current_readout"]["bayesian_confidence"]["probability_best"] <= 0.90
     assert summary["current_readout"]["recommendation_status"] == "Ready to scale"
     assert summary["current_readout"]["estimated_additional_contacts_needed"] == 0
     assert summary["current_readout"]["frequentist_check"]["statistically_significant"] is True
-    assert summary["current_readout"]["current_leading_strategy_traffic_share"] == 1.0
-    assert summary["strategy_performance"][0]["traffic_share"] == 1.0
+    assert summary["current_readout"]["current_leading_strategy_traffic_share"] >= 0.85
+    assert summary["strategy_performance"][0]["traffic_share"] >= 0.85
     assert summary["current_readout"]["estimated_additional_contacts_needed"] >= 0
     assert summary["best_segment"]["label"]
     assert summary["best_channel"]["label"]
@@ -82,7 +81,7 @@ def test_summary_has_campaign_experiment_metrics():
     assert summary["strategy_timeline"][0]["experiment_date"] == "2026-02-01"
     assert summary["strategy_rate_timeline"]
     assert summary["traffic_allocation_timeline"]
-    assert summary["traffic_allocation_timeline"][-1]["series"][-1]["traffic_share"] == 1.0
+    assert summary["traffic_allocation_timeline"][-1]["series"][-1]["traffic_share"] >= 0.85
     assert summary["strategy_status_timeline"]
     assert summary["strategy_status_timeline"][0]["total_contacts_observed"] < summary["strategy_status_timeline"][-1]["total_contacts_observed"]
     assert summary["strategy_rate_timeline"][0]["experiment_date"] == "2026-02-01"

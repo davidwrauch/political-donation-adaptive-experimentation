@@ -792,8 +792,9 @@ button {
 
 .preset-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 5px;
+  overflow-x: auto;
 }
 
 .preset-row button {
@@ -805,6 +806,7 @@ button {
   font-size: 0.72rem;
   font-weight: 760;
   padding: 0.26rem 0.43rem;
+  white-space: nowrap;
 }
 
 .preset-row button.active {
@@ -1063,6 +1065,16 @@ button {
   padding: 7px 10px;
 }
 
+.impact-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.impact-row .projected-impact-card {
+  min-width: 0;
+}
+
 .scenario-note strong,
 .projected-impact-card span {
   color: #18282b;
@@ -1138,6 +1150,101 @@ button {
   align-items: center;
   display: inline-flex;
   gap: 4px;
+}
+
+.methodology-note {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(219, 229, 224, 0.3);
+  border-radius: 18px;
+  box-shadow: 0 16px 42px rgba(37, 54, 50, 0.05);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+
+.methodology-note h3 {
+  margin: 0 0 5px;
+}
+
+.methodology-note p {
+  color: #526165;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.methodology-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.methodology-actions button,
+.methodology-actions a,
+.methodology-modal-head button {
+  background: #14282c;
+  border-radius: 999px;
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 760;
+  padding: 0.54rem 0.78rem;
+  text-decoration: none;
+}
+
+.methodology-actions a {
+  background: rgba(20, 40, 44, 0.08);
+  color: #19363b;
+}
+
+.methodology-overlay {
+  align-items: center;
+  background: rgba(15, 22, 23, 0.38);
+  backdrop-filter: blur(14px);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 18px;
+  position: fixed;
+  z-index: 2100;
+}
+
+.methodology-modal {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  box-shadow: 0 34px 110px rgba(8, 20, 22, 0.28);
+  display: grid;
+  gap: 12px;
+  max-height: 92vh;
+  max-width: 940px;
+  padding: 18px;
+  width: min(940px, calc(100vw - 32px));
+}
+
+.methodology-modal-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.methodology-modal-head h2 {
+  margin: 0;
+}
+
+.methodology-modal iframe {
+  background: #f8faf8;
+  border: 1px solid rgba(219, 229, 224, 0.55);
+  border-radius: 16px;
+  height: min(68vh, 680px);
+  width: 100%;
+}
+
+.methodology-modal p {
+  color: #526165;
+  font-size: 0.86rem;
+  margin: 0;
 }
 
 .what-if-help-wrap {
@@ -2169,6 +2276,7 @@ button {
   .comparison-surface,
   .what-if-metrics,
   .what-if-bottom,
+  .impact-row,
   .strategy-legend,
   .strategy-grid,
   .chart-grid,
@@ -2214,6 +2322,11 @@ button {
   }
 
   .ai-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .methodology-note {
     align-items: flex-start;
     flex-direction: column;
   }
