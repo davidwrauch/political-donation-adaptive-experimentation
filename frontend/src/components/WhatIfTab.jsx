@@ -39,13 +39,6 @@ const presets = {
     local_community_message_boost: 1.1,
     negative_urgency_message_penalty: 1.35,
   },
-  "Learn aggressively": {
-    ...defaultWeights,
-    donation_value_weight: 0.6,
-    conversion_weight: 0.65,
-    exploration_diversity_weight: 1.45,
-    fairness_audience_diversity_weight: 1.25,
-  },
   "Balance donations + volunteers": {
     ...defaultWeights,
     donation_value_weight: 1.15,
@@ -77,7 +70,6 @@ const presetExplanations = {
   "Prioritize big donations": "Increases weight on expected dollars per contact and larger gift potential. This may raise total value, but can concentrate outreach among already-likely donors.",
   "Prioritize small donations": "Increases weight on broader conversion and lower-friction giving. This may grow participation and list engagement, but average donation size may fall.",
   "More positive campaign": "Rewards trust-building and reduces reliance on urgent or pressure-heavy frames. This may reduce fatigue and improve long-term engagement, but short-term donation value may be lower.",
-  "Learn aggressively": "Preserves more exploration across audiences, messages, and channels. This can improve learning and avoid premature lock-in, but may sacrifice near-term fundraising efficiency.",
   "Balance donations + volunteers": "Keeps donation value important while increasing weight on volunteering, trust-building, local relevance, and fatigue guardrails.",
   "Prioritize volunteering": "Raises the value of volunteer signups and civic participation. Donation value may fall, but the campaign could build more durable organizing capacity.",
 };
@@ -143,24 +135,26 @@ export default function WhatIfTab({ apiBase }) {
   const adjusted = result?.adjusted_policy;
   const baseline = result?.baseline_policy;
   const deltas = result?.deltas;
-  const reliabilityNeedsMore = result?.overlap?.warning || activePreset === "Learn aggressively";
+  const reliabilityNeedsMore = result?.overlap?.warning;
   const projectedImpact = (deltas?.estimated_net_value_per_contact ?? 0) * audienceSize;
   const projectedVolunteerSignups = (deltas?.volunteer_conversion_rate ?? 0) * audienceSize;
 
   return (
     <div className="tab-panel what-if-tab">
       <section className="what-if-hero compact">
-        <div>
+        <div className="what-if-hero-left">
           <p className="eyebrow">Strategy mixing board</p>
           <h2><LabelWithHelp label="What If?" help="This tab lets campaign leadership test alternative reward priorities before changing allocation logic." /></h2>
-          <p>Test how different campaign priorities would change the system's recommendations.</p>
-          <p>Use this as a strategy mixing board: shift the reward settings, compare the result to the current policy, and see the tradeoffs before changing how outreach is allocated.</p>
           <small className="quiet-caveat">
             <LabelWithHelp
               label="Offline estimate, not proof."
               help="This uses the simulated campaign log to estimate what might have happened under different priorities. It is most reliable when the historical experiment explored similar actions often enough to compare them."
             />
           </small>
+        </div>
+        <div className="what-if-hero-right">
+          <p>Test how different campaign priorities would change the system's recommendations.</p>
+          <p>Use this as a strategy mixing board: shift the reward settings, compare the result to the current policy, and see the tradeoffs before changing how outreach is allocated.</p>
         </div>
       </section>
 
@@ -261,13 +255,13 @@ export default function WhatIfTab({ apiBase }) {
           <h3>Research grounding</h3>
           <p>
             This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy
-            simulation. The methodology note explains why this approach is useful, what assumptions it requires, and
+            simulation. The research white paper explains why this approach is useful, what assumptions it requires, and
             why it should be read as decision support rather than causal proof.
           </p>
         </div>
         <div className="methodology-actions">
-          <button onClick={() => setShowMethodology(true)} type="button">View methodology note</button>
-          <a download href="/adaptive-experimentation-methodology.pdf">Download PDF</a>
+          <button onClick={() => setShowMethodology(true)} type="button">View research white paper</button>
+          <a download href="/adaptive-experimentation-methodology.pdf">Download white paper</a>
         </div>
       </section>
 
@@ -484,15 +478,15 @@ function formatDeltaPercent(value, lowerIsBetter = false) {
 
 function MethodologyModal({ onClose }) {
   return (
-    <section className="methodology-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Methodology note">
+    <section className="methodology-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Research white paper">
       <div className="methodology-modal" onClick={(event) => event.stopPropagation()}>
         <div className="methodology-modal-head">
-          <h2>Methodology note</h2>
+          <h2>Research white paper</h2>
           <button onClick={onClose} type="button">Close</button>
         </div>
-        <iframe src="/adaptive-experimentation-methodology.pdf" title="Adaptive experimentation methodology note" />
+        <iframe src="/adaptive-experimentation-methodology.pdf#view=FitH" title="Adaptive experimentation research white paper" />
         <p>
-          If the embedded preview is unavailable, use Download PDF to open the methodology note directly.
+          If the embedded preview is unavailable, use Download white paper to open the PDF directly.
         </p>
       </div>
     </section>

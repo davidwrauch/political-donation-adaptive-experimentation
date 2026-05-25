@@ -13,7 +13,6 @@ const helpText = {
   "Adaptive lift vs control": "Estimated improvement versus generic non-personalized outreach.",
   "Total contacts observed": "Total simulated supporter contacts included in the current dashboard readout.",
   "Control contacts": "Number of simulated contacts assigned to generic non-personalized outreach.",
-  "Contacts observed": "Number of simulated supporter contacts assigned to this strategy so far.",
   "Contacts assigned to this strategy": "Number of simulated supporter contacts assigned to the current leading strategy.",
   "Traffic share": "Current share of simulated outreach traffic allocated to this strategy.",
   "Net expected value": "Estimated donation value after accounting for response rate, average donation amount, and fatigue effects.",
@@ -200,7 +199,6 @@ function StrategyStatusCard({ strategy, isLeader }) {
           value={formatMaybePercent(strategy.fatigue_risk)}
           help="Estimated risk that repeated outreach reduces future response or causes opt-outs."
         />
-        <Metric label="Contacts observed" value={formatMaybeNumber(strategy.contacts_observed)} />
         <div className="allocation-box">
           <Metric label="Traffic share" value={formatMaybePercent(strategy.traffic_share)} />
           <Metric className={`allocation-status ${statusClass}`} label="Allocation status" value={strategy.allocation_status ?? "Loading"} />

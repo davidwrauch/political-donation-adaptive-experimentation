@@ -734,8 +734,10 @@ button {
 
 .what-if-hero.compact {
   align-items: center;
-  display: block;
-  padding: 13px 18px;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 0.82fr 1.18fr;
+  padding: 16px 20px;
 }
 
 .what-if-hero.compact h2 {
@@ -747,6 +749,16 @@ button {
   font-size: 0.82rem;
   line-height: 1.26;
   max-width: 980px;
+}
+
+.what-if-hero-right {
+  display: grid;
+  gap: 8px;
+}
+
+.what-if-hero-left {
+  display: grid;
+  gap: 4px;
 }
 
 .quiet-caveat {
@@ -792,9 +804,9 @@ button {
 
 .preset-row {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 5px;
-  overflow-x: auto;
+  flex-wrap: wrap;
+  column-gap: 7px;
+  row-gap: 7px;
 }
 
 .preset-row button {
@@ -1218,9 +1230,9 @@ button {
   display: grid;
   gap: 12px;
   max-height: 92vh;
-  max-width: 940px;
+  max-width: 1180px;
   padding: 18px;
-  width: min(940px, calc(100vw - 32px));
+  width: min(1180px, calc(100vw - 32px));
 }
 
 .methodology-modal-head {
@@ -1237,7 +1249,7 @@ button {
   background: #f8faf8;
   border: 1px solid rgba(219, 229, 224, 0.55);
   border-radius: 16px;
-  height: min(68vh, 680px);
+  height: 80vh;
   width: 100%;
 }
 
@@ -1521,7 +1533,7 @@ button {
 .strategy-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .strategy-legend .panel,
@@ -2329,5 +2341,9 @@ button {
   .methodology-note {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .what-if-hero.compact {
+    grid-template-columns: 1fr;
   }
 }

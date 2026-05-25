@@ -75,7 +75,6 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Prioritize big donations",
         "Prioritize small donations",
         "More positive campaign",
-        "Learn aggressively",
         "Balance donations + volunteers",
         "Prioritize volunteering",
         "Donation value",
@@ -96,8 +95,10 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Estimated difference if this policy had been used across the selected outreach volume.",
         "Research grounding",
         "This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy",
-        "View methodology note",
-        "Download PDF",
+        "research white paper explains why this approach is useful",
+        "View research white paper",
+        "Download white paper",
+        "#view=FitH",
         "/adaptive-experimentation-methodology.pdf",
         "Why this works",
         "evaluation. It is not perfect causal proof",
@@ -117,6 +118,7 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Local/community focus",
         "Optimize net value",
         "Long-term trust",
+        "Learn aggressively",
         "Overlap and reliability",
         "Top affected audience segment",
     ]:
@@ -133,6 +135,8 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
     assert "impact-row" in what_if
     for style in [
         "what-if-hero",
+        "what-if-hero-left",
+        "what-if-hero-right",
         "compact-policy-grid",
         "strategy-console",
         "strategy-knob",
@@ -141,6 +145,10 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "methodology-note",
     ]:
         assert style in styles
+    assert "flex-wrap: wrap" in styles
+    assert "overflow-x: auto" not in styles
+    assert "grid-template-columns: repeat(4, minmax(0, 1fr))" in styles
+    assert "height: 80vh" in styles
 
 
 def test_overview_contains_leadership_metrics_and_charts():
@@ -162,7 +170,6 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Average donation amount",
         "Total contacts observed",
         "Contacts assigned to this strategy",
-        "Contacts observed",
         "Probability best",
         "Additional contacts before high-confidence rollout",
         "Rollout confidence status",
@@ -261,6 +268,7 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "Leading metric" not in overview
     assert "Winning strategy traffic share" not in overview
     assert 'label="Exploration rate"' not in overview
+    assert 'label="Contacts observed"' not in overview
     assert "Frequentist check" not in overview
     assert "p-value" not in overview
     assert "winning message" not in overview.lower()
@@ -391,9 +399,13 @@ def test_about_tab_matches_campaign_positioning_and_boundaries():
     assert "https://arxiv.org/abs/2211.12004" in about
     assert "Research grounding" in about
     assert "This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy" in about
-    assert "View methodology note" in about
-    assert "Download PDF" in about
+    assert "research white paper explains why this approach is useful" in about
+    assert "View research white paper" in about
+    assert "Download white paper" in about
+    assert "#view=FitH" in about
     assert "/adaptive-experimentation-methodology.pdf" in about
+    assert "Methodology note" not in about
+    assert "methodology note" not in about
     assert "Adapted from my adaptive experimentation platform" not in about
     assert "Product-focused data scientist" in about
     for guardrail in [

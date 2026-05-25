@@ -19,13 +19,13 @@ export default function AboutTab() {
           <h3>Research grounding</h3>
           <p>
             This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy
-            simulation. The methodology note explains why this approach is useful, what assumptions it requires, and
+            simulation. The research white paper explains why this approach is useful, what assumptions it requires, and
             why it should be read as decision support rather than causal proof.
           </p>
         </div>
         <div className="methodology-actions">
-          <button onClick={() => setShowMethodology(true)} type="button">View methodology note</button>
-          <a download href="/adaptive-experimentation-methodology.pdf">Download PDF</a>
+          <button onClick={() => setShowMethodology(true)} type="button">View research white paper</button>
+          <a download href="/adaptive-experimentation-methodology.pdf">Download white paper</a>
         </div>
       </section>
 
@@ -115,15 +115,15 @@ export default function AboutTab() {
 
 function MethodologyModal({ onClose }) {
   return (
-    <section className="methodology-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Methodology note">
+    <section className="methodology-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Research white paper">
       <div className="methodology-modal" onClick={(event) => event.stopPropagation()}>
         <div className="methodology-modal-head">
-          <h2>Methodology note</h2>
+          <h2>Research white paper</h2>
           <button onClick={onClose} type="button">Close</button>
         </div>
-        <iframe src="/adaptive-experimentation-methodology.pdf" title="Adaptive experimentation methodology note" />
+        <iframe src="/adaptive-experimentation-methodology.pdf#view=FitH" title="Adaptive experimentation research white paper" />
         <p>
-          If the embedded preview is unavailable, use Download PDF to open the methodology note directly.
+          If the embedded preview is unavailable, use Download white paper to open the PDF directly.
         </p>
       </div>
     </section>
