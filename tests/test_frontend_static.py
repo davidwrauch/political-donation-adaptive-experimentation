@@ -60,9 +60,10 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
     assert "/api/policy-simulator" in main
     for text in [
         "What If?",
-        "Explore how changing campaign priorities reshapes persuasion, fundraising, fatigue, and audience reach.",
-        "Offline simulation, not causal proof.",
-        "What If lets campaign leadership test how changing priorities would have changed estimated outcomes on the simulated campaign log.",
+        "Test how different campaign priorities would change the system's recommendations.",
+        "Use this as a strategy mixing board",
+        "Offline estimate, not proof.",
+        "This uses the simulated campaign log to estimate what might have happened under different priorities.",
         "Default settings match the current logged policy.",
         "The default policy reflects the current reward settings used by the simulated adaptive campaign",
         "Current policy",
@@ -70,14 +71,12 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "$0.00",
         "Change vs current policy",
         "What this means",
-        "Overlap and reliability",
         "Current policy",
         "Prioritize big donations",
         "Prioritize small donations",
         "More positive campaign",
         "Learn aggressively",
         "Long-term trust",
-        "Local/community focus",
         "Optimize net value",
         "Donation value",
         "Conversion",
@@ -88,9 +87,15 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Learning/diversity",
         "Hover over each control to see what it changes.",
         "These controls are not independent causal levers.",
+        "Turning every knob up does not mean every outcome improves",
         "Contextual bandits (adaptive experimentation) do not decide what \"good\" means on their own.",
         "trust, fatigue, and audience coverage.",
-        "Top affected audience segment",
+        "Projected campaign impact",
+        "Estimated difference if this policy had been used across the selected outreach volume.",
+        "Why this works",
+        "evaluation. It is not perfect causal proof",
+        "Reliable demo estimate",
+        "Needs more exploration",
     ]:
         assert text in what_if
     for removed in [
@@ -100,6 +105,9 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Urgency/negative penalty",
         "Exploration diversity",
         "Audience diversity",
+        "Local/community focus",
+        "Overlap and reliability",
+        "Top affected audience segment",
     ]:
         assert removed not in what_if
     for metric in [

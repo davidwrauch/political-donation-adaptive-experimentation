@@ -735,24 +735,24 @@ button {
 .what-if-hero.compact {
   align-items: center;
   display: block;
-  padding: 24px 28px;
+  padding: 18px 22px;
 }
 
 .what-if-hero.compact h2 {
-  font-size: clamp(2.15rem, 3.8vw, 4rem);
-  margin: 2px 0 8px;
+  font-size: clamp(1.9rem, 3.2vw, 3.3rem);
+  margin: 0 0 6px;
 }
 
 .what-if-hero.compact p {
-  font-size: 0.98rem;
-  line-height: 1.42;
-  max-width: 880px;
+  font-size: 0.9rem;
+  line-height: 1.34;
+  max-width: 980px;
 }
 
 .quiet-caveat {
   color: rgba(255, 255, 255, 0.5) !important;
-  font-size: 0.78rem;
-  margin-top: 8px !important;
+  font-size: 0.72rem;
+  margin-top: 6px !important;
 }
 
 .neutral-delta,
@@ -775,25 +775,25 @@ button {
   border-radius: 18px;
   box-shadow: 0 18px 44px rgba(37, 54, 50, 0.045);
   display: grid;
-  gap: 3px;
-  padding: 11px 15px;
+  gap: 2px;
+  padding: 8px 12px;
 }
 
 .default-note strong {
   color: #18282b;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
 }
 
 .default-note span {
   color: #526165;
-  font-size: 0.8rem;
-  line-height: 1.35;
+  font-size: 0.74rem;
+  line-height: 1.28;
 }
 
 .preset-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 6px;
 }
 
 .preset-row button {
@@ -802,9 +802,9 @@ button {
   border-radius: 999px;
   box-shadow: 0 10px 26px rgba(37, 54, 50, 0.045);
   color: #344247;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 760;
-  padding: 0.42rem 0.62rem;
+  padding: 0.34rem 0.5rem;
 }
 
 .preset-row button.active {
@@ -820,15 +820,15 @@ button {
   border-radius: 24px;
   box-shadow: 0 24px 64px rgba(37, 54, 50, 0.065), inset 0 1px 0 rgba(255, 255, 255, 0.78);
   display: grid;
-  gap: 10px;
+  gap: 8px;
   grid-template-columns: repeat(7, minmax(78px, 1fr));
-  padding: 12px;
+  padding: 9px;
 }
 
 .strategy-knob {
   align-items: center;
   display: grid;
-  gap: 5px;
+  gap: 3px;
   justify-items: center;
   min-width: 0;
   position: relative;
@@ -837,19 +837,19 @@ button {
 
 .strategy-knob span {
   color: #344247;
-  font-size: 0.68rem;
+  font-size: 0.63rem;
   font-weight: 830;
   line-height: 1.1;
-  min-height: 24px;
+  min-height: 22px;
 }
 
 .strategy-knob input {
   cursor: pointer;
-  height: 46px;
+  height: 38px;
   opacity: 0;
   position: absolute;
-  top: 24px;
-  width: 46px;
+  top: 22px;
+  width: 38px;
   z-index: 2;
 }
 
@@ -860,27 +860,27 @@ button {
   border-radius: 999px;
   box-shadow: inset 0 1px 4px rgba(20, 40, 44, 0.12), 0 10px 22px rgba(37, 54, 50, 0.08);
   display: block;
-  height: 46px;
+  height: 38px;
   position: relative;
-  width: 46px;
+  width: 38px;
 }
 
 .strategy-knob i::after {
   background: #19363b;
   border-radius: 999px;
   content: "";
-  height: 13px;
+  height: 11px;
   left: 50%;
   position: absolute;
-  top: 6px;
+  top: 5px;
   transform: translateX(-50%) rotate(var(--angle));
-  transform-origin: 50% 17px;
+  transform-origin: 50% 14px;
   width: 3px;
 }
 
 .strategy-knob strong {
   color: #17694f;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 
 .strategy-knob small {
@@ -908,8 +908,8 @@ button {
 
 .console-note {
   color: #6b787c;
-  font-size: 0.78rem;
-  margin: -4px 0 -8px;
+  font-size: 0.72rem;
+  margin: -6px 0 -10px;
 }
 
 .tradeoff-note {
@@ -918,7 +918,7 @@ button {
 
 .compact-policy-grid {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   grid-template-columns: 1fr 1fr 0.78fr;
 }
 
@@ -928,21 +928,34 @@ button {
   border: 1px solid rgba(219, 229, 224, 0.34);
   border-radius: 22px;
   box-shadow: 0 20px 52px rgba(37, 54, 50, 0.06);
-  padding: 14px;
+  padding: 11px;
 }
 
 .policy-summary.compact strong,
 .delta-card strong {
   display: block;
-  font-size: clamp(1.55rem, 3.2vw, 2.7rem);
+  font-size: clamp(1.35rem, 2.8vw, 2.25rem);
   letter-spacing: -0.06em;
   line-height: 0.94;
-  margin: 6px 0 10px;
+  margin: 3px 0 5px;
+}
+
+.summary-metric-layout {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(120px, 0.95fr) minmax(0, 1.2fr);
+}
+
+.summary-primary small {
+  color: #627175;
+  font-size: 0.72rem;
+  font-weight: 760;
 }
 
 .policy-summary.compact dl {
   display: grid;
-  gap: 4px 10px;
+  gap: 3px 10px;
   grid-template-columns: repeat(3, 1fr);
   margin: 0;
 }
@@ -956,8 +969,21 @@ button {
 
 .policy-summary.compact dd {
   color: #18282b;
+  font-size: 0.88rem;
   font-weight: 830;
   margin: 0;
+}
+
+.positive-value {
+  color: #17694f !important;
+}
+
+.tradeoff-value {
+  color: #9a5b00 !important;
+}
+
+.neutral-value {
+  color: #627175 !important;
 }
 
 .delta-card {
@@ -993,7 +1019,7 @@ button {
 
 .what-if-bottom.compact .meaning-panel,
 .what-if-bottom.compact .overlap-panel {
-  padding: 15px;
+  padding: 12px;
 }
 
 .what-if-bottom.compact h3 {
@@ -1003,6 +1029,82 @@ button {
 .what-if-bottom.compact p {
   font-size: 0.9rem;
   line-height: 1.45;
+}
+
+.scenario-note,
+.compact-reliability,
+.projected-impact-card {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(219, 229, 224, 0.28);
+  border-radius: 16px;
+  box-shadow: 0 14px 34px rgba(37, 54, 50, 0.045);
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 9px 12px;
+}
+
+.scenario-note strong,
+.projected-impact-card span {
+  color: #18282b;
+  flex: 0 0 auto;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.scenario-note span,
+.compact-reliability p,
+.projected-impact-card p,
+.projected-impact-card small {
+  color: #526165;
+  font-size: 0.74rem;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.compact-reliability {
+  justify-content: flex-start;
+}
+
+.compact-reliability .soft-pill {
+  margin: 0;
+}
+
+.projected-impact-card strong {
+  color: #102c29;
+  display: block;
+  font-size: 1.55rem;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  margin: 3px 0;
+}
+
+.projected-impact-card label {
+  color: #627175;
+  display: grid;
+  flex: 0 0 132px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  gap: 4px;
+}
+
+.projected-impact-card select {
+  border: 1px solid rgba(197, 213, 206, 0.75);
+  border-radius: 999px;
+  color: #19363b;
+  font: inherit;
+  padding: 0.34rem 0.52rem;
+}
+
+.what-if-label-help {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.what-if-help-wrap {
+  display: inline-flex;
 }
 
 .intro-card p {

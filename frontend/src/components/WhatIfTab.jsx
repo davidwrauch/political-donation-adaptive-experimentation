@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const defaultWeights = {
   donation_value_weight: 1.0,
@@ -53,12 +53,6 @@ const presets = {
     negative_urgency_message_penalty: 1.25,
     fairness_audience_diversity_weight: 1.05,
   },
-  "Local/community focus": {
-    ...defaultWeights,
-    local_community_message_boost: 1.55,
-    persuasion_trust_proxy_weight: 1.05,
-    negative_urgency_message_penalty: 0.95,
-  },
   "Optimize net value": {
     ...defaultWeights,
     donation_value_weight: 1.75,
@@ -72,6 +66,16 @@ const presets = {
   },
 };
 
+const presetExplanations = {
+  "Current policy": "Uses the same reward settings as the current logged policy. Choose this when you want the simulator to match the campaign's existing allocation logic.",
+  "Prioritize big donations": "Increases weight on expected dollars per contact and larger gift potential. This may raise total value, but can concentrate outreach among already-likely donors.",
+  "Prioritize small donations": "Increases weight on broader conversion and lower-friction giving. This may grow participation and list engagement, but average donation size may fall.",
+  "More positive campaign": "Rewards trust-building and reduces reliance on urgent or pressure-heavy frames. This may reduce fatigue and improve long-term engagement, but short-term donation value may be lower.",
+  "Learn aggressively": "Preserves more exploration across audiences, messages, and channels. This can improve learning and avoid premature lock-in, but may sacrifice near-term fundraising efficiency.",
+  "Long-term trust": "Prioritizes credibility, lower fatigue, and broader audience coverage. This is useful when the campaign cares about durable engagement, not just immediate dollars.",
+  "Optimize net value": "Searches for the highest estimated net donation value per contact while respecting guardrails. This is the closest setting to a simulated optimum, not the default policy.",
+};
+
 const controls = [
   ["donation_value_weight", "Donation value", "Prioritize expected dollars raised per contact."],
   ["conversion_weight", "Conversion", "Prioritize the chance that a contacted supporter donates."],
@@ -82,12 +86,21 @@ const controls = [
   ["learning_diversity", "Learning/diversity", "Preserve exploration across messages, audiences, and channels so the campaign keeps learning."],
 ];
 
+const audienceOptions = [
+  ["50000", "50k"],
+  ["100000", "100k"],
+  ["250000", "250k"],
+  ["500000", "500k"],
+  ["1000000", "1m"],
+];
+
 export default function WhatIfTab({ apiBase }) {
   const [weights, setWeights] = useState(defaultWeights);
   const [activePreset, setActivePreset] = useState("Current policy");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [audienceSize, setAudienceSize] = useState(250000);
   const requestKey = useMemo(() => JSON.stringify(weights), [weights]);
 
   useEffect(() => {
@@ -123,16 +136,23 @@ export default function WhatIfTab({ apiBase }) {
   const adjusted = result?.adjusted_policy;
   const baseline = result?.baseline_policy;
   const deltas = result?.deltas;
+  const reliabilityNeedsMore = result?.overlap?.warning || activePreset === "Learn aggressively";
+  const projectedImpact = (deltas?.estimated_net_value_per_contact ?? 0) * audienceSize;
 
   return (
     <div className="tab-panel what-if-tab">
       <section className="what-if-hero compact">
         <div>
           <p className="eyebrow">Strategy mixing board</p>
-          <h2>What If?</h2>
-          <p>Explore how changing campaign priorities reshapes persuasion, fundraising, fatigue, and audience reach.</p>
-          <p>What If lets campaign leadership test how changing priorities would have changed estimated outcomes on the simulated campaign log.</p>
-          <small className="quiet-caveat">Offline simulation, not causal proof. Estimates are strongest when the historical policy explored similar actions.</small>
+          <h2><LabelWithHelp label="What If?" help="This tab lets campaign leadership test alternative reward priorities before changing allocation logic." /></h2>
+          <p>Test how different campaign priorities would change the system's recommendations.</p>
+          <p>Use this as a strategy mixing board: shift the reward settings, compare the result to the current policy, and see the tradeoffs before changing how outreach is allocated.</p>
+          <small className="quiet-caveat">
+            <LabelWithHelp
+              label="Offline estimate, not proof."
+              help="This uses the simulated campaign log to estimate what might have happened under different priorities. It is most reliable when the historical experiment explored similar actions often enough to compare them."
+            />
+          </small>
         </div>
       </section>
 
@@ -146,9 +166,14 @@ export default function WhatIfTab({ apiBase }) {
       <section className="preset-row" aria-label="Policy simulator presets">
         {Object.keys(presets).map((name) => (
           <button className={activePreset === name ? "active" : ""} key={name} onClick={() => applyPreset(name)} type="button">
-            {name}
+            <LabelWithHelp label={name} help={presetExplanations[name]} />
           </button>
         ))}
+      </section>
+
+      <section className="scenario-note">
+        <strong>{activePreset}</strong>
+        <span>{presetExplanations[activePreset] ?? "Custom policy settings. Compare the adjusted estimate against the current logged policy."}</span>
       </section>
 
       <p className="console-note">Hover over each control to see what it changes.</p>
@@ -163,12 +188,44 @@ export default function WhatIfTab({ apiBase }) {
           />
         ))}
       </section>
-      <p className="console-note tradeoff-note">These controls are not independent causal levers. They change the scoring rule, so improving one priority can move other outcomes.</p>
+      <p className="console-note tradeoff-note">
+        These controls are not independent causal levers.
+        <HelpTooltip text="These controls are weights, not independent improvement levers. Turning every knob up does not mean every outcome improves; it changes the scoring rule and can create tradeoffs between money, trust, fatigue, and learning." />
+      </p>
 
       <section className="compact-policy-grid">
         <PolicySummaryCard title="Current policy" metrics={baseline} />
-        <PolicySummaryCard title="Adjusted policy" metrics={adjusted} />
+        <PolicySummaryCard baseline={baseline} metrics={adjusted} title="Adjusted policy" />
         <DeltaCard deltas={deltas} />
+      </section>
+
+      <section className="compact-reliability">
+        <span className={reliabilityNeedsMore ? "soft-pill warning-pill" : "soft-pill"}>
+          {reliabilityNeedsMore ? "Needs more exploration" : "Reliable demo estimate"}
+        </span>
+        <p>
+          {reliabilityNeedsMore
+            ? "Needs more exploration: the logged experiment did not test similar actions often enough, so this estimate is less certain."
+            : "Reliable demo estimate: the logged experiment explored similar actions often enough for comparison."}
+          <HelpTooltip text="This is the OPE-style overlap idea. Counterfactual estimates are more trustworthy when the historical policy sometimes tried the same kinds of actions the adjusted policy now prefers." />
+        </p>
+      </section>
+
+      <section className="projected-impact-card">
+        <div>
+          <span><LabelWithHelp label="Projected campaign impact" help="This extrapolates the estimated per-contact change across a larger campaign audience. Real-world results would vary." /></span>
+          <strong>{signedMoney(projectedImpact)}</strong>
+          <small>{signedMoney(deltas?.estimated_net_value_per_contact ?? 0)}/contact over {audienceSize.toLocaleString()} contacts</small>
+          <p>Estimated difference if this policy had been used across the selected outreach volume.</p>
+        </div>
+        <label>
+          Audience size
+          <select onChange={(event) => setAudienceSize(Number(event.target.value))} value={String(audienceSize)}>
+            {audienceOptions.map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </label>
       </section>
 
       <section className="what-if-metrics compact">
@@ -187,18 +244,14 @@ export default function WhatIfTab({ apiBase }) {
             estimated outcomes across donations, trust, fatigue, and audience coverage.
           </p>
         </article>
-        <article className="overlap-panel">
-          <span className={result?.overlap?.warning ? "soft-pill warning-pill" : "soft-pill"}>{result?.overlap?.level ?? "Checking overlap"}</span>
-          <h3>Overlap and reliability</h3>
-          <p>{result?.overlap?.explanation ?? "Waiting for policy estimate."}</p>
-          {result?.top_affected_audience_segment && (
-            <dl>
-              <dt>Top affected audience segment</dt>
-              <dd>{result.top_affected_audience_segment.segment}</dd>
-              <dt>Adjusted share</dt>
-              <dd>{formatPercent(result.top_affected_audience_segment.adjusted_share)}</dd>
-            </dl>
-          )}
+        <article className="meaning-panel quiet-method">
+          <h3>Why this works</h3>
+          <p>
+            Because the simulated campaign logs the action shown, the outcome, and the probability of assignment, we
+            can estimate how a different policy might have performed. This is the basic idea behind offline policy
+            evaluation. It is not perfect causal proof, but it is much stronger than guessing from ordinary
+            observational data.
+          </p>
           {loading && <small>Updating estimate...</small>}
         </article>
       </section>
@@ -234,13 +287,13 @@ function Knob({ label, description, value, onChange }) {
   const angle = value * 135 - 135;
   return (
     <label className="strategy-knob" title={description}>
-      <span>{label}</span>
+      <span><LabelWithHelp label={label} help={description} /></span>
       <input
         aria-label={label}
         max="2"
         min="0"
         onChange={(event) => onChange(event.target.value)}
-        step="0.05"
+        step="0.25"
         type="range"
         value={value}
       />
@@ -251,22 +304,86 @@ function Knob({ label, description, value, onChange }) {
   );
 }
 
-function PolicySummaryCard({ title, metrics }) {
+function PolicySummaryCard({ title, metrics, baseline }) {
   return (
     <article className="policy-summary compact">
-      <span>{title}</span>
-      <strong>{formatMoney(metrics?.estimated_net_value_per_contact)}</strong>
-      <small>Net value/contact</small>
-      <dl>
-        <dt>Conversion</dt>
-        <dd>{formatPercent(metrics?.donation_conversion_rate)}</dd>
-        <dt>Fatigue</dt>
-        <dd>{formatPercent(metrics?.fatigue_risk)}</dd>
-        <dt>Diversity</dt>
-        <dd>{formatPercent(metrics?.message_diversity)}</dd>
-      </dl>
+      <span><LabelWithHelp label={title} help={title === "Current policy" ? "The logged campaign policy used as the comparison baseline." : "The estimated result after applying the selected priority weights."} /></span>
+      <div className="summary-metric-layout">
+        <div className="summary-primary">
+          <strong>{formatMoney(metrics?.estimated_net_value_per_contact)}</strong>
+          <small><LabelWithHelp label="Net value/contact" help="Estimated donation value per contacted person after accounting for conversion, donation amount, and fatigue." /></small>
+        </div>
+        <dl>
+          <dt><LabelWithHelp label="Conversion" help="Share of contacted supporters expected to donate." /></dt>
+          <dd className={deltaValueClass(metrics?.donation_conversion_rate, baseline?.donation_conversion_rate)}>{formatPercent(metrics?.donation_conversion_rate)}</dd>
+          <dt><LabelWithHelp label="Fatigue" help="Estimated risk that outreach reduces future response or increases opt-outs." /></dt>
+          <dd className={deltaValueClass(baseline?.fatigue_risk, metrics?.fatigue_risk)}>{formatPercent(metrics?.fatigue_risk)}</dd>
+          <dt><LabelWithHelp label="Diversity" help="How evenly the policy keeps message frames represented instead of collapsing to one option." /></dt>
+          <dd className={deltaValueClass(metrics?.message_diversity, baseline?.message_diversity)}>{formatPercent(metrics?.message_diversity)}</dd>
+        </dl>
+      </div>
     </article>
   );
+}
+
+function LabelWithHelp({ label, help }) {
+  return (
+    <span className="what-if-label-help">
+      {label}
+      <HelpTooltip text={help} />
+    </span>
+  );
+}
+
+function HelpTooltip({ text }) {
+  const buttonRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [style, setStyle] = useState({});
+
+  useEffect(() => {
+    if (!open) return undefined;
+    function position() {
+      const button = buttonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      const margin = 12;
+      const width = Math.min(280, window.innerWidth - margin * 2);
+      const estimatedHeight = 96;
+      let left = rect.left + rect.width / 2 - width / 2;
+      left = Math.min(Math.max(left, margin), window.innerWidth - width - margin);
+      const openAbove = rect.bottom + estimatedHeight + margin > window.innerHeight;
+      const top = openAbove ? rect.top - estimatedHeight - 8 : rect.bottom + 8;
+      setStyle({ left, top: Math.max(margin, top), width });
+    }
+    position();
+    window.addEventListener("resize", position);
+    window.addEventListener("scroll", position, true);
+    return () => {
+      window.removeEventListener("resize", position);
+      window.removeEventListener("scroll", position, true);
+    };
+  }, [open]);
+
+  return (
+    <span className="what-if-help-wrap" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button
+        aria-label="Help"
+        className="help-icon"
+        onBlur={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        ref={buttonRef}
+        type="button"
+      >
+        ?
+      </button>
+      {open && <span className="tooltip-popover" role="tooltip" style={style}>{text}</span>}
+    </span>
+  );
+}
+
+function deltaValueClass(value, comparison) {
+  if (typeof value !== "number" || typeof comparison !== "number" || Math.abs(value - comparison) < 0.0001) return "neutral-value";
+  return value > comparison ? "positive-value" : "tradeoff-value";
 }
 
 function DeltaCard({ deltas }) {
