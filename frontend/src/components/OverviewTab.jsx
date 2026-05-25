@@ -16,10 +16,8 @@ const helpText = {
   "Contacts observed": "Number of simulated supporter contacts assigned to this strategy so far.",
   "Contacts assigned to this strategy": "Number of simulated supporter contacts assigned to the current leading strategy.",
   "Traffic share": "Current share of simulated outreach traffic allocated to this strategy.",
-  "Winning strategy traffic share": "Current share of simulated outreach traffic allocated to the leading strategy.",
   "Net expected value": "Estimated donation value after accounting for response rate, average donation amount, and fatigue effects.",
   "Fatigue risk": "Estimated risk that repeated outreach reduces future response or increases opt-outs.",
-  "Exploration rate": "Share of traffic intentionally reserved for learning rather than only using the current winner.",
   "Control": "Generic non-personalized outreach with fixed messaging and no adaptive allocation.",
   "Static randomized test": "Randomly splits traffic across approved message/channel combinations, but does not adapt allocation based on results.",
   "Directional only": "Directional only means the current leader is promising, but the evidence is not strong enough to shift all traffic to it yet.",
@@ -226,34 +224,30 @@ function ExperimentStatus({ strategies, readout, paused, onTogglePaused, lastUpd
 }
 
 function StrategyStatusCard({ strategy, isLeader }) {
+  const statusClass = allocationStatusClass(strategy.allocation_status);
   return (
-    <article className={isLeader ? "panel strategy-metric-card leader-card" : "panel strategy-metric-card"}>
+    <article className={`${isLeader ? "panel strategy-metric-card leader-card" : "panel strategy-metric-card"} ${strategyGroupClass(strategy.id)}`}>
       <div className="card-title-row">
-        <h3>{strategy.label}</h3>
-        {isLeader && <span className="leader-pill">Current leader</span>}
+        <div>
+          <span className="strategy-group-label">{strategyGroupLabel(strategy.id)}</span>
+          <h3>{strategy.label}</h3>
+        </div>
+        {isLeader && <span className="leader-pill winning">Current leader</span>}
       </div>
       <p>{strategy.description}</p>
       <div className="strategy-metric-list">
-        <Metric label="Donation conversion rate" value={formatMaybePercent(strategy.conversion_rate)} />
         <Metric label="Net donation value per contact" value={formatMaybeMoney(strategy.net_expected_value)} />
-        <Metric label="Average donation amount" value={formatMaybeMoney(strategy.expected_donation_amount)} />
-        <Metric label="Traffic share" value={formatMaybePercent(strategy.traffic_share)} />
-        <Metric label="Contacts observed" value={formatMaybeNumber(strategy.contacts_observed)} />
+        <Metric label="Donation conversion rate" value={formatMaybePercent(strategy.conversion_rate)} />
         <Metric
           label="Fatigue risk"
           value={formatMaybePercent(strategy.fatigue_risk)}
           help="Estimated risk that repeated outreach reduces future response or causes opt-outs."
         />
-        <Metric
-          label="Exploration rate"
-          value={formatMaybePercent(strategy.exploration_rate)}
-          help="Share of contacts reserved for learning rather than only using the current best-performing option."
-        />
-        <Metric
-          label="Leading metric"
-          value={strategy.winning_metrics?.length ? strategy.winning_metrics.join(", ") : "Not currently leading"}
-        />
-        <Metric label="Allocation status" value={strategy.allocation_status ?? "Loading"} />
+        <Metric label="Contacts observed" value={formatMaybeNumber(strategy.contacts_observed)} />
+        <div className="allocation-box">
+          <Metric label="Traffic share" value={formatMaybePercent(strategy.traffic_share)} />
+          <Metric className={`allocation-status ${statusClass}`} label="Allocation status" value={strategy.allocation_status ?? "Loading"} />
+        </div>
       </div>
     </article>
   );
@@ -294,7 +288,6 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
             />
             <ReadoutMetric label="Adaptive lift vs control" value={formatMoney(readout.adaptive_lift_vs_control)} />
             <ReadoutMetric label="Statistically significant?" value={formatSignificanceCheck(readout.frequentist_check)} />
-            <ReadoutMetric label="Winning strategy traffic share" value={formatPercent(readout.current_leading_strategy_traffic_share)} />
           </div>
         </section>
         <section className="scope-card leading-scope">
@@ -305,11 +298,10 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
             <strong>{readout.leading_strategy.label}</strong>
           </article>
           <div className="readout-grid compact">
-            <ReadoutMetric label="Donation conversion rate" value={formatPercent(readout.leading_strategy.conversion_rate)} />
             <ReadoutMetric label="Net donation value per contact" value={formatMoney(readout.leading_strategy.net_expected_value)} />
+            <ReadoutMetric label="Donation conversion rate" value={formatPercent(readout.leading_strategy.conversion_rate)} />
             <ReadoutMetric label="Average donation amount" value={formatMoney(readout.leading_strategy.expected_donation_amount)} />
             <ReadoutMetric label="Fatigue risk" value={formatPercent(readout.leading_strategy.fatigue_risk)} />
-            <ReadoutMetric label="Exploration rate" value={formatPercent(readout.leading_strategy.exploration_rate)} />
             <ReadoutMetric label="Contacts assigned to this strategy" value={readout.leading_strategy.contacts_observed.toLocaleString()} />
           </div>
         </section>
@@ -521,9 +513,9 @@ function MessageAllocationChart({ rows, strategy }) {
   );
 }
 
-function Metric({ label, value, help }) {
+function Metric({ label, value, help, className = "" }) {
   return (
-    <div>
+    <div className={className}>
       <span><LabelWithHelp label={label} help={help} /></span>
       <strong>{value}</strong>
     </div>
@@ -585,6 +577,25 @@ function formatWholePercent(value) {
 function formatSignificanceCheck(check) {
   if (!check) return "Loading";
   return check.statistically_significant ? "Yes" : "Not yet";
+}
+
+function strategyGroupLabel(id) {
+  if (id === "control") return "Control";
+  if (id === "static_ab") return "Static benchmark";
+  return "Adaptive strategy";
+}
+
+function strategyGroupClass(id) {
+  if (id === "control") return "control-group";
+  if (id === "static_ab") return "static-group";
+  return "adaptive-group";
+}
+
+function allocationStatusClass(status = "") {
+  const normalized = status.toLowerCase();
+  if (normalized.includes("reduced") || normalized.includes("low")) return "status-reduced";
+  if (normalized.includes("leader") || normalized.includes("scale") || normalized.includes("active")) return "status-active";
+  return "status-monitor";
 }
 
 function lineOpacity(id, hoveredId, isolatedId) {

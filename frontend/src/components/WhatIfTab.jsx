@@ -195,26 +195,14 @@ export default function WhatIfTab({ apiBase }) {
 
       <section className="compact-policy-grid">
         <PolicySummaryCard title="Current policy" metrics={baseline} />
-        <PolicySummaryCard baseline={baseline} metrics={adjusted} title="Adjusted policy" />
+        <PolicySummaryCard baseline={baseline} metrics={adjusted} reliabilityNeedsMore={reliabilityNeedsMore} title="Adjusted policy" />
         <DeltaCard deltas={deltas} />
-      </section>
-
-      <section className="compact-reliability">
-        <span className={reliabilityNeedsMore ? "soft-pill warning-pill" : "soft-pill"}>
-          {reliabilityNeedsMore ? "Needs more exploration" : "Reliable demo estimate"}
-        </span>
-        <p>
-          {reliabilityNeedsMore
-            ? "Needs more exploration: the logged experiment did not test similar actions often enough, so this estimate is less certain."
-            : "Reliable demo estimate: the logged experiment explored similar actions often enough for comparison."}
-          <HelpTooltip text="This is the OPE-style overlap idea. Counterfactual estimates are more trustworthy when the historical policy sometimes tried the same kinds of actions the adjusted policy now prefers." />
-        </p>
       </section>
 
       <section className="projected-impact-card">
         <div>
           <span><LabelWithHelp label="Projected campaign impact" help="This extrapolates the estimated per-contact change across a larger campaign audience. Real-world results would vary." /></span>
-          <strong>{signedMoney(projectedImpact)}</strong>
+          <strong>{formatImpactMoney(projectedImpact)}</strong>
           <small>{signedMoney(deltas?.estimated_net_value_per_contact ?? 0)}/contact over {audienceSize.toLocaleString()} contacts</small>
           <p>Estimated difference if this policy had been used across the selected outreach volume.</p>
         </div>
@@ -229,6 +217,7 @@ export default function WhatIfTab({ apiBase }) {
       </section>
 
       <section className="what-if-metrics compact">
+        <h3>Secondary metrics</h3>
         <MetricTile label="Conversion" value={formatPercent(adjusted?.donation_conversion_rate)} delta={formatDeltaPercent(deltas?.donation_conversion_rate)} />
         <MetricTile label="Average donation" value={formatMoney(adjusted?.average_donation_amount)} delta={signedMoney(deltas?.average_donation_amount)} />
         <MetricTile label="Fatigue" value={formatPercent(adjusted?.fatigue_risk)} delta={formatDeltaPercent(deltas?.fatigue_risk, true)} />
@@ -304,7 +293,7 @@ function Knob({ label, description, value, onChange }) {
   );
 }
 
-function PolicySummaryCard({ title, metrics, baseline }) {
+function PolicySummaryCard({ title, metrics, baseline, reliabilityNeedsMore = false }) {
   return (
     <article className="policy-summary compact">
       <span><LabelWithHelp label={title} help={title === "Current policy" ? "The logged campaign policy used as the comparison baseline." : "The estimated result after applying the selected priority weights."} /></span>
@@ -313,15 +302,26 @@ function PolicySummaryCard({ title, metrics, baseline }) {
           <strong>{formatMoney(metrics?.estimated_net_value_per_contact)}</strong>
           <small><LabelWithHelp label="Net value/contact" help="Estimated donation value per contacted person after accounting for conversion, donation amount, and fatigue." /></small>
         </div>
-        <dl>
-          <dt><LabelWithHelp label="Conversion" help="Share of contacted supporters expected to donate." /></dt>
-          <dd className={deltaValueClass(metrics?.donation_conversion_rate, baseline?.donation_conversion_rate)}>{formatPercent(metrics?.donation_conversion_rate)}</dd>
-          <dt><LabelWithHelp label="Fatigue" help="Estimated risk that outreach reduces future response or increases opt-outs." /></dt>
-          <dd className={deltaValueClass(baseline?.fatigue_risk, metrics?.fatigue_risk)}>{formatPercent(metrics?.fatigue_risk)}</dd>
-          <dt><LabelWithHelp label="Diversity" help="How evenly the policy keeps message frames represented instead of collapsing to one option." /></dt>
-          <dd className={deltaValueClass(metrics?.message_diversity, baseline?.message_diversity)}>{formatPercent(metrics?.message_diversity)}</dd>
-        </dl>
+        <div className="summary-secondary">
+          <span>Secondary metrics</span>
+          <dl>
+            <dt><LabelWithHelp label="Conversion" help="Share of contacted supporters expected to donate." /></dt>
+            <dd className={deltaValueClass(metrics?.donation_conversion_rate, baseline?.donation_conversion_rate)}>{formatPercent(metrics?.donation_conversion_rate)}</dd>
+            <dt><LabelWithHelp label="Fatigue" help="Estimated risk that outreach reduces future response or increases opt-outs." /></dt>
+            <dd className={deltaValueClass(baseline?.fatigue_risk, metrics?.fatigue_risk)}>{formatPercent(metrics?.fatigue_risk)}</dd>
+            <dt><LabelWithHelp label="Diversity" help="How evenly the policy keeps message frames represented instead of collapsing to one option." /></dt>
+            <dd className={deltaValueClass(metrics?.message_diversity, baseline?.message_diversity)}>{formatPercent(metrics?.message_diversity)}</dd>
+          </dl>
+        </div>
       </div>
+      {title === "Adjusted policy" && (
+        <p className={reliabilityNeedsMore ? "summary-reliability warning" : "summary-reliability good"}>
+          <LabelWithHelp
+            label={`Reliable demo estimate? ${reliabilityNeedsMore ? "No" : "Yes"}`}
+            help="This is the OPE-style overlap idea. Counterfactual estimates are more trustworthy when the historical policy sometimes tried the same kinds of actions the adjusted policy now prefers."
+          />
+        </p>
+      )}
     </article>
   );
 }
@@ -429,6 +429,15 @@ function signedMoney(value) {
   if (Math.abs(value) < 0.005) return "$0.00";
   const sign = value >= 0 ? "+" : "";
   return `${sign}$${value.toFixed(2)}`;
+}
+
+function formatImpactMoney(value) {
+  if (typeof value !== "number") return "Calculating";
+  const rounded = Math.round(value);
+  const absolute = Math.abs(rounded).toLocaleString();
+  if (rounded < 0) return `-$${absolute}`;
+  if (rounded > 0) return `+$${absolute}`;
+  return "$0";
 }
 
 function formatPercent(value) {

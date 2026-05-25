@@ -31,7 +31,7 @@ def test_four_tabs_and_campaign_loading_language():
     assert "<strong>12.5% lift</strong>" in app
     assert "<strong>25%+ improvement</strong>" in app
     assert "<strong>13.62% higher engagement</strong>" in app
-    assert "<strong>20.79% improvement</strong>" in app
+    assert "20.79% improvement" not in app
     assert "onClick={() => setShowBriefing(false)}" in app
     assert "onClick={(event) => event.stopPropagation()}" in app
     assert "Research grounding" not in app
@@ -95,7 +95,9 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         "Why this works",
         "evaluation. It is not perfect causal proof",
         "Reliable demo estimate",
-        "Needs more exploration",
+        "Reliable demo estimate? ${reliabilityNeedsMore ? \"No\" : \"Yes\"}",
+        "formatImpactMoney(projectedImpact)",
+        "summary-secondary",
     ]:
         assert text in what_if
     for removed in [
@@ -178,15 +180,19 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Current leader",
         "Donation conversion rate",
         "Fatigue risk",
-        "Exploration rate",
         "Estimated risk that repeated outreach reduces future response or causes opt-outs.",
-        "Share of contacts reserved for learning rather than only using the current best-performing option.",
+        "strategyGroupLabel",
+        "strategyGroupClass",
+        "allocationStatusClass",
+        "allocation-box",
+        "strategy-group-label",
+        "Static benchmark",
+        "Adaptive strategy",
         "Net donation value per contact over time by allocation strategy",
         "X-axis: dates. Y-axis: net donation value per contact. Line thickness reflects current traffic allocation share.",
         "Thicker lines indicate higher traffic allocation as the experiment shifts outreach toward stronger-performing strategies.",
         "ticks = [0, 2, 4, 6, 8, 10, 12]",
         "Traffic share",
-        "Winning strategy traffic share",
         "Fast forward to winner",
         "Simulation progress:",
         "Winner locked in",
@@ -244,6 +250,9 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "Cumulative donation conversions by allocation strategy" not in overview
     assert "Campaign readout" not in overview
     assert "Leading adaptive method" not in overview
+    assert "Leading metric" not in overview
+    assert "Winning strategy traffic share" not in overview
+    assert 'label="Exploration rate"' not in overview
     assert "Use Contextual bandit with fatigue guardrail as the leading allocation strategy" not in overview
     assert "Frequentist check" not in overview
     assert "p-value" not in overview
@@ -255,7 +264,7 @@ def test_experiment_design_is_practical_and_guardrailed():
     design = read("frontend/src/components/ExperimentDesignTab.jsx")
 
     for text in [
-        "How we would actually run this",
+        "How the experiment runs",
         "How this would work operationally",
         "Why campaigns are rethinking outreach",
         "Modern campaigns already segment voters and tailor outreach",
@@ -267,39 +276,22 @@ def test_experiment_design_is_practical_and_guardrailed():
         "Warehouse",
         "Experimentation models",
         "Allocation engine",
-        "Reviewed outreach recommendations",
+        "Reviewed recommendations",
         "Vendor execution",
-        "What adaptive experimentation means",
-        "How the static randomized baseline is comparable",
-        "Adaptive allocation does not split traffic evenly forever",
+        "The campaign starts with Control and a static randomized benchmark",
         "Control uses generic non-personalized outreach",
         "does not adapt allocation based on results",
         "Audience data needed",
         "Message arms needed",
-        "Experimentation strategies compared",
-        "Channels needed",
-        "Outcome definitions",
-        "Randomization / assignment logic",
-        "Sample size caveat",
-        "Fatigue guardrails",
-        "Human approval process",
-        "Questions for Campaign Leadership",
-        "How much exploration is acceptable?",
-        "Potential future inputs",
-        "Social listening APIs",
-        "Google News trend signals",
-        "Issue salience tracking",
-        "Fundraising response shifts after major events",
-        "Earned media sentiment",
-        "Regional issue spikes",
-        "Social listening extension:",
-        "Future versions could incorporate social listening, news trend",
-        "inform which message families deserve",
-        "more exploration",
+        "Strategies compared",
+        "Outcomes tracked",
+        "Human review",
     ]:
         assert text in design
     assert "supporter ID" in design
     assert "CSVs or APIs" in design
+    assert "Questions for Campaign Leadership" not in design
+    assert "Potential future inputs" not in design
 
 
 def test_ai_tab_is_campaign_synthesis_not_autonomous_persuasion():
