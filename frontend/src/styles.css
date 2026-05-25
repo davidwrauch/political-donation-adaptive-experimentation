@@ -140,6 +140,49 @@ button {
   display: block;
 }
 
+.hero-live-status {
+  background:
+    linear-gradient(120deg, rgba(255, 251, 240, 0.82), rgba(240, 247, 244, 0.84)),
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+  border: 1px solid rgba(226, 216, 176, 0.34);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 13px;
+}
+
+.hero-live-status.ready {
+  background: linear-gradient(135deg, rgba(231, 248, 239, 0.86), rgba(248, 252, 250, 0.8));
+  border-color: rgba(169, 218, 195, 0.34);
+}
+
+.hero-live-status strong {
+  color: #17694f;
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.hero-live-status span {
+  color: #526165;
+  font-size: 0.82rem;
+  font-weight: 560;
+  line-height: 1.35;
+}
+
+.hero-live-status .briefing-button {
+  background: rgba(20, 40, 44, 0.92);
+  border-radius: 999px;
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 720;
+  justify-self: start;
+  margin-top: 3px;
+  padding: 0.48rem 0.78rem;
+}
+
 .eyebrow {
   color: #96c8ba;
   font-size: 0.8rem;
@@ -1008,6 +1051,38 @@ button {
   margin: 0;
 }
 
+.summary-primary {
+  align-self: stretch;
+  display: grid;
+  gap: 4px;
+  grid-template-rows: auto 1fr;
+}
+
+.summary-secondary-metrics {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.summary-mini-metric {
+  display: grid;
+  gap: 4px;
+}
+
+.summary-mini-metric span {
+  color: #627175;
+  font-size: 0.7rem;
+  font-weight: 760;
+}
+
+.summary-mini-metric strong {
+  color: #18282b;
+  font-size: 0.84rem !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.05 !important;
+  margin: 0 !important;
+}
+
 .policy-summary.compact dt,
 .delta-card span {
   color: #627175;
@@ -1246,7 +1321,7 @@ button {
 .intro-card p {
   color: #344247;
   font-size: 1.08rem;
-  line-height: 1.7;
+  line-height: 1.45;
   margin: 0;
 }
 
@@ -1337,10 +1412,16 @@ button {
   padding: 11px;
 }
 
+.confidence-highlight article > span,
+.confidence-highlight article strong {
+  display: block;
+}
+
 .confidence-highlight strong {
   color: #17694f;
   font-size: clamp(1.25rem, 2.4vw, 1.9rem);
   letter-spacing: -0.045em;
+  margin-top: 8px;
 }
 
 .readout-grid {
@@ -1513,7 +1594,7 @@ button {
 .strategy-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .strategy-legend .panel,

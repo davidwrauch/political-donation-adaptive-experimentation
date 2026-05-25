@@ -23,7 +23,7 @@ CHANNELS = ["email", "SMS", "phone", "digital ad"]
 STRATEGIES = [
     {
         "id": "control",
-        "label": "Control",
+        "label": "Control / holdout",
         "description": "Uses generic non-personalized outreach with fixed messaging and no adaptive allocation.",
         "exploration_rate": 0.0,
     },
@@ -32,12 +32,6 @@ STRATEGIES = [
         "label": "Static randomized test",
         "description": "Keeps contacts evenly split across approved message/channel combinations. It is a baseline for comparison against adaptive methods.",
         "exploration_rate": 1.0,
-    },
-    {
-        "id": "thompson_sampling",
-        "label": "Thompson sampling",
-        "description": "Shifts allocation toward frames with stronger observed donation conversion while preserving uncertainty-aware learning.",
-        "exploration_rate": 0.18,
     },
     {
         "id": "linucb",
@@ -275,8 +269,6 @@ def choose_frame_for_strategy(supporter: dict, priors: dict, rng: random.Random,
         return MESSAGE_FRAMES[0], "generic fixed control message"
     if strategy["id"] == "static_ab":
         return rng.choice(MESSAGE_FRAMES), "static equal-split assignment"
-    if strategy["id"] == "thompson_sampling":
-        return choose_frame(supporter, priors, rng, strategy["exploration_rate"])
     if strategy["id"] == "linucb":
         return choose_contextual_frame(supporter, priors, rng, strategy["exploration_rate"], guarded=False)
     return choose_contextual_frame(supporter, priors, rng, strategy["exploration_rate"], guarded=True)
@@ -343,8 +335,6 @@ def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random
         score -= 0.22
     if strategy["id"] == "linucb":
         score += 0.12
-    if strategy["id"] == "thompson_sampling":
-        score += 0.05
     conversion_probability = sigmoid(score)
     converted = rng.random() < conversion_probability
     expected_amount = (
@@ -360,8 +350,6 @@ def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random
         net_value -= 0.35
     if strategy["id"] == "linucb":
         net_value += 0.75
-    if strategy["id"] == "thompson_sampling":
-        net_value += 0.35
     return {
         "conversion_probability": round(conversion_probability, 4),
         "converted": int(converted),
@@ -561,14 +549,12 @@ def traffic_shares_for_batch(batch: int, total_batches: int) -> dict[str, float]
         return {
             "control": 0.0,
             "static_ab": 0.0,
-            "thompson_sampling": 0.0,
             "linucb": 1.0,
         }
     weights = {
         "control": max(0.03, 0.25 * (1 - progress) ** 1.25),
         "static_ab": max(0.05, 0.25 * (1 - progress) ** 1.05),
-        "thompson_sampling": max(0.08, 0.25 * (1 - progress * 0.55)),
-        "linucb": 0.25 + 1.15 * progress ** 1.18,
+        "linucb": 0.32 + 1.15 * progress ** 1.18,
     }
     total = sum(weights.values())
     return {key: round(value / total, 4) for key, value in weights.items()}

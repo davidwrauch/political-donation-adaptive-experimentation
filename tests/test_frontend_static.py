@@ -25,6 +25,8 @@ def test_four_tabs_and_campaign_loading_language():
     assert "Loading simulated campaign results, usually 10-15 seconds" in app
     assert "Live data ready" in app
     assert "Project briefing" in app
+    assert "hero-live-status" in app
+    assert "load-banner" not in app
     assert "This live demo explores how adaptive experimentation could reshape political fundraising." in app
     assert "Instead of relying only on polling, fixed scripts, and preplanned messaging calendars" in app
     assert "Companies like Google, Spotify, Netflix, Amazon, and Meta" in app
@@ -140,7 +142,7 @@ def test_what_if_tab_contains_policy_simulator_controls_and_caveats():
         assert style in styles
     assert "flex-wrap: wrap" in styles
     assert "overflow-x: auto" not in styles
-    assert "grid-template-columns: repeat(4, minmax(0, 1fr))" in styles
+    assert "grid-template-columns: repeat(3, minmax(0, 1fr))" in styles
     assert "methodology-modal" not in styles
     assert "iframe" not in what_if
     assert "DeltaCard" not in what_if
@@ -157,10 +159,10 @@ def test_overview_contains_leadership_metrics_and_charts():
 
     for text in [
         "A New York Democratic campaign is testing donation outreach",
+        "Control plus two allocation strategies",
         "The simulation updates quickly so",
         "the tradeoff between learning and scaling is visible during a short demo.",
         "Current experiment status",
-        "How reliable is the current winner?",
         "Campaign-wide experiment status",
         "Current leading strategy performance",
         "Metrics below refer only to the current leading strategy",
@@ -178,10 +180,6 @@ def test_overview_contains_leadership_metrics_and_charts():
         "Not yet",
         "Traditional statistical significance asks whether the observed winner",
         "This prototype also uses probability-best",
-        "Do not send 100% of traffic to the current winner unless confidence is high.",
-        "High confidence generally means",
-        "the leading strategy has remained stable",
-        "Traditional statistical significance can still be reported in a real",
         "Probability best estimates how likely the current leading strategy is to outperform the others",
         "Average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
         "Directional only means the current leader is promising",
@@ -224,9 +222,8 @@ def test_overview_contains_leadership_metrics_and_charts():
     ]:
         assert text in overview
     for strategy in [
-        "Control",
+        "Control / holdout",
         "Static randomized test",
-        "Thompson sampling",
         "LinUCB",
     ]:
         assert strategy in simulation
@@ -241,7 +238,6 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "}, 5000)" in overview
     assert "setNextUpdateIn(5)" in overview
     assert "confidence-highlight" in overview
-    assert "reliability-note" in overview
     assert "live-status" in overview
     assert "chart-tooltip" in overview
     assert "tooltip-popover" in overview
@@ -254,13 +250,14 @@ def test_overview_contains_leadership_metrics_and_charts():
     assert "formatAxisDate(row.experiment_date)" in overview
     assert "strategy_performance" in overview
     assert "message_allocation_shift" not in overview
+    assert "How reliable is the current winner?" not in overview
+    assert "Do not send 100% of traffic to the current winner unless confidence is high." not in overview
     assert "Traffic allocation over time" not in overview
     assert "Overall donation conversion rate by strategy" not in overview
     assert "Net donation value per contact by strategy" not in overview
     assert "Fatigue risk by strategy" not in overview
     assert "Message-frame performance within the current leading strategy" not in overview
     assert "Message allocation within the current leading strategy" not in overview
-    assert "Contextual bandit with fatigue guardrail" not in overview
     assert "guarded_contextual_bandit" not in overview
     assert "Cumulative donation conversions by allocation strategy" not in overview
     assert "Campaign readout" not in overview
@@ -292,9 +289,10 @@ def test_experiment_design_is_practical_and_guardrailed():
         "Allocation engine",
         "Reviewed recommendations",
         "Vendor execution",
-        "The campaign starts with Control and a static randomized benchmark",
-        "Control uses generic non-personalized outreach",
+        "The campaign starts with Control / holdout and a static randomized benchmark",
+        "Control / holdout uses generic non-personalized outreach",
         "does not adapt allocation based on results",
+        "LinUCB adaptive strategy",
         "Audience data needed",
         "Message arms needed",
         "Strategies compared",

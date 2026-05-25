@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const lineColors = ["#6d7a80", "#2e8f7f", "#a16a2a", "#3f6f9f", "#8b4b66"];
+const lineColors = ["#3f6f9f", "#2e8f7f", "#6d7a80"];
 const helpText = {
   "Current leading strategy": "The strategy with the highest net donation value per contact in this simulated experiment.",
   "Net donation value per contact": "Average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
@@ -17,7 +17,7 @@ const helpText = {
   "Traffic share": "Current share of simulated outreach traffic allocated to this strategy.",
   "Net expected value": "Estimated donation value after accounting for response rate, average donation amount, and fatigue effects.",
   "Fatigue risk": "Estimated risk that repeated outreach reduces future response or increases opt-outs.",
-  "Control": "Generic non-personalized outreach with fixed messaging and no adaptive allocation.",
+  "Control / holdout": "Generic non-personalized outreach with fixed messaging and no adaptive allocation.",
   "Static randomized test": "Randomly splits traffic across approved message/channel combinations, but does not adapt allocation based on results.",
   "Directional only": "Directional only means the current leader is promising, but the evidence is not strong enough to shift all traffic to it yet.",
   "Promising but keep testing": "The current winner looks encouraging, but the campaign should keep learning before shifting most traffic.",
@@ -26,9 +26,9 @@ const helpText = {
 };
 const defaultStrategies = [
   {
-    id: "control",
-    label: "Control",
-    description: "Uses generic non-personalized outreach with fixed messaging and no adaptive allocation.",
+    id: "linucb",
+    label: "LinUCB",
+    description: "Uses supporter context such as issue affinity, engagement, channel preference, and donation history to personalize assignments.",
   },
   {
     id: "static_ab",
@@ -36,16 +36,12 @@ const defaultStrategies = [
     description: "Keeps contacts evenly split across approved message/channel combinations. It is a baseline for comparison against adaptive methods.",
   },
   {
-    id: "thompson_sampling",
-    label: "Thompson sampling",
-    description: "Balances learning and performance by favoring options that look promising while still preserving uncertainty-aware exploration.",
-  },
-  {
-    id: "linucb",
-    label: "LinUCB",
-    description: "Uses supporter context such as issue affinity, engagement, channel preference, and donation history to personalize assignments.",
+    id: "control",
+    label: "Control / holdout",
+    description: "Uses generic non-personalized outreach with fixed messaging and no adaptive allocation.",
   },
 ];
+const strategyDisplayOrder = ["linucb", "static_ab", "control"];
 
 export default function OverviewTab({ overview }) {
   const [paused, setPaused] = useState(false);
@@ -90,11 +86,7 @@ export default function OverviewTab({ overview }) {
     <div className="tab-panel">
       <section className="panel intro-card">
         <p>
-          A New York Democratic campaign is testing donation outreach before scaling donation outreach.
-          This dashboard compares Control plus three allocation strategies to see which approach allocates limited contacts most
-          effectively across messages, audience segments, and channels. It does not declare one global best message
-          because adaptive campaigns assign different messages to different people. The simulation updates quickly so
-          the tradeoff between learning and scaling is visible during a short demo.
+          A New York Democratic campaign is testing donation outreach before scaling donation outreach. This dashboard compares Control plus two allocation strategies to see which approach allocates limited contacts most effectively across messages, audience segments, and channels. It does not declare one global best message because adaptive campaigns assign different messages to different people. The simulation updates quickly so the tradeoff between learning and scaling is visible during a short demo.
         </p>
       </section>
 
@@ -153,6 +145,9 @@ export default function OverviewTab({ overview }) {
 
 function ExperimentStatus({ strategies, readout, paused, onTogglePaused, lastUpdated, nextUpdateIn, onReplay, simulationComplete, onFastForward, progress }) {
   const leadingId = readout?.leading_strategy?.id;
+  const orderedStrategies = [...strategies].sort(
+    (left, right) => strategyDisplayOrder.indexOf(left.id) - strategyDisplayOrder.indexOf(right.id)
+  );
   return (
     <section className="experiment-status" aria-label="Current experiment status">
       <CurrentReadout
@@ -167,7 +162,7 @@ function ExperimentStatus({ strategies, readout, paused, onTogglePaused, lastUpd
         simulationComplete={simulationComplete}
       />
       <section className="strategy-grid">
-        {strategies.map((strategy) => (
+        {orderedStrategies.map((strategy) => (
           <StrategyStatusCard
             isLeader={strategy.id === leadingId}
             key={strategy.id}
@@ -261,15 +256,6 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
           </div>
         </section>
       </div>
-      <section className="reliability-note">
-        <h3>How reliable is the current winner?</h3>
-        <p>
-          Do not send 100% of traffic to the current winner unless confidence is high. High confidence generally means
-          the leading strategy has remained stable over additional traffic and reached roughly 80-90% simulated
-          probability best. Traditional statistical significance can still be reported in a real deployment, but this
-          prototype uses Bayesian-style probability best because it is easier to interpret for live allocation decisions.
-        </p>
-      </section>
     </section>
   );
 }
@@ -479,7 +465,7 @@ function formatSignificanceCheck(check) {
 }
 
 function strategyGroupLabel(id) {
-  if (id === "control") return "Control";
+  if (id === "control") return "Control / holdout";
   if (id === "static_ab") return "Static benchmark";
   return "Adaptive strategy";
 }

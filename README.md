@@ -37,7 +37,7 @@ The prototype tests donation appeals across:
 
 The app has four focused tabs:
 
-- **Overview:** comparison of Control, Static randomized test, Thompson sampling, LinUCB, and contextual bandit with fatigue guardrail.
+- **Overview:** comparison of Control / holdout, Static randomized test, and LinUCB.
 - **Experiment Design:** practical setup notes for audience data, message arms, channels, outcomes, assignment logic, fatigue guardrails, and leadership questions.
 - **AI Message Review:** constrained RAG/LLM-style workflow for adapting one approved affordability message into human-reviewed channel drafts.
 - **About:** project purpose, inspiration, and boundaries.
@@ -81,13 +81,11 @@ Channels:
 
 The assignment engine is intentionally simple and explainable. It compares:
 
-1. Control
+1. Control / holdout
 2. Static randomized test
-3. Thompson sampling
-4. LinUCB
-5. Contextual bandit with fatigue guardrail
+3. LinUCB
 
-The adaptive strategies use segment-level response estimates, supporter context, channel fit, and fatigue penalties.
+The adaptive strategy uses segment-level response estimates, supporter context, channel fit, and fatigue penalties.
 
 It simulates and explains:
 
@@ -114,7 +112,7 @@ It does **not** implement OPE, IPS, SNIPS, doubly robust estimation, or advanced
 
 ## Dashboard Flow
 
-The Overview tab is designed to feel like a campaign experimentation control room. It leads with the strategies being compared and a conversion-rate trend chart with one line per strategy. It then shows whether adaptive allocation is outperforming Control, which adaptive method is leading, simulated confidence, donation conversion rate, net expected donation value, fatigue risk, and exploration rate by strategy.
+The Overview tab is designed to feel like a campaign experimentation control room. It leads with the strategies being compared and a net-value trend chart with one line per strategy. It then shows whether adaptive allocation is outperforming Control / holdout, which strategy is leading, simulated confidence, donation conversion rate, net expected donation value, fatigue risk, and traffic allocation by strategy.
 
 The Experiment Design tab answers, "How would we actually run this?" It keeps the demo practical for campaign leadership: available channels, audience data, approved message arms, outcome definitions, sample-size caveats, fatigue guardrails, human approval, and what should not be automated.
 

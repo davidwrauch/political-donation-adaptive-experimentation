@@ -60,6 +60,30 @@ def test_policy_simulator_models_volunteer_tradeoff():
     assert "volunteer_conversion_rate" in volunteer_first["deltas"]
 
 
+def test_policy_simulator_models_big_donation_tradeoff():
+    experiment = generate_experiment(seed=36, n=420)
+    result = simulate_policy(
+        experiment,
+        {
+            "donation_value_weight": 1.75,
+            "conversion_weight": 0.35,
+            "volunteer_conversion_weight": 0.05,
+            "high_dollar_donor_weight": 1.65,
+            "persuasion_trust_proxy_weight": 0.15,
+            "fatigue_penalty": 0.55,
+            "unsubscribe_penalty": 0.55,
+            "negative_urgency_message_penalty": 0.2,
+            "local_community_message_boost": 0.05,
+            "exploration_diversity_weight": 0.08,
+            "fairness_audience_diversity_weight": 0.08,
+        },
+    )
+
+    assert result["deltas"]["estimated_net_value_per_contact"] > 0
+    assert result["deltas"]["average_donation_amount"] > 0
+    assert result["deltas"]["donation_conversion_rate"] <= 0.012
+
+
 def test_policy_simulator_overlap_warning_when_propensity_is_sparse():
     experiment = generate_experiment(seed=33, n=220)
     for event in experiment["events"]:

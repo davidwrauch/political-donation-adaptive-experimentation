@@ -3,7 +3,7 @@ import React from "react";
 const designItems = [
   ["Audience data needed", "Supporter history, donation behavior, engagement, geography, issue affinity, channel availability, and fatigue/exposure history."],
   ["Message arms needed", "Approved donation frames such as affordability, democracy protection, accountability, local investment, economic fairness, and campaign momentum."],
-  ["Strategies compared", "Control, static randomized test, Thompson sampling, LinUCB, and contextual bandit with fatigue guardrail."],
+  ["Strategies compared", "Control / holdout, static randomized test, and the LinUCB adaptive strategy."],
   ["Outcomes tracked", "Primary: net donation value per contact. Secondary: donation conversion rate, average donation amount, fatigue risk, and exploration behavior."],
   ["Human review", "Campaign staff approve message templates, generated variants, fatigue caps, and rollout choices before outreach is executed."],
 ];
@@ -37,13 +37,15 @@ export default function ExperimentDesignTab() {
       <section className="panel">
         <h2>How the experiment runs</h2>
         <p>
-          The campaign starts with Control and a static randomized benchmark, then compares them against adaptive
-          strategies that update allocation as new donation outcomes arrive. Stronger strategies receive more traffic,
-          but exploration remains so the campaign does not overreact to early noise or miss smaller-segment effects.
+          The campaign starts with Control / holdout and a static randomized benchmark, then compares them against a
+          LinUCB adaptive strategy that updates allocation as new donation outcomes arrive. Stronger strategies receive
+          more traffic, but exploration remains so the campaign does not overreact to early noise or miss smaller-segment
+          effects.
         </p>
         <p>
-          Control uses generic non-personalized outreach with fixed messaging. Static randomized test splits contacts
-          across approved message/channel combinations but does not adapt allocation based on results.
+          Control / holdout uses generic non-personalized outreach with fixed messaging. Static randomized test splits
+          contacts across approved message/channel combinations but does not adapt allocation based on results. LinUCB
+          uses supporter context to adapt message and channel allocation while keeping the comparison transparent.
         </p>
         <div className="design-grid">
           {designItems.map(([label, value]) => (

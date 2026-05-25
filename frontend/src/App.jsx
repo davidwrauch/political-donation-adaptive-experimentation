@@ -51,17 +51,16 @@ export default function App() {
             </span>
           </strong>
           <small>Secondary metrics: donation conversion rate, average donation amount, fatigue risk, and exploration rate.</small>
+          <div className={overview ? "hero-live-status ready" : "hero-live-status"}>
+            <strong>{overview ? "Live data ready" : "Loading simulated campaign results, usually 10-15 seconds"}</strong>
+            <span>
+              This dashboard compares donation allocation strategies, tracks whether adaptive methods beat Control,
+              and keeps confidence/readiness visible for leadership.
+            </span>
+            <button className="briefing-button" onClick={() => setShowBriefing(true)} type="button">Project briefing</button>
+          </div>
         </div>
       </header>
-
-      <section className={overview ? "load-banner ready" : "load-banner"}>
-        <strong>{overview ? "Live data ready" : "Loading simulated campaign results, usually 10-15 seconds"}</strong>
-        <span>
-          This dashboard compares donation allocation strategies, tracks whether adaptive methods beat Control,
-          and keeps confidence/readiness visible for leadership.
-        </span>
-        <button className="briefing-button" onClick={() => setShowBriefing(true)} type="button">Project briefing</button>
-      </section>
 
       {showBriefing && (
         <section className="briefing-overlay" onClick={() => setShowBriefing(false)} role="dialog" aria-modal="true" aria-labelledby="briefing-title">

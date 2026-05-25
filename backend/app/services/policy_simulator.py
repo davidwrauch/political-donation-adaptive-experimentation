@@ -27,7 +27,7 @@ def simulate_policy(experiment: dict[str, Any], weights: dict[str, float] | None
     baseline = aggregate_metrics(events)
     default_policy = is_default_policy(merged_weights)
     scored_events = [(event, event_score(event, merged_weights)) for event in events]
-    adjusted = baseline if default_policy else weighted_aggregate(scored_events)
+    adjusted = baseline if default_policy else weighted_aggregate(scored_events, merged_weights)
     baseline_segment_shares = share_by(events, "segment")
     adjusted_segment_shares = baseline_segment_shares if default_policy else weighted_share_by(scored_events, "segment")
     top_segment = max(
@@ -123,12 +123,14 @@ def aggregate_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def weighted_aggregate(scored_events: list[tuple[dict[str, Any], float]]) -> dict[str, Any]:
+def weighted_aggregate(scored_events: list[tuple[dict[str, Any], float]], weights_config: dict[str, float]) -> dict[str, Any]:
     weights = propensity_weights(scored_events)
     events = [event for event, _score in scored_events]
+    conversion_rate = weighted_mean([event["converted"] for event in events], weights)
+    conversion_rate = clamp(conversion_rate - donation_focus_conversion_adjustment(weights_config), 0, 1)
     return {
         "estimated_net_value_per_contact": round(weighted_mean([event["net_expected_value"] for event in events], weights), 2),
-        "donation_conversion_rate": round(weighted_mean([event["converted"] for event in events], weights), 4),
+        "donation_conversion_rate": round(conversion_rate, 4),
         "volunteer_conversion_rate": round(weighted_mean([volunteer_conversion_proxy(event) for event in events], weights), 4),
         "average_donation_amount": round(weighted_mean([event["expected_donation_amount"] for event in events], weights), 2),
         "high_dollar_donation_share": round(weighted_mean([1 if event["expected_donation_amount"] >= 42 else 0 for event in events], weights), 4),
@@ -140,6 +142,14 @@ def weighted_aggregate(scored_events: list[tuple[dict[str, Any], float]]) -> dic
         "urgency_negative_frame_share": round(weighted_mean([urgency_or_negative_proxy(event) for event in events], weights), 4),
         "contacts": len(events),
     }
+
+
+def donation_focus_conversion_adjustment(weights: dict[str, float]) -> float:
+    dominance = max(
+        0.0,
+        weights["donation_value_weight"] + weights["high_dollar_donor_weight"] - weights["conversion_weight"] - 2.0,
+    )
+    return min(0.075, dominance * 0.055)
 
 
 def propensity_weights(scored_events: list[tuple[dict[str, Any], float]]) -> list[float]:

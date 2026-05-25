@@ -18,12 +18,17 @@ const presets = {
   "Current policy": defaultWeights,
   "Prioritize big donations": {
     ...defaultWeights,
-    donation_value_weight: 1.55,
-    conversion_weight: 0.85,
-    high_dollar_donor_weight: 1.35,
-    fatigue_penalty: 0.65,
-    exploration_diversity_weight: 0.12,
-    fairness_audience_diversity_weight: 0.12,
+    donation_value_weight: 1.75,
+    conversion_weight: 0.35,
+    volunteer_conversion_weight: 0.05,
+    high_dollar_donor_weight: 1.65,
+    persuasion_trust_proxy_weight: 0.15,
+    fatigue_penalty: 0.55,
+    unsubscribe_penalty: 0.55,
+    negative_urgency_message_penalty: 0.2,
+    local_community_message_boost: 0.05,
+    exploration_diversity_weight: 0.08,
+    fairness_audience_diversity_weight: 0.08,
   },
   "Prioritize small donations": {
     ...defaultWeights,
@@ -309,19 +314,31 @@ function PolicySummaryCard({ title, metrics, baseline, reliabilityNeedsMore = fa
       <span><LabelWithHelp label={title} help={title === "Current policy" ? "The logged campaign policy used as the comparison baseline." : "The estimated result after applying the selected priority weights."} /></span>
       <div className="summary-metric-layout">
         <div className="summary-primary">
-          <strong>{formatMoney(metrics?.estimated_net_value_per_contact)}</strong>
           <small><LabelWithHelp label="Net value/contact" help="Estimated donation value per contacted person after accounting for conversion, donation amount, and fatigue." /></small>
+          <strong className={deltaValueClass(metrics?.estimated_net_value_per_contact, baseline?.estimated_net_value_per_contact)}>{formatMoney(metrics?.estimated_net_value_per_contact)}</strong>
         </div>
         <div className="summary-secondary">
           <span>Secondary metrics</span>
-          <dl>
-            <dt><LabelWithHelp label="Donation conversion" help="Share of contacted supporters expected to donate." /></dt>
-            <dd className={deltaValueClass(metrics?.donation_conversion_rate, baseline?.donation_conversion_rate)}>{formatPercent(metrics?.donation_conversion_rate)}</dd>
-            <dt><LabelWithHelp label="Volunteer conversion" help="Estimated share of contacted supporters who would take a non-donation campaign action, such as volunteering, canvassing, phonebanking, or event signup." /></dt>
-            <dd className={deltaValueClass(metrics?.volunteer_conversion_rate, baseline?.volunteer_conversion_rate)}>{formatPercent(metrics?.volunteer_conversion_rate)}</dd>
-            <dt><LabelWithHelp label="Fatigue" help="Estimated risk that outreach reduces future response or increases opt-outs." /></dt>
-            <dd className={deltaValueClass(baseline?.fatigue_risk, metrics?.fatigue_risk)}>{formatPercent(metrics?.fatigue_risk)}</dd>
-          </dl>
+          <div className="summary-secondary-metrics">
+            <SummaryMiniMetric
+              label="Donation conversion"
+              help="Share of contacted supporters expected to donate."
+              value={formatPercent(metrics?.donation_conversion_rate)}
+              valueClass={deltaValueClass(metrics?.donation_conversion_rate, baseline?.donation_conversion_rate)}
+            />
+            <SummaryMiniMetric
+              label="Volunteer conversion"
+              help="Estimated share of contacted supporters who would take a non-donation campaign action, such as volunteering, canvassing, phonebanking, or event signup."
+              value={formatPercent(metrics?.volunteer_conversion_rate)}
+              valueClass={deltaValueClass(metrics?.volunteer_conversion_rate, baseline?.volunteer_conversion_rate)}
+            />
+            <SummaryMiniMetric
+              label="Fatigue"
+              help="Estimated risk that outreach reduces future response or increases opt-outs."
+              value={formatPercent(metrics?.fatigue_risk)}
+              valueClass={deltaValueClass(baseline?.fatigue_risk, metrics?.fatigue_risk)}
+            />
+          </div>
         </div>
       </div>
       {title === "Adjusted policy" && (
@@ -333,6 +350,15 @@ function PolicySummaryCard({ title, metrics, baseline, reliabilityNeedsMore = fa
         </p>
       )}
     </article>
+  );
+}
+
+function SummaryMiniMetric({ label, help, value, valueClass }) {
+  return (
+    <div className="summary-mini-metric">
+      <span><LabelWithHelp label={label} help={help} /></span>
+      <strong className={valueClass}>{value}</strong>
+    </div>
   );
 }
 
