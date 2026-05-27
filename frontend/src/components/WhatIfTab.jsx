@@ -15,8 +15,8 @@ const defaultWeights = {
 };
 
 const presets = {
-  "Current policy": defaultWeights,
-  "Prioritize big donations": {
+  "Current chase policy": defaultWeights,
+  "Prioritize high-uplift ballot returns": {
     ...defaultWeights,
     donation_value_weight: 1.75,
     conversion_weight: 0.35,
@@ -30,7 +30,7 @@ const presets = {
     exploration_diversity_weight: 0.08,
     fairness_audience_diversity_weight: 0.08,
   },
-  "Prioritize small donations": {
+  "Prioritize high-support voters": {
     ...defaultWeights,
     donation_value_weight: 0.55,
     conversion_weight: 1.45,
@@ -38,13 +38,13 @@ const presets = {
     local_community_message_boost: 1.0,
     negative_urgency_message_penalty: 1.0,
   },
-  "More positive campaign": {
+  "Reduce contact fatigue": {
     ...defaultWeights,
     persuasion_trust_proxy_weight: 1.25,
     local_community_message_boost: 1.1,
     negative_urgency_message_penalty: 1.35,
   },
-  "Balance donations + volunteers": {
+  "County opportunity": {
     ...defaultWeights,
     donation_value_weight: 1.15,
     conversion_weight: 0.85,
@@ -55,7 +55,7 @@ const presets = {
     fatigue_penalty: 0.9,
     unsubscribe_penalty: 0.85,
   },
-  "Prioritize volunteering": {
+  "Urgent returns": {
     ...defaultWeights,
     donation_value_weight: 0.45,
     conversion_weight: 0.75,
@@ -71,22 +71,23 @@ const presets = {
 };
 
 const presetExplanations = {
-  "Current policy": "Uses the same reward settings as the current logged policy. Choose this when you want the simulator to match the campaign's existing allocation logic: optimize net donation value per contact while applying guardrails for fatigue, exploration, and audience coverage.",
-  "Prioritize big donations": "Increases weight on expected dollars per contact and larger gift potential. This may raise total value, but can concentrate outreach among already-likely donors.",
-  "Prioritize small donations": "Increases weight on broader conversion and lower-friction giving. This may grow participation and list engagement, but average donation size may fall.",
-  "More positive campaign": "Rewards trust-building and reduces reliance on urgent or pressure-heavy frames. This may reduce fatigue and improve long-term engagement, but short-term donation value may be lower.",
-  "Balance donations + volunteers": "Keeps donation value important while increasing weight on volunteering, trust-building, local relevance, and fatigue guardrails.",
-  "Prioritize volunteering": "Raises the value of volunteer signups and civic participation. Donation value may fall, but the campaign could build more durable organizing capacity.",
+  "Current chase policy": "Uses the same reward settings as the current logged ballot-chase policy: optimize expected additional returned ballots while applying guardrails for fatigue, exploration, and county coverage.",
+  "Prioritize high-uplift ballot returns": "Increases weight on voters most likely to return a ballot because of contact. This may raise impact, but can concentrate outreach among a narrower movable audience.",
+  "Prioritize high-support voters": "Raises the value of high-support and high-priority voters. This may protect campaign priorities, but can miss lower-propensity voters who are more movable.",
+  "Reduce contact fatigue": "Penalizes voters who have already received repeated outreach. This protects voter experience, but may reduce near-term returned-ballot volume.",
+  "County opportunity": "Raises weight on county-level opportunity and local election relevance. This can shift resources toward places where more outstanding ballots remain.",
+  "Urgent returns": "Prioritizes voters whose ballots have been outstanding longer and may need immediate help returning them.",
 };
 
 const controls = [
-  ["donation_value_weight", "Donation value", "Prioritize expected dollars raised per contact."],
-  ["conversion_weight", "Conversion", "Prioritize the chance that a contacted supporter donates."],
-  ["volunteer_conversion_weight", "Volunteer conversion", "Prioritize contacts and messages more likely to produce volunteer signups or civic participation, not just donations."],
-  ["trust_positive_tone", "Trust/positive tone", "Favor messages that build confidence, credibility, and longer-term trust while reducing pressure-heavy frames."],
-  ["fatigue_guardrail", "Fatigue guardrail", "Reduce priority for contacts likely to feel over-contacted or less responsive after repeated outreach."],
-  ["local_community_message_boost", "Local/community", "Favor local investment, community benefit, and everyday-affordability frames."],
-  ["learning_diversity", "Learning/diversity", "Preserve exploration across messages, audiences, and channels so the campaign keeps learning."],
+  ["donation_value_weight", "Ballot return uplift", "Prioritize voters most likely to return a ballot because of contact."],
+  ["high_dollar_donor_weight", "Support score", "Prioritize high-support or high-priority voters."],
+  ["conversion_weight", "Contactability", "Prioritize voters who can likely be reached through available channels."],
+  ["volunteer_conversion_weight", "Urgency", "Prioritize voters whose ballots have been outstanding longer."],
+  ["fatigue_guardrail", "Contact fatigue guardrail", "Reduce priority for voters likely to feel over-contacted."],
+  ["trust_positive_tone", "Voter confidence/helpfulness", "Favor interventions that answer questions and make ballot return easier."],
+  ["local_community_message_boost", "Local election relevance", "Favor local election context, county-specific help, and practical ballot-return information."],
+  ["learning_diversity", "County/exploration diversity", "Preserve learning across counties, voters, interventions, and channels."],
 ];
 
 const audienceOptions = [
@@ -99,7 +100,7 @@ const audienceOptions = [
 
 export default function WhatIfTab({ apiBase }) {
   const [weights, setWeights] = useState(defaultWeights);
-  const [activePreset, setActivePreset] = useState("Current policy");
+  const [activePreset, setActivePreset] = useState("Current chase policy");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -140,8 +141,8 @@ export default function WhatIfTab({ apiBase }) {
   const baseline = result?.baseline_policy;
   const deltas = result?.deltas;
   const reliabilityNeedsMore = result?.overlap?.warning;
-  const projectedImpact = (deltas?.estimated_net_value_per_contact ?? 0) * audienceSize;
-  const projectedVolunteerSignups = (deltas?.volunteer_conversion_rate ?? 0) * audienceSize;
+  const projectedImpact = ((deltas?.estimated_net_value_per_contact ?? 0) / 100) * audienceSize;
+  const projectedPriorityMoves = (deltas?.donation_conversion_rate ?? 0) * audienceSize;
 
   return (
     <div className="tab-panel what-if-tab">
@@ -157,8 +158,8 @@ export default function WhatIfTab({ apiBase }) {
           </small>
         </div>
         <div className="what-if-hero-right">
-          <p>Test how different campaign priorities would change the system's recommendations.</p>
-          <p>Use this as a strategy mixing board: shift the reward settings, compare the result to the current policy, and see the tradeoffs before changing how outreach is allocated.</p>
+          <p>Explore how changing turnout priorities reshapes ballot returns, contact fatigue, and county-level opportunity.</p>
+          <p>Use this as a strategy mixing board: shift the reward settings, compare the result to the current chase policy, and see the tradeoffs before changing how outreach is allocated.</p>
         </div>
         <label className="hero-audience-select">
           Audience size
@@ -199,26 +200,26 @@ export default function WhatIfTab({ apiBase }) {
       </section>
 
       <section className="compact-policy-grid">
-        <PolicySummaryCard title="Current policy" metrics={baseline} />
-        <PolicySummaryCard baseline={baseline} metrics={adjusted} reliabilityNeedsMore={reliabilityNeedsMore} title="Adjusted policy" />
+        <PolicySummaryCard title="Current chase policy" metrics={baseline} />
+        <PolicySummaryCard baseline={baseline} metrics={adjusted} reliabilityNeedsMore={reliabilityNeedsMore} title="Adjusted chase policy" />
       </section>
 
       <section className="impact-row">
         <article className="projected-impact-card">
           <div>
-            <span><LabelWithHelp label="Projected campaign impact" help="This extrapolates the estimated per-contact change across a larger campaign audience. Real-world results would vary." /></span>
+            <span><LabelWithHelp label="Projected additional returned ballots" help="This extrapolates the estimated per-contact change across a larger ballot-chase universe. Real-world results would vary." /></span>
             <strong className={impactClass(projectedImpact)}>{formatImpactMoney(projectedImpact)}</strong>
-            <small>{signedMoney(deltas?.estimated_net_value_per_contact ?? 0)}/contact over {audienceSize.toLocaleString()} contacts</small>
-            <p>Estimated difference if this policy had been used across the selected outreach volume.</p>
+            <small>{signedMoney(deltas?.estimated_net_value_per_contact ?? 0)} per 100 contacts over {audienceSize.toLocaleString()} voters</small>
+            <p>Estimated returned-ballot difference if this chase policy had been used across the selected outreach volume.</p>
           </div>
         </article>
 
         <article className="projected-impact-card volunteer-impact-card">
           <div>
-            <span><LabelWithHelp label="Projected volunteer signups" help="Estimated additional volunteer actions across the selected audience size based on the volunteer conversion change." /></span>
-            <strong className={impactClass(projectedVolunteerSignups)}>{formatSignedWholeNumber(projectedVolunteerSignups)}</strong>
-            <small>{formatDeltaPercent(deltas?.volunteer_conversion_rate)} over {audienceSize.toLocaleString()} contacts</small>
-            <p>Estimated additional volunteer, canvassing, phonebanking, event, or civic-participation actions.</p>
+            <span><LabelWithHelp label="Projected ballot returns from rate change" help="Estimated additional returned ballots from changing the ballot return rate across the selected audience size." /></span>
+            <strong className={impactClass(projectedPriorityMoves)}>{formatSignedWholeNumber(projectedPriorityMoves)}</strong>
+            <small>{formatDeltaPercent(deltas?.donation_conversion_rate)} over {audienceSize.toLocaleString()} contacts</small>
+            <p>Estimated returned ballots from the modeled return-rate change.</p>
           </div>
         </article>
       </section>
@@ -227,9 +228,9 @@ export default function WhatIfTab({ apiBase }) {
         <article className="meaning-panel">
           <h3>What this means</h3>
           <p>
-            Contextual bandits (adaptive experimentation) do not decide what "good" means on their own. Humans define
-            the reward, constraints, and tradeoffs. This simulator shows how changing those priorities can shift
-            estimated outcomes across donations, volunteering, trust, fatigue, and audience coverage.
+            The goal is not to chase every outstanding ballot equally. The goal is to identify where contact is most
+            likely to change behavior. Humans define the reward, constraints, and tradeoffs; the adaptive system learns
+            how those priorities shift returned ballots, urgency, fatigue, and county coverage.
           </p>
         </article>
         <article className="meaning-panel quiet-method">
@@ -311,24 +312,24 @@ function Knob({ label, description, value, onChange }) {
 function PolicySummaryCard({ title, metrics, baseline, reliabilityNeedsMore = false }) {
   return (
     <article className="policy-summary compact">
-      <span><LabelWithHelp label={title} help={title === "Current policy" ? "The logged campaign policy used as the comparison baseline." : "The estimated result after applying the selected priority weights."} /></span>
+      <span><LabelWithHelp label={title} help={title === "Current chase policy" ? "The logged ballot-chase policy used as the comparison baseline." : "The estimated result after applying the selected priority weights."} /></span>
       <div className="summary-metric-layout">
         <div className="summary-primary">
-          <small><LabelWithHelp label="Net value/contact" help="Estimated donation value per contacted person after accounting for conversion, donation amount, and fatigue." /></small>
+          <small><LabelWithHelp label="Additional returns/contact" help="Estimated additional ballot-return impact per contacted voter after accounting for uplift and fatigue." /></small>
           <strong className={deltaValueClass(metrics?.estimated_net_value_per_contact, baseline?.estimated_net_value_per_contact)}>{formatMoney(metrics?.estimated_net_value_per_contact)}</strong>
         </div>
         <div className="summary-secondary">
           <span>Secondary metrics</span>
           <div className="summary-secondary-metrics">
             <SummaryMiniMetric
-              label="Donation conversion"
-              help="Share of contacted supporters expected to donate."
+              label="Ballot return rate"
+              help="Share of contacted voters expected to return their mail ballot."
               value={formatPercent(metrics?.donation_conversion_rate)}
               valueClass={deltaValueClass(metrics?.donation_conversion_rate, baseline?.donation_conversion_rate)}
             />
             <SummaryMiniMetric
-              label="Volunteer conversion"
-              help="Estimated share of contacted supporters who would take a non-donation campaign action, such as volunteering, canvassing, phonebanking, or event signup."
+              label="Average uplift"
+              help="Estimated increase in ballot return probability caused by contact."
               value={formatPercent(metrics?.volunteer_conversion_rate)}
               valueClass={deltaValueClass(metrics?.volunteer_conversion_rate, baseline?.volunteer_conversion_rate)}
             />
@@ -341,7 +342,7 @@ function PolicySummaryCard({ title, metrics, baseline, reliabilityNeedsMore = fa
           </div>
         </div>
       </div>
-      {title === "Adjusted policy" && (
+      {title === "Adjusted chase policy" && (
         <p className={reliabilityNeedsMore ? "summary-reliability warning" : "summary-reliability good"}>
           <LabelWithHelp
             label={`Reliable demo estimate? ${reliabilityNeedsMore ? "No" : "Yes"}`}
@@ -424,23 +425,23 @@ function deltaValueClass(value, comparison) {
 
 function formatMoney(value) {
   if (typeof value !== "number") return "Loading";
-  return `$${value.toFixed(2)}`;
+  return value.toFixed(2);
 }
 
 function signedMoney(value) {
   if (typeof value !== "number") return "Calculating";
-  if (Math.abs(value) < 0.005) return "$0.00";
+  if (Math.abs(value) < 0.005) return "0.00";
   const sign = value >= 0 ? "+" : "";
-  return `${sign}$${value.toFixed(2)}`;
+  return `${sign}${value.toFixed(2)}`;
 }
 
 function formatImpactMoney(value) {
   if (typeof value !== "number") return "Calculating";
   const rounded = Math.round(value);
   const absolute = Math.abs(rounded).toLocaleString();
-  if (rounded < 0) return `-$${absolute}`;
-  if (rounded > 0) return `+$${absolute}`;
-  return "$0";
+  if (rounded < 0) return `-${absolute}`;
+  if (rounded > 0) return `+${absolute}`;
+  return "0";
 }
 
 function formatSignedWholeNumber(value) {

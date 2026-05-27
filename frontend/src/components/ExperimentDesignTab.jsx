@@ -1,11 +1,11 @@
 import React from "react";
 
 const designItems = [
-  ["Audience data needed", "Supporter history, donation behavior, engagement, geography, issue affinity, channel availability, and fatigue/exposure history."],
-  ["Message arms needed", "Approved donation frames such as affordability, democracy protection, accountability, local investment, economic fairness, and campaign momentum."],
+  ["Audience data needed", "Mail ballot request data, county, district, support score, turnout score, contactability, prior contacts, preferred channel, and fatigue/exposure history."],
+  ["Interventions needed", "Approved ballot-chase options such as SMS reminder, volunteer call, door knock, candidate call, email reminder, and suppress / do not contact."],
   ["Strategies compared", "Control / holdout, static randomized test, and the LinUCB adaptive strategy."],
-  ["Outcomes tracked", "Primary: net donation value per contact. Secondary: donation conversion rate, average donation amount, fatigue risk, and exploration behavior."],
-  ["Human review", "Campaign staff approve message templates, generated variants, fatigue caps, and rollout choices before outreach is executed."],
+  ["Outcomes tracked", "Primary: estimated additional returned ballots. Secondary: ballot return rate, average uplift, contact fatigue risk, and traffic allocation."],
+  ["Human review", "Campaign staff approve reminder templates, contact caps, suppression rules, and rollout choices before outreach is executed."],
 ];
 
 const operationalSteps = [
@@ -19,9 +19,9 @@ const operationalSteps = [
 
 const operationalDetails = [
   "Outreach vendors send interaction data back through APIs or batch uploads.",
-  "A warehouse combines demographic, behavioral, donation, and engagement history.",
-  "Allocation models compare strategy performance across supporter segments.",
-  "The system exports reviewed supporter ID, message variant, channel, and cadence recommendations through CSVs or APIs.",
+  "A warehouse combines voter file, mail ballot, contact, geography, support, turnout, and engagement history.",
+  "Allocation models compare intervention performance across counties, districts, and voter segments.",
+  "The system exports reviewed voter ID, intervention, channel, urgency, and cadence recommendations through CSVs or APIs.",
   "Human review and campaign approval remain part of the workflow.",
 ];
 
@@ -38,14 +38,14 @@ export default function ExperimentDesignTab() {
         <h2>How the experiment runs</h2>
         <p>
           The campaign starts with Control / holdout and a static randomized benchmark, then compares them against a
-          LinUCB adaptive strategy that updates allocation as new donation outcomes arrive. Stronger strategies receive
+          LinUCB adaptive strategy that updates allocation as ballot-return outcomes arrive. Stronger strategies receive
           more traffic, but exploration remains so the campaign does not overreact to early noise or miss smaller-segment
           effects.
         </p>
         <p>
-          Control / holdout uses generic non-personalized outreach with fixed messaging. Static randomized test splits
-          contacts across approved message/channel combinations but does not adapt allocation based on results. LinUCB
-          uses supporter context to adapt message and channel allocation while keeping the comparison transparent.
+          Control / holdout uses generic non-personalized ballot-return reminders. Static randomized test splits
+          contacts across approved intervention/channel combinations but does not adapt allocation based on results.
+          LinUCB uses voter context to adapt intervention and channel allocation while keeping the comparison transparent.
         </p>
         <div className="design-grid">
           {designItems.map(([label, value]) => (

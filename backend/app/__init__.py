@@ -1,1 +1,1 @@
-"""Political donation adaptive experimentation demo."""
+"""Adaptive ballot chase experimentation demo."""

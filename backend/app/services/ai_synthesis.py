@@ -7,10 +7,9 @@ def synthesize_recommendation(summary: dict) -> dict:
             "Costs are too high for New York families. Rent, groceries, child care, transit, and "
             "utility bills are stretching household budgets across the state.\n\n"
             "Our campaign is organizing around practical affordability solutions and a fairer "
-            "economy. Will you make a grassroots donation today to help us reach more voters before "
-            "the next outreach deadline?\n\n"
-            "Every contribution helps organizers talk with more neighbors, share our plan, and build "
-            "support for leaders who will focus on the cost of living."
+            "economy. Our records show your mail ballot was requested but may not have been returned yet.\n\n"
+            "Please return your ballot as soon as possible, and contact the campaign if you need help finding "
+            "deadline, drop-off, or ballot-return information."
         ),
         "retrieved_context": {
             "approved_issue_brief": "Affordability / cost of living",
@@ -20,9 +19,8 @@ def synthesize_recommendation(summary: dict) -> dict:
                 "Door-knocking scripts should open with listening before making an ask."
             ),
             "prior_performance_note": (
-                "High-engagement prior donors usually need concise, direct donation asks. "
-                "Lower-engagement prospects often need more context, trust-building, and issue "
-                "framing before an ask."
+                "High-contactability voters usually need concise, practical reminders. "
+                "Lower-contactability voters often need more context, trust-building, and clear ballot-return help."
             ),
         },
         "human_review_required": True,
@@ -33,27 +31,24 @@ def synthesize_recommendation(summary: dict) -> dict:
         ),
         "variants": [
             {
-                "id": "sms_prior_donor",
-                "audience": "High-engagement prior donor",
+                "id": "sms_high_contactability",
+                "audience": "High-contactability outstanding ballot voter",
                 "medium": "SMS",
                 "length": "Short",
                 "message": (
-                    "Costs are still too high for NY families. Can you chip in again today to help us "
-                    "fight for lower everyday costs?"
+                    "Your mail ballot is still outstanding. Please return it today if you can, and reply if you need deadline or drop-off info."
                 ),
-                "reason": "Prior donors respond well to concise SMS reminders tied to a familiar issue frame.",
+                "reason": "High-contactability voters respond well to concise practical SMS reminders.",
             },
             {
-                "id": "email_prior_donor",
-                "audience": "High-engagement prior donor",
+                "id": "email_ballot_help",
+                "audience": "Outstanding ballot voter needing more context",
                 "medium": "Email",
                 "length": "Medium",
                 "message": (
-                    "You have helped power this campaign before. Today, we are focused on lowering "
-                    "everyday costs for New York families, and another grassroots donation would help "
-                    "us reach more voters before the next outreach push."
+                    "Our records show your requested mail ballot may still be outstanding. This election affects everyday costs for New York families. Please return your ballot as soon as possible, and contact us if you need official return instructions or deadline information."
                 ),
-                "reason": "Email allows a little more context while keeping the ask direct for engaged donors.",
+                "reason": "Email allows more context and practical ballot-return guidance.",
             },
             {
                 "id": "sms_prospect",
@@ -63,7 +58,7 @@ def synthesize_recommendation(summary: dict) -> dict:
                 "message": (
                     "We are organizing around lower costs for NY families. Can we count on your support today?"
                 ),
-                "reason": "Prospects get a softer, lower-pressure SMS with no assumption of prior donation history.",
+                "reason": "Lower-contactability voters get a softer reminder focused on help rather than pressure.",
             },
             {
                 "id": "door_script_prospect",
@@ -75,7 +70,7 @@ def synthesize_recommendation(summary: dict) -> dict:
                     "of living and what would make life more affordable here in New York. Is that an issue "
                     "you would like to hear more about?"
                 ),
-                "reason": "Door outreach should start with listening and issue relevance rather than an immediate donation ask.",
+                "reason": "Door outreach should start with listening and practical ballot-return help.",
             },
         ],
     }

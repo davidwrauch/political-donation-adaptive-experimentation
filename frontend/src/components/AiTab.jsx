@@ -16,7 +16,7 @@ const familyContent = {
 
 Our campaign is focused on costs people feel every day: housing, food, child care, transit, and utility bills. We are fighting for leaders who understand what working families are carrying.
 
-Your donation helps us reach more New Yorkers with a simple message: working people deserve a fair shot and a government that takes affordability seriously.`,
+Returning your ballot helps make sure working people are counted in decisions about affordability and daily costs.`,
     frame: "making everyday life more affordable",
   },
   "Healthcare access": {
@@ -25,7 +25,7 @@ Your donation helps us reach more New Yorkers with a simple message: working peo
 
 Our campaign is speaking up for lower prescription costs, local health services, and care that people can actually reach when they need it.
 
-A donation today helps us talk with voters who believe healthcare should put people first, not paperwork, profits, or politics.`,
+Returning your ballot helps make sure voters who care about healthcare access are counted before the deadline.`,
     frame: "protecting affordable healthcare access",
   },
   "Anti-corruption / accountability": {
@@ -34,7 +34,7 @@ A donation today helps us talk with voters who believe healthcare should put peo
 
 Our campaign is focused on clean, accountable leadership. That means fighting for honest budgets, fair rules, and leaders who do not forget who sent them there.
 
-Your donation helps us reach voters who want a campaign that is people-powered, transparent, and not bought by the loudest special interests.`,
+Returning your ballot helps make sure voters who care about clean government are counted.`,
     frame: "clean government and public accountability",
   },
   "Democracy / voting rights": {
@@ -43,7 +43,7 @@ Your donation helps us reach voters who want a campaign that is people-powered, 
 
 Our campaign is organizing around fair elections, voting access, and public leaders who respect every community's right to be heard.
 
-Your donation helps us reach voters who believe democracy is strongest when more people participate, not fewer.`,
+Returning your ballot helps make democracy stronger by making sure your voice is counted.`,
     frame: "protecting voting rights and fair elections",
   },
   "Climate / resiliency": {
@@ -52,7 +52,7 @@ Your donation helps us reach voters who believe democracy is strongest when more
 
 Our campaign is focused on practical climate action: safer neighborhoods, cleaner air, stronger infrastructure, and faster recovery when severe weather hits.
 
-A donation helps us reach voters who want climate plans that protect families today and prepare communities for tomorrow.`,
+Returning your ballot helps make sure climate and resiliency concerns are counted locally.`,
     frame: "building safer climate-ready communities",
   },
   "Public transit / infrastructure": {
@@ -61,7 +61,7 @@ A donation helps us reach voters who want climate plans that protect families to
 
 Our campaign is focused on reliable trains and buses, safer streets, stronger bridges, and public systems that serve every neighborhood.
 
-Your donation helps us talk with voters about the basic infrastructure that makes opportunity possible: getting to work, school, healthcare, and home safely.`,
+Returning your ballot helps make sure transit and infrastructure priorities are counted in this election.`,
     frame: "better transit and stronger infrastructure",
   },
   "Reproductive rights": {
@@ -70,18 +70,18 @@ Your donation helps us talk with voters about the basic infrastructure that make
 
 Our campaign is organizing to protect reproductive freedom and defend access to care before rights are weakened or taken away.
 
-A donation today helps us reach voters who believe personal freedom and basic healthcare rights deserve strong public defense.`,
+Returning your ballot helps make sure reproductive rights voters are counted before the deadline.`,
     frame: "protecting reproductive freedom",
   },
 };
 
 const variantTypes = [
-  "SMS",
-  "Fundraising email",
+  "SMS reminder",
+  "Email reminder",
   "Volunteer call script",
   "Door knocking script",
-  "Younger donor version",
-  "High-engagement prior donor version",
+  "Candidate call",
+  "Suppress / do not contact note",
 ];
 
 export default function AiTab({ recommendation }) {
@@ -106,12 +106,12 @@ export default function AiTab({ recommendation }) {
       <section className="panel ai-callout">
         <strong>This section shows ONE example message family.</strong>
         <p>
-          A real campaign would repeat this workflow across multiple issue frames, supporter types, and outreach channels.
+          A real campaign would repeat this workflow across multiple issue frames, voter segments, counties, and outreach channels.
         </p>
       </section>
 
       <section className="panel intro-card">
-        <h2>AI Message Review</h2>
+        <h2>AI Ballot Chase Review</h2>
         <p>{recommendation.explanation}</p>
         <span className="review-pill">Human review required</span>
       </section>
@@ -126,7 +126,7 @@ export default function AiTab({ recommendation }) {
       </section>
 
       <section className="panel">
-        <h2>Staff-written base message</h2>
+        <h2>Staff-written base reminder</h2>
         <p className="panel-copy">Tone: {content.tone}</p>
         <div className="base-message">{content.base}</div>
       </section>
@@ -142,7 +142,7 @@ export default function AiTab({ recommendation }) {
       </section>
 
       <section className="panel">
-        <h2>LLM-generated variants for review</h2>
+        <h2>Generated ballot-chase variants for review</h2>
         <div className="variant-grid">
           {variantTypes.map((type) => {
             const id = `${family}-${type}`;
@@ -203,12 +203,12 @@ function ContextItem({ label, value }) {
 }
 
 function renderVariant(type, frame) {
-  if (type === "SMS") return `We are organizing around ${frame}. Can you chip in today to help us reach more New Yorkers?`;
-  if (type === "Fundraising email") {
-    return `Our campaign is focused on ${frame}. Your donation helps us reach voters with a clear, practical message before the next outreach push.\n\nThis is how we turn one approved issue frame into real voter conversations. If you can, please make a donation today.`;
+  if (type === "SMS reminder") return `Your mail ballot is still outstanding. If ${frame} matters to you, please return your ballot today or contact us if you need help.`;
+  if (type === "Email reminder") {
+    return `Our records show your requested mail ballot has not yet been returned.\n\nThis election affects ${frame}. Please return your ballot as soon as possible, and use the official return instructions included with your ballot. If you need help finding a drop-off option or deadline information, our team can help.`;
   }
   if (type === "Volunteer call script") {
-    return `Hi, this is the campaign calling. We are reaching supporters about ${frame}. Is this an issue you care about?\n\nIf yes: Thank you. We are asking supporters to help fund the next round of voter outreach. Would you consider a small donation today?`;
+    return `Hi, this is the campaign calling with a quick mail ballot reminder. Our records show your ballot was requested but may not have been returned yet. Do you have a plan to return it?\n\nIf they need help: offer deadline and return-option information. If already returned: thank them and mark the record for follow-up cleanup.`;
   }
   if (type === "Door knocking script") {
     return (
@@ -220,33 +220,33 @@ function renderVariant(type, frame) {
           <li>What issue feels most urgent in your neighborhood right now?</li>
           <li>How has this issue affected your family or daily life?</li>
           <li>What would you want elected leaders to do first?</li>
-          <li>Would you like information about supporting the campaign?</li>
+          <li>Do you have what you need to return your ballot?</li>
         </ol>
         <strong>Common concerns heard from voters</strong>
         <ul>
-          <li>People want to feel heard before they are asked for money.</li>
+          <li>People want practical help, not pressure.</li>
           <li>Many voters connect {frame} to local stress in their own lives.</li>
-          <li>Some supporters want a clear explanation of how donations expand outreach.</li>
+          <li>Some voters need deadline, postage, signature, or drop-box information.</li>
         </ul>
         <strong>Suggested follow-up</strong>
-        <p>If the voter is interested, offer a donation link or follow-up card. Thank them for their time either way, and note which concern shaped the conversation.</p>
+        <p>If the voter needs help, offer official ballot-return information. Thank them for their time either way, and note whether follow-up is needed.</p>
       </div>
     );
   }
-  if (type === "Younger donor version") return `This campaign is about the future we are going to live in. If ${frame} matters to you, a small donation helps us reach people your age.`;
-  return `You have supported us before. Another donation today would help us keep organizing around ${frame} while the race is still moving.`;
+  if (type === "Candidate call") return `This is a short candidate or surrogate call reserved for a high-priority voter: thank them for requesting a ballot, connect the election to ${frame}, and ask whether they have a plan to return it.`;
+  return `Do not contact if fatigue risk is high or modeled uplift is low. Preserve capacity for voters more likely to return a ballot because of contact.`;
 }
 
 function audienceFor(type) {
-  if (type === "Younger donor version") return "Younger donor";
-  if (type === "High-engagement prior donor version") return "High-engagement prior donor";
+  if (type === "Candidate call") return "High-support high-priority voter";
+  if (type === "Suppress / do not contact note") return "High fatigue or low-uplift voter";
   if (type === "Door knocking script") return "In-person voter conversation";
   if (type === "Volunteer call script") return "Phone outreach";
-  return "General supporter audience";
+  return "Outstanding mail ballot voter";
 }
 
 function lengthFor(type) {
-  if (type === "SMS") return "Very short";
+  if (type === "SMS reminder") return "Very short";
   if (type === "Door knocking script") return "Structured script";
   if (type === "Fundraising email") return "Medium";
   return "Short";
@@ -254,9 +254,9 @@ function lengthFor(type) {
 
 function reasonFor(type) {
   if (type === "Door knocking script") return "Door conversations should stay adaptive, listening-oriented, and grounded in what the voter raises first.";
-  if (type === "SMS") return "SMS needs a short ask that is easy to read quickly.";
-  if (type === "Fundraising email") return "Email can carry more context and a clearer donation rationale.";
-  if (type === "Younger donor version") return "Younger donors often respond to future-oriented stakes and low-friction asks.";
-  if (type === "High-engagement prior donor version") return "Prior donors can receive a more direct reminder because they already know the campaign.";
+  if (type === "SMS reminder") return "SMS needs a short practical reminder that is easy to read quickly.";
+  if (type === "Email reminder") return "Email can carry more deadline and ballot-return help.";
+  if (type === "Candidate call") return "Candidate calls are scarce and should be reserved for high-priority voters where contact may move behavior.";
+  if (type === "Suppress / do not contact note") return "Suppression protects voters from over-contact and preserves limited chase capacity.";
   return "Call scripts need a conversational opening and a clear next step.";
 }

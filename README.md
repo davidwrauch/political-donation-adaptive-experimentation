@@ -1,18 +1,10 @@
-# Political Donation Adaptive Experimentation Platform
+# Adaptive Ballot Chase
 
-A production-style prototype for adaptive campaign fundraising experiments that learns which donation messages, audience segments, and channels perform best while monitoring donor fatigue and expected donation value.
+Adaptive Ballot Chase is a contextual bandit prototype for prioritizing mail-ballot follow-up using uplift, contactability, fatigue, and county-level opportunity signals.
 
-## What This Is
+The demo simulates voters who requested mail ballots but have not yet returned them. The system estimates who is most movable, which reminder or channel is most appropriate, and whether adaptive allocation is outperforming a static baseline and a Control / holdout group.
 
-This is a lightweight interactive prototype for a New York Democratic campaign testing donation outreach before scaling donation outreach. It compares a true Control group, a static randomized baseline, and adaptive experimentation strategies for allocating limited contacts across messages, audience segments, and channels while monitoring net donation value per contact, conversion, average donation amount, exploration, and donor fatigue.
-
-The demo is inspired by three ideas:
-
-- Campaign data science is mainly **resource allocation and optimization**, not election prediction.
-- Donation solicitation can be modeled as a **contextual bandit** problem: different profiles receive different message treatments and the system learns which appeals perform best.
-- Campaign analytics should translate research and modeling into clear outreach decisions: effective message frames, priority cohorts, and efficient channel allocation.
-
-This is not production political technology. It is a portfolio simulation designed to explain adaptive experimentation, donation propensity thinking, message-frame testing, channel optimization, and human-reviewed AI-assisted recommendations.
+This is a prototype / simulation / portfolio project, not production political technology, not an election prediction model, and not an autonomous persuasion system.
 
 ## Technical Stack
 
@@ -20,261 +12,141 @@ This is not production political technology. It is a portfolio simulation design
 - FastAPI
 - React
 - Vite
-- pandas
-- scikit-learn optional
-- lightweight synthetic simulation data
-
-## Product Framing
-
-The prototype tests donation appeals across:
-
-- Audience segments
-- Issue affinities
-- Message frames
-- Outreach channels
-- Donor fatigue risk
-- Expected donation value
-
-The app has four focused tabs:
-
-- **Overview:** comparison of Control / holdout, Static randomized test, and LinUCB.
-- **Experiment Design:** practical setup notes for audience data, message arms, channels, outcomes, assignment logic, fatigue guardrails, and leadership questions.
-- **AI Message Review:** constrained RAG/LLM-style workflow for adapting one approved affordability message into human-reviewed channel drafts.
-- **About:** project purpose, inspiration, and boundaries.
-
-## Simulated Supporter Data
-
-Each generated supporter has:
-
-- `supporter_id`
-- `age_band`
-- `geography_type`
-- `prior_donation_count`
-- `prior_total_donated`
-- `recent_engagement_score`
-- `volunteer_history`
-- `issue_affinity`
-- `channel_preference`
-- `political_engagement_level`
-- `donor_fatigue_score`
-- `civic_engagement_score`
-
-## Message Frames
-
-The experiment tests six donation message frames:
-
-- Economic fairness
-- Anti-corruption / accountability
-- Democracy protection
-- Affordability / cost of living
-- Local community investment
-- Candidate momentum / urgency
-
-Channels:
-
-- Email
-- SMS
-- Phone
-- Digital ad
-
-## Decision Engine
-
-The assignment engine is intentionally simple and explainable. It compares:
-
-1. Control / holdout
-2. Static randomized test
-3. LinUCB
-
-The adaptive strategy uses segment-level response estimates, supporter context, channel fit, and fatigue penalties.
-
-It simulates and explains:
-
-- Which message frame to send
-- Which channel to use
-- Expected reward
-- Uncertainty
-- Exploration need
-- Fatigue penalty
-- Channel fit
-
-It does **not** implement OPE, IPS, SNIPS, doubly robust estimation, or advanced causal claims.
+- Lightweight synthetic data generation
+- Contextual bandit-style adaptive allocation
+- Deterministic template-based AI review workflow
 
 ## What It Demonstrates
 
-- Adaptive experimentation
-- Donation propensity thinking
-- Message-frame testing
-- Audience segmentation
-- Channel optimization
-- Campaign resource allocation
-- Donor fatigue monitoring
-- Human-reviewed AI-assisted recommendations
+- Adaptive experimentation for turnout operations
+- Ballot chase prioritization
+- Uplift / movability thinking
+- Contactability and fatigue-aware outreach
+- County and district opportunity monitoring
+- Intervention/channel optimization
+- Human-reviewed AI-assisted reminder adaptation
+- Offline What If policy simulation
 
-## Dashboard Flow
+## Scenario
 
-The Overview tab is designed to feel like a campaign experimentation control room. It leads with the strategies being compared and a net-value trend chart with one line per strategy. It then shows whether adaptive allocation is outperforming Control / holdout, which strategy is leading, simulated confidence, donation conversion rate, net expected donation value, fatigue risk, and traffic allocation by strategy.
+A New York Democratic campaign is running a ballot chase program. Every voter in the simulated universe has requested a mail ballot but has not yet returned it. The campaign has limited staff, volunteer, and paid-contact capacity, so it should not chase every outstanding ballot equally.
 
-The Experiment Design tab answers, "How would we actually run this?" It keeps the demo practical for campaign leadership: available channels, audience data, approved message arms, outcome definitions, sample-size caveats, fatigue guardrails, human approval, and what should not be automated.
+The core question is:
 
-The AI Message Review tab is a message adaptation review workflow, not an experiment decision engine. A staff-written affordability message is adapted into SMS, email, and door-knocking drafts using approved context. Staff must approve, reject, or replace every draft; nothing is sent automatically.
+> Which voters are most likely to return their ballot because of the right contact?
+
+## Simulated Voter Fields
+
+Each generated voter includes:
+
+- `voter_id`
+- `county`
+- `district`
+- `support_score`
+- `turnout_score`
+- `ballot_requested_date`
+- `ballot_returned`
+- `days_since_request`
+- `contactability_score`
+- `fatigue_score`
+- `prior_contact_count`
+- `prior_vote_history`
+- `preferred_channel`
+- `baseline_return_probability`
+- `estimated_return_probability_if_contacted`
+- `uplift_score`
+- `recommended_intervention`
+- `urgency_score`
+- `assignment_probability`
+- `adaptive_policy_group`
+
+## Interventions
+
+The simulation compares approved ballot-chase interventions:
+
+1. SMS reminder
+2. Volunteer call
+3. Door knock
+4. Candidate call
+5. Email reminder
+6. Suppress / do not contact
+
+## Allocation Strategies
+
+The Overview compares:
+
+1. Control / holdout
+2. Static randomized test
+3. LinUCB adaptive strategy
+
+Control / holdout uses generic reminders with no adaptive allocation. Static randomized test splits contacts across approved interventions and channels. LinUCB uses voter context such as support, turnout, contactability, urgency, fatigue, and county opportunity to prioritize outreach.
+
+## Key Metrics
+
+- Outstanding ballots
+- High-priority chase targets
+- Estimated additional returned ballots
+- Average uplift
+- Top county opportunity
+- Fatigue-risk voters suppressed
+- Recommended contacts by channel
+- Adaptive vs static estimated lift
+
+## What If Tab
+
+The What If tab is an offline policy simulation. It lets campaign leadership change turnout priorities and estimate how those choices would have shifted returned ballots, contact fatigue, and county-level opportunity on the simulated historical log.
+
+It is decision support, not causal proof. Estimates are strongest when the logged experiment explored similar actions with enough assignment probability overlap.
+
+## AI Review
+
+The AI review surface demonstrates constrained, deterministic reminder adaptation. It does not call external LLM APIs and does not send messages automatically. Staff must review reminder language, intervention type, and suppression choices before execution.
 
 ## Run Locally
 
-Create and activate a Python environment:
+Backend:
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r backend/requirements.txt
-```
-
-Run the API:
-
-```powershell
-$env:PYTHONPATH="backend"
+```bash
+cd backend
+pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Start the frontend:
+Hosted backend build command:
 
-```powershell
+```bash
+pip install -r backend/requirements.txt
+```
+
+Hosted backend start command:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+Frontend:
+
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Open:
+Production build:
 
-- Dashboard: `http://localhost:5173`
-- API docs: `http://localhost:8000/docs`
-
-Generate a local CSV of synthetic experiment events:
-
-```powershell
-python scripts/generate_demo_data.py
+```bash
+cd frontend
+npm run build
 ```
 
-Run tests:
-
-```powershell
-pytest
-```
-
-## Deploy As A Live Site
-
-This project is ready for a simple Vercel + Render deployment:
-
-- **Frontend:** Vercel, rooted at `frontend`
-- **Backend:** Render Web Service, rooted at the repository root
-- **Data:** synthetic in-memory demo data generated on backend startup
-- **External APIs:** none required
-
-### Backend: Render
-
-Create a Render Web Service from the GitHub repository.
-
-Use these settings:
-
-- **Build command:** `pip install -r backend/requirements.txt`
-- **Start command:** `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- **Health check path:** `/health`
-
-Required Render environment variables:
-
-```text
-APP_ENV=production
-CORS_ORIGINS=https://your-vercel-app.vercel.app,http://localhost:5173,http://127.0.0.1:5173
-```
-
-After deployment, confirm:
-
-```text
-https://your-render-service.onrender.com/health
-```
-
-Expected response:
-
-```json
-{"status":"ok"}
-```
-
-### Frontend: Vercel
-
-Create a Vercel project from the same GitHub repository.
-
-Use these settings:
-
-- **Framework preset:** Vite
-- **Root directory:** `frontend`
-- **Build command:** `npm install && npm run build`
-- **Output directory:** `dist`
-
-Required Vercel environment variable:
-
-```text
-VITE_API_BASE=https://your-render-service.onrender.com
-```
-
-The frontend reads `VITE_API_BASE` at build time and calls:
-
-- `/api/overview`
-- `/api/ai/recommendation`
-- `/health`
-
-### Deployment Order
-
-1. Push this repository to GitHub.
-2. Deploy the Render backend first.
-3. Copy the Render backend URL.
-4. Add that URL as `VITE_API_BASE` in Vercel.
-5. Add the Vercel frontend URL to `CORS_ORIGINS` in Render.
-6. Redeploy both services if environment variables change.
-
-### Confirmed Commands
-
-Frontend build:
+Hosted frontend build command:
 
 ```bash
 npm install && npm run build
 ```
 
-Backend build:
+Tests:
 
 ```bash
-pip install -r backend/requirements.txt
+pytest
 ```
-
-Render start command:
-
-```bash
-cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
-```
-
-## Interview-Friendly Explanation
-
-Most campaign analytics examples focus on prediction. This prototype focuses on decisions: if campaign resources are scarce, which audience should receive which donation message through which channel?
-
-The system simulates a controlled donation-message experiment and shows how adaptive allocation strategies can learn from response patterns while still remaining transparent. The AI Message Review tab is deliberately constrained: it retrieves approved context, then generates channel-specific drafts that require human review.
-
-That makes the project easy to explain:
-
-- The campaign wants 3-4 high-performing message frames.
-- The campaign needs priority cohorts, not just global averages.
-- Channels matter because email, SMS, phone, and digital ads have different response and fatigue profiles.
-- Donation conversion is the primary metric, but expected value and fatigue risk shape whether an outreach strategy is responsible.
-
-## Boundaries
-
-This is:
-
-- A prototype
-- A simulation
-- A portfolio project
-- A human-reviewed experimentation demo
-
-This is not:
-
-- An election prediction model
-- A production campaign targeting system
-- An autonomous persuasion system
-- A replacement for compliance, legal review, or campaign governance

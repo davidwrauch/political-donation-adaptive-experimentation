@@ -61,7 +61,7 @@ def simulate_policy(experiment: dict[str, Any], weights: dict[str, float] | None
         },
         "plain_english": (
             "Changing the reward definition changes what the bandit learns to favor. This estimate shows how a "
-            "different priority mix could shift donations, fatigue, trust-oriented frames, and audience coverage."
+            "different priority mix could shift returned ballots, contact fatigue, helpful interventions, and county coverage."
         ),
     }
 
@@ -81,8 +81,8 @@ def is_default_policy(weights: dict[str, float]) -> bool:
 def event_score(event: dict[str, Any], weights: dict[str, float]) -> float:
     value = safe_scale(event["net_expected_value"], -4, 12)
     conversion = float(event["conversion_probability"])
-    volunteer = volunteer_conversion_proxy(event)
-    high_dollar = 1.0 if event["expected_donation_amount"] >= 42 else 0.0
+    volunteer = float(event.get("uplift_score", 0))
+    high_dollar = float(event.get("support_score", 0))
     trust = trust_proxy(event)
     fatigue = float(event["fatigue_risk"])
     unsubscribe = unsubscribe_proxy(event)
@@ -110,9 +110,9 @@ def aggregate_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "estimated_net_value_per_contact": round(mean(event["net_expected_value"] for event in events), 2),
         "donation_conversion_rate": round(mean(event["converted"] for event in events), 4),
-        "volunteer_conversion_rate": round(mean(volunteer_conversion_proxy(event) for event in events), 4),
+        "volunteer_conversion_rate": round(mean(event.get("uplift_score", 0) for event in events), 4),
         "average_donation_amount": round(mean(event["expected_donation_amount"] for event in events), 2),
-        "high_dollar_donation_share": round(mean(1 if event["expected_donation_amount"] >= 42 else 0 for event in events), 4),
+        "high_dollar_donation_share": round(mean(1 if event.get("support_score", 0) >= 0.68 else 0 for event in events), 4),
         "fatigue_risk": round(mean(event["fatigue_risk"] for event in events), 4),
         "unsubscribe_contact_risk_proxy": round(mean(unsubscribe_proxy(event) for event in events), 4),
         "persuasion_trust_proxy": round(mean(trust_proxy(event) for event in events), 4),
@@ -131,9 +131,9 @@ def weighted_aggregate(scored_events: list[tuple[dict[str, Any], float]], weight
     return {
         "estimated_net_value_per_contact": round(weighted_mean([event["net_expected_value"] for event in events], weights), 2),
         "donation_conversion_rate": round(conversion_rate, 4),
-        "volunteer_conversion_rate": round(weighted_mean([volunteer_conversion_proxy(event) for event in events], weights), 4),
+        "volunteer_conversion_rate": round(weighted_mean([event.get("uplift_score", 0) for event in events], weights), 4),
         "average_donation_amount": round(weighted_mean([event["expected_donation_amount"] for event in events], weights), 2),
-        "high_dollar_donation_share": round(weighted_mean([1 if event["expected_donation_amount"] >= 42 else 0 for event in events], weights), 4),
+        "high_dollar_donation_share": round(weighted_mean([1 if event.get("support_score", 0) >= 0.68 else 0 for event in events], weights), 4),
         "fatigue_risk": round(weighted_mean([event["fatigue_risk"] for event in events], weights), 4),
         "unsubscribe_contact_risk_proxy": round(weighted_mean([unsubscribe_proxy(event) for event in events], weights), 4),
         "persuasion_trust_proxy": round(weighted_mean([trust_proxy(event) for event in events], weights), 4),
@@ -211,9 +211,9 @@ def zero_deltas(baseline: dict[str, Any]) -> dict[str, float]:
 
 def trust_proxy(event: dict[str, Any]) -> float:
     frame = event["message_frame"]
-    if frame in {"local_investment", "democracy_protection", "accountability"}:
+    if frame in {"volunteer_call", "door_knock", "email_reminder"}:
         return 0.82
-    if frame in {"affordability", "economic_fairness"}:
+    if frame in {"sms_reminder", "candidate_call"}:
         return 0.62
     return 0.38
 
@@ -223,7 +223,7 @@ def volunteer_conversion_proxy(event: dict[str, Any]) -> float:
     local = 0.1 if is_local_frame(event) else 0.0
     positive_tone = 0.08 if not urgency_or_negative_proxy(event) else -0.06
     learning = 0.04 if event.get("uncertainty", 0.2) > 0.35 else 0.0
-    high_dollar_drag = 0.06 if event["expected_donation_amount"] >= 48 else 0.0
+    high_dollar_drag = 0.06 if event.get("support_score", 0) >= 0.76 else 0.0
     fatigue_drag = float(event["fatigue_risk"]) * 0.16
     donation_dominance_drag = safe_scale(event["net_expected_value"], 6, 12) * 0.05
     base = 0.055 + trust * 0.09 + local + positive_tone + learning
@@ -231,23 +231,23 @@ def volunteer_conversion_proxy(event: dict[str, Any]) -> float:
 
 
 def unsubscribe_proxy(event: dict[str, Any]) -> float:
-    channel_risk = 0.12 if event["channel"] in {"SMS", "phone"} else 0.04
-    urgency_risk = 0.08 if event["message_frame"] == "momentum" else 0
+    channel_risk = 0.12 if event["channel"] in {"SMS", "volunteer call", "door knock", "candidate call"} else 0.04
+    urgency_risk = 0.08 if event["message_frame"] in {"candidate_call", "door_knock"} else 0
     return clamp(float(event["fatigue_risk"]) * 0.82 + channel_risk + urgency_risk, 0, 1)
 
 
 def urgency_or_negative_proxy(event: dict[str, Any]) -> float:
-    return 1.0 if event["message_frame"] in {"momentum", "accountability"} else 0.0
+    return 1.0 if event["message_frame"] in {"candidate_call", "door_knock"} else 0.0
 
 
 def is_local_frame(event: dict[str, Any]) -> bool:
-    return event["message_frame"] in {"local_investment", "affordability"}
+    return event["message_frame"] in {"door_knock", "volunteer_call", "email_reminder"}
 
 
 def audience_diversity_proxy(event: dict[str, Any]) -> float:
-    if "prospects" in event["segment"] and event["channel"] != "SMS":
+    if "urgent" in event["segment"] and event["channel"] != "SMS":
         return 0.8
-    if event["channel"] == "digital ad":
+    if event["channel"] in {"door knock", "volunteer call"}:
         return 0.7
     return 0.5
 

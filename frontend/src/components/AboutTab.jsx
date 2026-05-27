@@ -6,9 +6,9 @@ export default function AboutTab() {
       <section className="panel about">
         <h2>About this prototype</h2>
         <p>
-          An adaptive experimentation prototype for political donation and civic engagement campaigns.
-          The system simulates how campaigns can allocate scarce outreach resources across messages,
-          audiences, and channels while monitoring donation conversion, expected value, and fatigue risk.
+          An adaptive experimentation prototype for ballot chase and turnout intervention programs.
+          The system simulates how campaigns can prioritize voters who requested mail ballots but have not yet
+          returned them, then recommend the reminder, channel, and cadence most likely to move a returned ballot.
         </p>
       </section>
 
@@ -36,10 +36,10 @@ export default function AboutTab() {
           </p>
         </article>
         <article className="panel">
-          <h3>Inspired by charitable-giving bandits</h3>
+          <h3>Inspired by contextual bandit decision systems</h3>
           <p>
-            Inspired by Stanford charitable-giving contextual bandit research where different
-            donation appeals are assigned to profiles and the system learns which messages work best.
+            Inspired by contextual bandit research where different interventions are assigned to profiles and the
+            system learns which actions work best for which people under limited outreach capacity.
           </p>
           <a href="https://arxiv.org/abs/2211.12004" target="_blank" rel="noreferrer">
             Stanford charitable-giving contextual bandit paper
@@ -49,7 +49,7 @@ export default function AboutTab() {
           <h3>Transparent and human-reviewed</h3>
           <p>
             The AI Message Review tab is deterministic template-based synthesis. It does not call external LLM APIs
-            and does not autonomously generate or deploy persuasion content.
+            and does not autonomously generate or deploy ballot-chase content.
           </p>
         </article>
         <article className="panel">
@@ -57,7 +57,7 @@ export default function AboutTab() {
           <p>
             This is not an election prediction model, a production campaign platform, or an
             autonomous persuasion system. It is a portfolio simulation for explaining adaptive
-            experimentation and campaign resource allocation while monitoring uncertainty and fatigue.
+            experimentation and turnout resource allocation while monitoring uncertainty and contact fatigue.
           </p>
         </article>
       </section>
@@ -66,10 +66,10 @@ export default function AboutTab() {
         <h2>Architecture</h2>
         <p>This prototype combines:</p>
         <ul className="plain-list">
-          <li>Multi-armed bandit allocation for experiment traffic shifting</li>
-          <li>Contextual personalization features for supporter-level assignment</li>
-          <li>Human-reviewed AI-assisted message adaptation</li>
-          <li>Fatigue-aware outreach constraints</li>
+          <li>Multi-armed bandit allocation for ballot-chase traffic shifting</li>
+          <li>Contextual personalization features for voter-level assignment</li>
+          <li>Human-reviewed reminder and intervention review</li>
+          <li>Fatigue-aware contact constraints</li>
         </ul>
         <p>
           The allocation system dynamically shifts more traffic toward stronger-performing strategies while preserving
@@ -82,11 +82,11 @@ export default function AboutTab() {
         <div className="guardrail-grid">
           {[
             "Human review required",
-            "Approved message templates only",
+            "Approved reminder templates only",
             "Fatigue and exposure caps",
             "Avoid overreacting to noisy early results",
             "Preserve some exploration",
-            "Do not maximize donations at all costs",
+            "Do not chase every outstanding ballot at all costs",
           ].map((item) => (
             <span key={item}>{item}</span>
           ))}

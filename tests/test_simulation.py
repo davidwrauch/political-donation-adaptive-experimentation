@@ -8,28 +8,32 @@ from app.services.ai_synthesis import synthesize_recommendation
 from app.services.simulation import generate_experiment, summarize_experiment
 
 
-def test_simulation_generates_required_supporter_fields():
+def test_simulation_generates_required_voter_fields():
     experiment = generate_experiment(seed=7, n=100)
-    supporter = experiment["supporters"][0]
+    voter = experiment["supporters"][0]
 
     for field in [
-        "supporter_id",
-        "age_band",
-        "geography_type",
-        "prior_donation_count",
-        "prior_total_donated",
-        "recent_engagement_score",
-        "volunteer_history",
-        "issue_affinity",
-        "channel_preference",
-        "political_engagement_level",
-        "donor_fatigue_score",
-        "civic_engagement_score",
+        "voter_id",
+        "county",
+        "district",
+        "support_score",
+        "turnout_score",
+        "ballot_requested_date",
+        "days_since_request",
+        "contactability_score",
+        "fatigue_score",
+        "prior_contact_count",
+        "prior_vote_history",
+        "preferred_channel",
+        "baseline_return_probability",
+        "estimated_return_probability_if_contacted",
+        "uplift_score",
+        "urgency_score",
     ]:
-        assert field in supporter
+        assert field in voter
 
 
-def test_summary_has_campaign_experiment_metrics():
+def test_summary_has_ballot_chase_metrics():
     summary = summarize_experiment(generate_experiment(seed=8, n=250))
 
     assert summary["total_supporters"] == 250
@@ -39,57 +43,31 @@ def test_summary_has_campaign_experiment_metrics():
         "Static randomized test",
         "LinUCB",
     ]
-    assert summary["primary_metric"]["value"] > 0
-    assert summary["primary_metric"]["label"] == "Net donation value per contact"
-    assert "Average dollars raised per person contacted" in summary["primary_metric"]["definition"]
-    assert "donation_conversion_rate" in summary["secondary_metrics"]
-    assert summary["secondary_metrics"]["expected_donation_amount"] > 0
-    assert summary["best_strategy"]["label"]
-    assert summary["current_readout"]["leading_strategy"]["label"]
-    assert summary["current_readout"]["leading_adaptive_strategy"]["label"]
-    assert summary["current_readout"]["conversion_winner"]["label"]
-    assert summary["current_readout"]["net_value_winner"]["label"]
-    assert summary["current_readout"]["control"]["label"] == "Control / holdout"
-    assert summary["current_readout"]["total_contacts_observed"] > 0
-    assert summary["current_readout"]["contacts_by_control"] > 0
-    assert summary["current_readout"]["contacts_by_strategy"]["control"] > 0
-    assert "adaptive_lift_vs_control" in summary["current_readout"]
-    assert 0 <= summary["current_readout"]["bayesian_confidence"]["probability_best"] <= 1
-    assert summary["current_readout"]["bayesian_confidence"]["basis"] == "simulated"
-    assert summary["current_readout"]["frequentist_check"]["basis"] == "simulated"
-    assert 0 <= summary["current_readout"]["frequentist_check"]["p_value_vs_control"] <= 1
-    assert 0 <= summary["current_readout"]["frequentist_check"]["p_value_vs_runner_up"] <= 1
-    assert isinstance(summary["current_readout"]["frequentist_check"]["statistically_significant"], bool)
-    assert summary["current_readout"]["recommendation_status"] in [
-        "Directional only",
-        "Promising but keep testing",
-        "Ready to scale",
-    ]
+    assert summary["primary_metric"]["label"] == "Estimated additional returned ballots"
+    assert "contact changed behavior" in summary["primary_metric"]["definition"]
+    assert summary["outstanding_ballots"] == 250
+    assert summary["estimated_additional_returned_ballots"] > 0
+    assert summary["average_uplift"] > 0
+    assert summary["top_county_opportunity"]["label"]
+    assert summary["fatigue_risk_voters_suppressed"] >= 0
+    assert summary["recommended_contacts_by_channel"]
+    assert "adaptive_vs_static_estimated_lift" in summary
     assert summary["current_readout"]["leading_strategy"]["label"] == "LinUCB"
-    assert 0.85 <= summary["current_readout"]["bayesian_confidence"]["probability_best"] <= 0.90
     assert summary["current_readout"]["recommendation_status"] == "Ready to scale"
     assert summary["current_readout"]["estimated_additional_contacts_needed"] == 0
-    assert summary["current_readout"]["frequentist_check"]["statistically_significant"] is True
-    assert summary["current_readout"]["current_leading_strategy_traffic_share"] >= 0.85
-    assert summary["strategy_performance"][0]["traffic_share"] >= 0.85
-    assert summary["current_readout"]["estimated_additional_contacts_needed"] >= 0
-    assert summary["best_segment"]["label"]
-    assert summary["best_channel"]["label"]
-    assert summary["leadership_takeaway"]
-    assert summary["strategy_timeline"]
-    assert summary["strategy_timeline"][0]["experiment_date"] == "2026-02-01"
-    assert summary["strategy_rate_timeline"]
-    assert summary["traffic_allocation_timeline"]
-    assert summary["traffic_allocation_timeline"][-1]["series"][-1]["traffic_share"] >= 0.85
-    assert summary["strategy_status_timeline"]
-    assert summary["strategy_status_timeline"][0]["total_contacts_observed"] < summary["strategy_status_timeline"][-1]["total_contacts_observed"]
     assert summary["strategy_rate_timeline"][0]["experiment_date"] == "2026-02-01"
-    assert 0 <= summary["strategy_rate_timeline"][0]["series"][0]["conversion_rate"] <= 1
-    assert summary["strategy_performance"]
-    assert all("winning_metrics" in strategy for strategy in summary["strategy_performance"])
-    assert summary["message_allocation_shift"]
+    assert summary["traffic_allocation_timeline"][-1]["series"][-1]["traffic_share"] >= 0.85
     assert summary["latest_decision"]["assignment_probability"] > 0
-    assert "selection_reason" in summary["latest_decision"]
+    for field in [
+        "voter_id",
+        "ballot_returned",
+        "recommended_intervention",
+        "baseline_return_probability",
+        "estimated_return_probability_if_contacted",
+        "uplift_score",
+        "adaptive_policy_group",
+    ]:
+        assert field in summary["latest_decision"]
 
 
 def test_ai_synthesis_is_deterministic_and_human_reviewed():
@@ -99,9 +77,10 @@ def test_ai_synthesis_is_deterministic_and_human_reviewed():
     assert recommendation["human_review_required"] is True
     assert "does not send messages automatically" in recommendation["explanation"]
     assert recommendation["base_message"]
+    assert "mail ballot was requested" in recommendation["base_message"]
     assert recommendation["retrieved_context"]["approved_issue_brief"] == "Affordability / cost of living"
-    assert "High-engagement prior donors usually need concise" in recommendation["retrieved_context"]["prior_performance_note"]
-    assert "trust-building" in recommendation["retrieved_context"]["prior_performance_note"]
+    assert "High-contactability voters usually need concise" in recommendation["retrieved_context"]["prior_performance_note"]
+    assert "ballot-return help" in recommendation["retrieved_context"]["prior_performance_note"]
     assert len(recommendation["variants"]) == 4
     assert {variant["medium"] for variant in recommendation["variants"]} == {
         "SMS",
@@ -119,12 +98,11 @@ def test_events_include_batch_and_assignment_explanation_fields():
         "batch",
         "strategy",
         "strategy_label",
-        "supporter_id",
-        "message_frame",
+        "voter_id",
+        "recommended_intervention",
         "channel",
         "segment",
-        "converted",
-        "donation_amount",
+        "ballot_returned",
         "fatigue_risk",
         "assignment_probability",
         "allocation_share",

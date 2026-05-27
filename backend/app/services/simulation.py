@@ -8,125 +8,135 @@ from datetime import date, timedelta
 from statistics import mean
 
 
-AGE_BANDS = ["18-29", "30-44", "45-64", "65+"]
-GEOGRAPHIES = ["urban", "suburban", "rural"]
-ISSUES = [
-    "economic fairness",
-    "anti-corruption",
-    "democracy protection",
-    "affordability",
-    "local community investment",
-    "candidate momentum",
-]
-CHANNELS = ["email", "SMS", "phone", "digital ad"]
+COUNTIES = ["Kings", "Queens", "Bronx", "New York", "Nassau", "Westchester", "Erie", "Monroe"]
+DISTRICTS = ["NY-03", "NY-04", "NY-16", "NY-17", "NY-18", "NY-19", "NY-22"]
+PRIOR_VOTE_HISTORY = ["consistent general voter", "midterm dropoff voter", "new mail voter", "sporadic voter"]
+CHANNELS = ["email", "SMS", "volunteer call", "door knock", "candidate call"]
 
 STRATEGIES = [
     {
         "id": "control",
         "label": "Control / holdout",
-        "description": "Uses generic non-personalized outreach with fixed messaging and no adaptive allocation.",
+        "description": "Uses generic non-personalized ballot-return reminders with fixed timing and no adaptive allocation.",
         "exploration_rate": 0.0,
     },
     {
         "id": "static_ab",
         "label": "Static randomized test",
-        "description": "Keeps contacts evenly split across approved message/channel combinations. It is a baseline for comparison against adaptive methods.",
+        "description": "Keeps ballot-chase contacts evenly split across approved interventions and channels without adapting allocation.",
         "exploration_rate": 1.0,
     },
     {
         "id": "linucb",
         "label": "LinUCB",
-        "description": "Uses supporter context such as issue affinity, engagement, channel preference, and donation history to personalize assignments.",
+        "description": "Uses voter context such as support, turnout, contactability, urgency, and fatigue to prioritize ballot-chase interventions.",
         "exploration_rate": 0.14,
     },
 ]
 
-MESSAGE_FRAMES = [
+INTERVENTIONS = [
     {
-        "id": "economic_fairness",
-        "label": "Economic fairness",
-        "issue": "economic fairness",
-        "template": "Help power a campaign fighting for fair wages and an economy that works for everyone.",
+        "id": "sms_reminder",
+        "label": "SMS reminder",
+        "type": "SMS reminder",
+        "template": "Quick reminder: your mail ballot is still outstanding. Please return it as soon as you can.",
     },
     {
-        "id": "accountability",
-        "label": "Anti-corruption / accountability",
-        "issue": "anti-corruption",
-        "template": "Chip in to hold special interests accountable and restore trust in government.",
+        "id": "volunteer_call",
+        "label": "Volunteer call",
+        "type": "volunteer call",
+        "template": "A volunteer calls to answer ballot-return questions and confirm the voter has a plan.",
     },
     {
-        "id": "democracy_protection",
-        "label": "Democracy protection",
-        "issue": "democracy protection",
-        "template": "Protect voting rights and democratic institutions with a grassroots donation today.",
+        "id": "door_knock",
+        "label": "Door knock",
+        "type": "door knock",
+        "template": "A canvasser checks in at the door with ballot-return instructions and local drop-box details.",
     },
     {
-        "id": "affordability",
-        "label": "Affordability / cost of living",
-        "issue": "affordability",
-        "template": "Support a campaign focused on lowering everyday costs for working families.",
+        "id": "candidate_call",
+        "label": "Candidate call",
+        "type": "candidate call",
+        "template": "A candidate or surrogate call is reserved for high-support, high-priority voters.",
     },
     {
-        "id": "local_investment",
-        "label": "Local community investment",
-        "issue": "local community investment",
-        "template": "Invest in local schools, safer neighborhoods, and stronger community services.",
+        "id": "email_reminder",
+        "label": "Email reminder",
+        "type": "email reminder",
+        "template": "An email provides ballot-return deadlines, drop-off options, and help-line details.",
     },
     {
-        "id": "momentum",
-        "label": "Candidate momentum / urgency",
-        "issue": "candidate momentum",
-        "template": "Our campaign is gaining momentum. Donate before the deadline to keep it going.",
+        "id": "suppress",
+        "label": "Suppress / do not contact",
+        "type": "suppress / do not contact",
+        "template": "Do not contact when fatigue risk is high or modeled uplift is too low.",
     },
 ]
+MESSAGE_FRAMES = INTERVENTIONS
 
 
 @dataclass(frozen=True)
-class Supporter:
-    supporter_id: str
-    age_band: str
-    geography_type: str
-    prior_donation_count: int
-    prior_total_donated: float
-    recent_engagement_score: float
-    volunteer_history: bool
-    issue_affinity: str
-    channel_preference: str
-    political_engagement_level: str
-    donor_fatigue_score: float
-    civic_engagement_score: float
+class Voter:
+    voter_id: str
+    county: str
+    district: str
+    support_score: float
+    turnout_score: float
+    ballot_requested_date: str
+    days_since_request: int
+    contactability_score: float
+    fatigue_score: float
+    prior_contact_count: int
+    prior_vote_history: str
+    preferred_channel: str
+    baseline_return_probability: float
+    estimated_return_probability_if_contacted: float
+    uplift_score: float
+    urgency_score: float
 
     @property
     def segment(self) -> str:
-        donor = "prior donors" if self.prior_donation_count else "prospects"
-        engagement = "high-engagement" if self.recent_engagement_score >= 0.65 else "low-engagement"
-        return f"{engagement} {donor} / {self.issue_affinity}"
+        support = "high-support" if self.support_score >= 0.68 else "persuadable-support"
+        urgency = "urgent" if self.urgency_score >= 0.62 else "standard"
+        return f"{support} {urgency} / {self.county}"
 
 
 def generate_supporters(n: int = 2500, seed: int = 42) -> list[dict]:
     rng = random.Random(seed)
-    supporters = []
+    voters = []
+    start_date = date(2026, 10, 1)
     for index in range(n):
-        prior_count = weighted_choice(rng, [(0, 0.46), (1, 0.25), (2, 0.16), (3, 0.08), (5, 0.05)])
-        engagement = clamp(rng.betavariate(2.4, 2.1), 0, 1)
-        fatigue = clamp(rng.betavariate(1.7 + prior_count * 0.2, 4.2), 0, 1)
-        issue = rng.choice(ISSUES)
-        supporter = Supporter(
-            supporter_id=f"SUP-{index + 1:05d}",
-            age_band=rng.choice(AGE_BANDS),
-            geography_type=rng.choice(GEOGRAPHIES),
-            prior_donation_count=prior_count,
-            prior_total_donated=round(prior_count * rng.uniform(18, 74), 2),
-            recent_engagement_score=round(engagement, 3),
-            volunteer_history=rng.random() < 0.18 + engagement * 0.18,
-            issue_affinity=issue,
-            channel_preference=rng.choice(CHANNELS),
-            political_engagement_level=engagement_level(engagement),
-            donor_fatigue_score=round(fatigue, 3),
-            civic_engagement_score=round(clamp(0.3 + engagement * 0.55 + rng.uniform(-0.12, 0.12), 0, 1), 3),
+        support = clamp(rng.betavariate(3.0, 1.8), 0, 1)
+        turnout = clamp(rng.betavariate(2.2, 2.4), 0, 1)
+        contactability = clamp(rng.betavariate(2.6, 2.1), 0, 1)
+        prior_contacts = weighted_choice(rng, [(0, 0.34), (1, 0.32), (2, 0.2), (3, 0.1), (5, 0.04)])
+        fatigue = clamp(rng.betavariate(1.4 + prior_contacts * 0.3, 4.1), 0, 1)
+        days_since_request = rng.randint(2, 21)
+        urgency = clamp(days_since_request / 21 + rng.uniform(-0.08, 0.08), 0, 1)
+        baseline = clamp(0.12 + turnout * 0.46 + contactability * 0.08 - fatigue * 0.14, 0.04, 0.82)
+        movability = clamp((1 - abs(baseline - 0.48) * 1.55) * contactability * (1 - fatigue * 0.62), 0, 1)
+        uplift = clamp(0.015 + movability * 0.18 + support * 0.035 + urgency * 0.04, 0.005, 0.32)
+        contacted_probability = clamp(baseline + uplift, 0.05, 0.97)
+        voter = Voter(
+            voter_id=f"VOTER-{index + 1:05d}",
+            county=rng.choice(COUNTIES),
+            district=rng.choice(DISTRICTS),
+            support_score=round(support, 3),
+            turnout_score=round(turnout, 3),
+            ballot_requested_date=(start_date - timedelta(days=days_since_request)).isoformat(),
+            days_since_request=days_since_request,
+            contactability_score=round(contactability, 3),
+            fatigue_score=round(fatigue, 3),
+            prior_contact_count=prior_contacts,
+            prior_vote_history=rng.choice(PRIOR_VOTE_HISTORY),
+            preferred_channel=rng.choice(CHANNELS[:-1]),
+            baseline_return_probability=round(baseline, 4),
+            estimated_return_probability_if_contacted=round(contacted_probability, 4),
+            uplift_score=round(uplift, 4),
+            urgency_score=round(urgency, 3),
         )
-        supporters.append(supporter.__dict__ | {"segment": supporter.segment})
-    return supporters
+        voters.append(voter.__dict__ | {"segment": voter.segment})
+    return voters
 
 
 def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float = 0.18, batches: int = 24) -> dict:
@@ -157,10 +167,28 @@ def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float =
                     "batch": batch,
                     "strategy": strategy["id"],
                     "strategy_label": strategy["label"],
-                    "supporter_id": supporter["supporter_id"],
+                    "supporter_id": supporter["voter_id"],
+                    "voter_id": supporter["voter_id"],
+                    "county": supporter["county"],
+                    "district": supporter["district"],
+                    "support_score": supporter["support_score"],
+                    "turnout_score": supporter["turnout_score"],
+                    "ballot_requested_date": supporter["ballot_requested_date"],
+                    "days_since_request": supporter["days_since_request"],
+                    "contactability_score": supporter["contactability_score"],
+                    "fatigue_score": supporter["fatigue_score"],
+                    "prior_contact_count": supporter["prior_contact_count"],
+                    "prior_vote_history": supporter["prior_vote_history"],
+                    "preferred_channel": supporter["preferred_channel"],
+                    "baseline_return_probability": supporter["baseline_return_probability"],
+                    "estimated_return_probability_if_contacted": supporter["estimated_return_probability_if_contacted"],
+                    "uplift_score": supporter["uplift_score"],
+                    "urgency_score": supporter["urgency_score"],
+                    "adaptive_policy_group": strategy["label"],
                     "segment": supporter["segment"],
                     "message_frame": frame["id"],
                     "message_label": frame["label"],
+                    "recommended_intervention": frame["label"],
                     "channel": channel,
                     "assignment_probability": round(assignment_probability, 4),
                     "allocation_share": round(assignment_probability, 4),
@@ -168,7 +196,7 @@ def generate_experiment(seed: int = 42, n: int = 2500, exploration_rate: float =
                     "uncertainty": round(uncertainty, 4),
                     "exploration_need": round(uncertainty + (strategy["exploration_rate"] * 0.2), 4),
                     "fatigue_penalty": round(fatigue_penalty_for(supporter, frame, channel), 4),
-                    "channel_fit": round(1 if channel == supporter["channel_preference"] else 0.35, 2),
+                    "channel_fit": round(1 if channel == supporter["preferred_channel"] else 0.35, 2),
                     "selection_reason": build_selection_reason(frame_reason, channel_reason, supporter),
                     **outcome,
                 }
@@ -212,26 +240,34 @@ def summarize_experiment(experiment: dict) -> dict:
         "channels": experiment["channels"],
         "exploration_rate": experiment["exploration_rate"],
         "primary_metric": {
-            "label": "Net donation value per contact",
-            "value": mean(event["net_expected_value"] for event in events),
-            "definition": "Average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
+            "label": "Estimated additional returned ballots",
+            "value": sum(event["net_expected_value"] / 100 for event in events),
+            "definition": "Estimated additional ballots returned because contact changed behavior, after accounting for uplift and contact fatigue.",
         },
         "secondary_metrics": {
-            "donation_conversion_rate": mean(event["converted"] for event in events),
-            "expected_donation_amount": mean(event["expected_donation_amount"] for event in events),
-            "net_expected_donation_value": mean(event["net_expected_value"] for event in events),
+            "ballot_return_rate": mean(event["converted"] for event in events),
+            "average_uplift": mean(event["uplift_score"] for event in events),
+            "estimated_additional_returned_ballots": sum(event["net_expected_value"] / 100 for event in events),
             "channel_response_rate": mean(row["conversion_rate"] for row in channel_rows),
-            "donor_fatigue_risk": fatigue_risk,
-            "message_frame_lift_by_segment": best_segment["conversion_rate"] - mean(event["converted"] for event in events),
+            "contact_fatigue_risk": fatigue_risk,
+            "segment_lift": best_segment["conversion_rate"] - mean(event["converted"] for event in events),
         },
         "best_strategy": best_strategy,
         "current_readout": current_readout,
         "best_segment": best_segment,
         "best_channel": best_channel,
         "donor_fatigue_warning": fatigue_risk >= 0.34,
+        "contact_fatigue_warning": fatigue_risk >= 0.34,
+        "outstanding_ballots": len(supporters),
+        "high_priority_chase_targets": sum(1 for event in events if event["uplift_score"] >= 0.11 and event["fatigue_risk"] < 0.42),
+        "estimated_additional_returned_ballots": round(sum(event["net_expected_value"] / 100 for event in events), 1),
+        "average_uplift": round(mean(event["uplift_score"] for event in events), 4),
+        "top_county_opportunity": max(grouped_metrics(events, "county"), key=lambda row: row["net_expected_value"]),
+        "fatigue_risk_voters_suppressed": sum(1 for event in events if event["recommended_intervention"] == "Suppress / do not contact"),
+        "recommended_contacts_by_channel": grouped_metrics(events, "channel"),
+        "adaptive_vs_static_estimated_lift": round(best_strategy["net_expected_value"] - next(row["net_expected_value"] for row in strategy_rows if row["id"] == "static_ab"), 4),
         "leadership_takeaway": (
-            "Under the current leading allocation strategy, some message frames receive more allocation for specific donor segments, "
-            "while the system preserves exploration because performance varies by segment and channel."
+            "The system prioritizes voters who are movable, contactable, urgent, and not over-contacted instead of chasing every outstanding ballot equally."
         ),
         "strategy_performance": strategy_rows,
         "strategy_status_timeline": strategy_status_timeline(events),
@@ -244,8 +280,7 @@ def summarize_experiment(experiment: dict) -> dict:
         "message_allocation_shift": allocation,
         "latest_decision": latest_event,
         "plain_english": (
-            "The system is optimizing scarce campaign outreach by learning which donation message "
-            "frames and channels convert across supporter segments while watching expected value and fatigue risk."
+            "The system is optimizing scarce ballot-chase capacity by learning which voters are most likely to return a ballot because of the right reminder, channel, and cadence."
         ),
     }
 
@@ -257,11 +292,9 @@ def choose_frame(supporter: dict, priors: dict, rng: random.Random, exploration_
     for frame in MESSAGE_FRAMES:
         key = (supporter["segment"], frame["id"])
         prior = priors[key]
-        estimated_conversion = prior["alpha"] / (prior["alpha"] + prior["beta"])
-        affinity_bonus = 0.08 if frame["issue"] == supporter["issue_affinity"] else 0
-        fatigue_penalty = 0.04 if frame["id"] == "momentum" and supporter["donor_fatigue_score"] > 0.55 else 0
-        scored.append((estimated_conversion + affinity_bonus - fatigue_penalty, frame))
-    return max(scored, key=lambda item: item[0])[1], "highest expected reward after affinity and fatigue adjustment"
+        estimated_return = prior["alpha"] / (prior["alpha"] + prior["beta"])
+        scored.append((estimated_return + intervention_fit(supporter, frame), frame))
+    return max(scored, key=lambda item: item[0])[1], "highest expected ballot-return uplift after contactability and fatigue adjustment"
 
 
 def choose_frame_for_strategy(supporter: dict, priors: dict, rng: random.Random, strategy: dict) -> tuple[dict, str]:
@@ -280,17 +313,19 @@ def choose_contextual_frame(supporter: dict, priors: dict, rng: random.Random, e
     scored = []
     for frame in MESSAGE_FRAMES:
         prior = priors[(supporter["segment"], frame["id"])]
-        estimated_conversion = prior["alpha"] / (prior["alpha"] + prior["beta"])
+        estimated_return = prior["alpha"] / (prior["alpha"] + prior["beta"])
         context_score = (
-            estimated_conversion
-            + (0.13 if frame["issue"] == supporter["issue_affinity"] else 0)
-            + supporter["recent_engagement_score"] * 0.05
-            + min(supporter["prior_donation_count"], 4) * 0.015
+            estimated_return
+            + supporter["uplift_score"] * 0.65
+            + supporter["support_score"] * 0.12
+            + supporter["contactability_score"] * 0.18
+            + supporter["urgency_score"] * 0.14
+            + intervention_fit(supporter, frame)
         )
         if guarded:
             context_score -= fatigue_penalty_for(supporter, frame, "SMS") * 1.2
         scored.append((context_score, frame))
-    reason = "contextual score with fatigue guardrail" if guarded else "contextual score from donor profile"
+    reason = "contextual score with fatigue guardrail" if guarded else "contextual score from voter uplift profile"
     return max(scored, key=lambda item: item[0])[1], reason
 
 
@@ -302,8 +337,8 @@ def choose_channel(supporter: dict, channel_stats: dict, rng: random.Random, exp
         key = (supporter["segment"], channel)
         prior = channel_stats[key]
         estimated = prior["alpha"] / (prior["alpha"] + prior["beta"])
-        preference_bonus = 0.08 if channel == supporter["channel_preference"] else 0
-        fatigue_penalty = 0.05 if channel in {"SMS", "phone"} and supporter["donor_fatigue_score"] > 0.58 else 0
+        preference_bonus = 0.08 if channel == supporter["preferred_channel"] else 0
+        fatigue_penalty = 0.05 if channel in {"SMS", "volunteer call", "door knock", "candidate call"} and supporter["fatigue_score"] > 0.58 else 0
         scored.append((estimated + preference_bonus - fatigue_penalty, channel))
     return max(scored, key=lambda item: item[0])[1], "best channel fit after response and fatigue adjustment"
 
@@ -317,46 +352,33 @@ def choose_channel_for_strategy(supporter: dict, channel_stats: dict, rng: rando
 
 
 def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random, strategy: dict) -> dict:
-    issue_match = frame["issue"] == supporter["issue_affinity"]
-    channel_match = channel == supporter["channel_preference"]
-    urgency_penalty = 0.12 if frame["id"] == "momentum" and supporter["donor_fatigue_score"] > 0.55 else 0
-    score = (
-        -2.25
-        + supporter["recent_engagement_score"] * 1.15
-        + supporter["civic_engagement_score"] * 0.75
-        + min(supporter["prior_donation_count"], 4) * 0.16
-        + (0.28 if supporter["volunteer_history"] else 0)
-        + (0.42 if issue_match else -0.05)
-        + (0.32 if channel_match else 0)
-        - supporter["donor_fatigue_score"] * 0.85
-        - urgency_penalty
-    )
+    channel_match = channel == supporter["preferred_channel"]
+    baseline = float(supporter["baseline_return_probability"])
+    intervention_multiplier = intervention_uplift_multiplier(frame, channel, supporter)
+    contact_uplift = clamp(float(supporter["uplift_score"]) * intervention_multiplier, 0, 0.15)
     if strategy["id"] == "control":
-        score -= 0.22
+        contact_uplift *= 0.35
     if strategy["id"] == "linucb":
-        score += 0.12
-    conversion_probability = sigmoid(score)
-    converted = rng.random() < conversion_probability
-    expected_amount = (
-        10
-        + supporter["prior_total_donated"] * 0.09
-        + supporter["recent_engagement_score"] * 18
-        + (8 if issue_match else 0)
-        + (5 if channel == "phone" else 0)
-    )
-    fatigue_risk = clamp(supporter["donor_fatigue_score"] + (0.12 if channel in {"SMS", "phone"} else 0.04), 0, 1)
-    net_value = conversion_probability * expected_amount - fatigue_risk * 4.5
-    if strategy["id"] == "control":
-        net_value -= 0.35
-    if strategy["id"] == "linucb":
-        net_value += 0.75
+        contact_uplift *= 1.18
+    if frame["id"] == "suppress":
+        contact_uplift = 0
+    return_probability = clamp(baseline + contact_uplift + (0.025 if channel_match else 0), 0.03, 0.98)
+    returned = rng.random() < return_probability
+    fatigue_risk = clamp(supporter["fatigue_score"] + (0.12 if channel in {"SMS", "volunteer call", "door knock", "candidate call"} else 0.03), 0, 1)
+    if frame["id"] == "suppress":
+        fatigue_risk = supporter["fatigue_score"]
+    net_value = contact_uplift * 100 - fatigue_risk * 1.8 + supporter["support_score"] * 0.8 + supporter["urgency_score"] * 0.5
     return {
-        "conversion_probability": round(conversion_probability, 4),
-        "converted": int(converted),
-        "expected_donation_amount": round(expected_amount, 2),
-        "donation_amount": round(expected_amount * rng.uniform(0.7, 1.35), 2) if converted else 0,
+        "conversion_probability": round(return_probability, 4),
+        "return_probability": round(return_probability, 4),
+        "converted": int(returned),
+        "ballot_returned": int(returned),
+        "expected_donation_amount": round(contact_uplift * 100, 2),
+        "expected_returned_ballot_value": round(contact_uplift * 100, 2),
+        "donation_amount": 0,
         "fatigue_risk": round(fatigue_risk, 4),
         "net_expected_value": round(net_value, 2),
+        "estimated_additional_return_probability": round(contact_uplift, 4),
     }
 
 
@@ -396,9 +418,9 @@ def enrich_strategy_rows(strategy_rows: list[dict], batch: int | None = None, to
         row["allocation_status"] = "Reduced allocation" if row["net_expected_value"] < value_winner["net_expected_value"] - 0.25 and row["event_count"] >= 100 else "Active learning"
         winning = []
         if row["id"] == value_winner["id"]:
-            winning.append("Net donation value per contact")
+            winning.append("Estimated additional returned ballots")
         if row["id"] == conversion_winner["id"]:
-            winning.append("Donation conversion rate")
+            winning.append("Ballot return rate")
         row["winning_metrics"] = winning
     return sorted(strategy_rows, key=lambda row: row["net_expected_value"], reverse=True)
 
@@ -590,9 +612,8 @@ def allocation_probability(supporter: dict, selected_frame: dict, priors: dict, 
     scored = []
     for frame in MESSAGE_FRAMES:
         prior = priors[(supporter["segment"], frame["id"])]
-        estimated_conversion = prior["alpha"] / (prior["alpha"] + prior["beta"])
-        affinity_bonus = 0.08 if frame["issue"] == supporter["issue_affinity"] else 0
-        scored.append((estimated_conversion + affinity_bonus, frame["id"]))
+        estimated_return = prior["alpha"] / (prior["alpha"] + prior["beta"])
+        scored.append((estimated_return + intervention_fit(supporter, frame), frame["id"]))
     best_frame = max(scored, key=lambda item: item[0])[1]
     if selected_frame["id"] == best_frame:
         return 1 - exploration_rate + exploration_rate / len(MESSAGE_FRAMES)
@@ -600,16 +621,51 @@ def allocation_probability(supporter: dict, selected_frame: dict, priors: dict, 
 
 
 def fatigue_penalty_for(supporter: dict, frame: dict, channel: str) -> float:
-    frame_penalty = 0.04 if frame["id"] == "momentum" and supporter["donor_fatigue_score"] > 0.55 else 0
-    channel_penalty = 0.05 if channel in {"SMS", "phone"} and supporter["donor_fatigue_score"] > 0.58 else 0
+    frame_penalty = 0.0 if frame["id"] == "suppress" else 0.04 if supporter["fatigue_score"] > 0.55 else 0
+    channel_penalty = 0.05 if channel in {"SMS", "volunteer call", "door knock", "candidate call"} and supporter["fatigue_score"] > 0.58 else 0
     return frame_penalty + channel_penalty
 
 
 def build_selection_reason(frame_reason: str, channel_reason: str, supporter: dict) -> str:
     return (
-        f"Selected because of {frame_reason}, {channel_reason}, issue affinity for "
-        f"{supporter['issue_affinity']}, and donor fatigue score {supporter['donor_fatigue_score']}."
+        f"Selected because of {frame_reason}, {channel_reason}, uplift score {supporter['uplift_score']}, "
+        f"urgency score {supporter['urgency_score']}, and contact fatigue score {supporter['fatigue_score']}."
     )
+
+
+def intervention_fit(supporter: dict, frame: dict) -> float:
+    if frame["id"] == "suppress":
+        return 0.28 if supporter["fatigue_score"] > 0.68 or supporter["uplift_score"] < 0.035 else -0.1
+    if frame["id"] == "candidate_call":
+        return supporter["support_score"] * 0.12 + supporter["urgency_score"] * 0.06 - supporter["fatigue_score"] * 0.06
+    if frame["id"] == "door_knock":
+        return supporter["contactability_score"] * 0.11 + supporter["urgency_score"] * 0.07 - supporter["fatigue_score"] * 0.08
+    if frame["id"] == "volunteer_call":
+        return supporter["contactability_score"] * 0.1 + supporter["uplift_score"] * 0.45
+    if frame["id"] == "sms_reminder":
+        return supporter["urgency_score"] * 0.09 + supporter["contactability_score"] * 0.05
+    return 0.04 + supporter["contactability_score"] * 0.04
+
+
+def intervention_uplift_multiplier(frame: dict, channel: str, supporter: dict) -> float:
+    multiplier = 0.72
+    if frame["id"] == "sms_reminder":
+        multiplier = 0.95 + supporter["urgency_score"] * 0.2
+    if frame["id"] == "volunteer_call":
+        multiplier = 1.05 + supporter["contactability_score"] * 0.18
+    if frame["id"] == "door_knock":
+        multiplier = 1.12 + supporter["urgency_score"] * 0.22
+    if frame["id"] == "candidate_call":
+        multiplier = 1.18 + supporter["support_score"] * 0.18
+    if frame["id"] == "email_reminder":
+        multiplier = 0.74 + (0.18 if channel == supporter["preferred_channel"] else 0)
+    if frame["id"] == "suppress":
+        return 0
+    if channel == supporter["preferred_channel"]:
+        multiplier += 0.12
+    if supporter["fatigue_score"] > 0.65:
+        multiplier -= 0.22
+    return clamp(multiplier, 0.25, 1.6)
 
 
 def simulated_bayesian_confidence(strategy_rows: list[dict], leading_strategy_id: str) -> dict:

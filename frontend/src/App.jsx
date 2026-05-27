@@ -28,33 +28,31 @@ export default function App() {
     <main className="app-shell">
       <header className="hero">
         <div>
-          <p className="eyebrow">Campaign analytics control room</p>
-          <h1>Political Donation Adaptive Experimentation</h1>
+          <p className="eyebrow">Turnout intervention control room</p>
+          <h1>Adaptive Ballot Chase</h1>
           <p>
-            A lightweight prototype for testing donation messages across audience segments, channels,
-            and issue frames while monitoring net donation value, conversion, average donation amount, and donor fatigue.
-            This live demo compresses a longer campaign experiment into a short simulation so viewers can watch
-            allocation, confidence, and performance update over time.
+            Prioritize voters who requested mail ballots but may need the right reminder to return them.
+            This live demo compresses a longer ballot chase program into a short simulation so viewers can watch
+            allocation, confidence, and returned-ballot impact update over time.
           </p>
         </div>
         <div className="hero-card">
-          <span>Primary metric</span>
+          <span>Hero metric</span>
           <strong className="hero-primary-metric">
-            Net donation value per contact
+            Estimated additional returned ballots
             <span className="hero-help-wrap">
               <button aria-label="Primary metric help" className="help-icon" type="button">?</button>
               <span className="tooltip-popover hero-tooltip" role="tooltip">
-                Average expected dollars raised per person contacted after accounting for donation conversion rate,
-                average donation amount, and fatigue risk. This is the primary optimization metric used to compare
-                allocation strategies.
+                Estimated ballots returned because contact changed behavior, after accounting for baseline return probability,
+                contact uplift, urgency, and fatigue risk.
               </span>
             </span>
           </strong>
-          <small>Secondary metrics: donation conversion rate, average donation amount, fatigue risk, and exploration rate.</small>
+          <small>Secondary metrics: ballot return rate, average uplift, contact fatigue risk, and traffic allocation.</small>
           <div className={overview ? "hero-live-status ready" : "hero-live-status"}>
             <strong>{overview ? "Live data ready" : "Loading simulated campaign results, usually 10-15 seconds"}</strong>
             <span>
-              This dashboard compares donation allocation strategies, tracks whether adaptive methods beat Control,
+              This dashboard compares ballot chase allocation strategies, tracks whether adaptive methods beat Control,
               and keeps confidence/readiness visible for leadership.
             </span>
             <button className="briefing-button" onClick={() => setShowBriefing(true)} type="button">Project briefing</button>
@@ -67,12 +65,12 @@ export default function App() {
           <div className="briefing-panel" onClick={(event) => event.stopPropagation()}>
             <div className="briefing-head">
               <p className="eyebrow">Executive briefing</p>
-              <h2 id="briefing-title">Adaptive campaign donation simulation</h2>
+              <h2 id="briefing-title">Adaptive ballot chase simulation</h2>
               <p>
-                This live demo explores how adaptive experimentation could reshape political fundraising. Most modern campaigns already segment outreach, but contextual bandits go further by continuously learning which messages resonate with which voters and dynamically reallocating traffic while the campaign is still running. Instead of relying only on polling, fixed scripts, and preplanned messaging calendars, adaptive systems can learn from real voter behavior and adjust outreach as conditions change.
+                This live demo explores how adaptive experimentation could reshape ballot chase programs. A voter has already requested a mail ballot, but the campaign still needs to help ensure it is returned. Contextual bandits continuously learn which voters are movable, which intervention is most useful, and when contact fatigue makes suppression the better choice.
               </p>
               <p>
-                Companies like Google, Spotify, Netflix, Amazon, and Meta use systems like these because they reduce wasted exposure to underperforming experiences and improve personalization at scale. Yahoo Research reported a <strong>12.5% lift</strong> from contextual-bandit personalization, Spotify reported <strong>25%+ improvement</strong> from better personalized recommendations, and Optimizely documented gains including <strong>13.62% higher engagement</strong>. This prototype simulates a campaign feedback loop where vendor response data streams into a warehouse and the system continuously updates targeting, messaging, and channel allocation in real time.
+                The goal is not to chase every outstanding ballot equally. The goal is to identify where contact is most likely to change behavior while preserving capacity, monitoring fatigue, and keeping human review in the loop.
               </p>
             </div>
             <div className="briefing-actions">

@@ -24,7 +24,7 @@ def get_cors_origins() -> list[str]:
     return configured + [origin for origin in defaults if origin not in configured]
 
 
-app = FastAPI(title="Political Donation Adaptive Experimentation Platform")
+app = FastAPI(title="Adaptive Ballot Chase")
 
 app.add_middleware(
     CORSMiddleware,

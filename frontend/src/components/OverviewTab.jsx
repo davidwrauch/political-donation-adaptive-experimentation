@@ -2,23 +2,23 @@ import React, { useEffect, useRef, useState } from "react";
 
 const lineColors = ["#3f6f9f", "#2e8f7f", "#6d7a80"];
 const helpText = {
-  "Current leading strategy": "The strategy with the highest net donation value per contact in this simulated experiment.",
-  "Net donation value per contact": "Average dollars raised per person contacted, after combining conversion rate, average donation amount, and fatigue penalty.",
-  "Donation conversion rate": "Share of contacted people who are expected to donate.",
-  "Average donation amount": "Average expected donation size among contacted supporters in this simulation.",
+  "Current leading strategy": "The strategy with the highest estimated additional returned ballots in this simulated ballot chase.",
+  "Estimated additional returns": "Estimated returned ballots caused by contact, expressed per 100 contacted voters.",
+  "Ballot return rate": "Share of contacted voters expected to return their mail ballot.",
+  "Average uplift": "Estimated increase in return probability from contacting a voter.",
   "Probability best": "Probability best estimates how likely the current leading strategy is to outperform the others if the experiment continues. In this prototype, high confidence means roughly 80-90% probability best plus stable performance over additional batches. Traditional statistical significance can still be reported separately.",
-  "Additional contacts before high-confidence rollout": "Estimated number of additional outreach contacts needed before the result is reliable enough for broad rollout.",
+  "Additional contacts before high-confidence rollout": "Estimated number of additional ballot-chase contacts needed before the result is reliable enough for broad rollout.",
   "Recommendation status": "Plain-English rollout guidance based on current simulated confidence and whether the campaign should keep learning.",
   "Rollout confidence status": "Plain-English rollout guidance based on current simulated confidence and whether the campaign should keep learning.",
-  "Adaptive lift vs control": "Estimated improvement versus generic non-personalized outreach.",
-  "Total contacts observed": "Total simulated supporter contacts included in the current dashboard readout.",
-  "Control contacts": "Number of simulated contacts assigned to generic non-personalized outreach.",
-  "Contacts assigned to this strategy": "Number of simulated supporter contacts assigned to the current leading strategy.",
+  "Adaptive lift vs control": "Estimated additional returned-ballot impact versus generic non-personalized reminders.",
+  "Total contacts observed": "Total simulated ballot-chase contacts included in the current dashboard readout.",
+  "Control contacts": "Number of simulated contacts assigned to generic non-personalized reminders.",
+  "Contacts assigned to this strategy": "Number of simulated voters assigned to the current leading strategy.",
   "Traffic share": "Current share of simulated outreach traffic allocated to this strategy.",
-  "Net expected value": "Estimated donation value after accounting for response rate, average donation amount, and fatigue effects.",
+  "Net expected value": "Estimated additional returned ballots after accounting for uplift, urgency, and fatigue effects.",
   "Fatigue risk": "Estimated risk that repeated outreach reduces future response or increases opt-outs.",
-  "Control / holdout": "Generic non-personalized outreach with fixed messaging and no adaptive allocation.",
-  "Static randomized test": "Randomly splits traffic across approved message/channel combinations, but does not adapt allocation based on results.",
+  "Control / holdout": "Generic non-personalized ballot-return reminders with fixed timing and no adaptive allocation.",
+  "Static randomized test": "Randomly splits traffic across approved ballot-chase interventions and channels, but does not adapt allocation based on results.",
   "Directional only": "Directional only means the current leader is promising, but the evidence is not strong enough to shift all traffic to it yet.",
   "Promising but keep testing": "The current winner looks encouraging, but the campaign should keep learning before shifting most traffic.",
   "Ready to scale": "The leading strategy has remained strong enough in the simulation to justify broader rollout with monitoring.",
@@ -28,17 +28,17 @@ const defaultStrategies = [
   {
     id: "linucb",
     label: "LinUCB",
-    description: "Uses supporter context such as issue affinity, engagement, channel preference, and donation history to personalize assignments.",
+    description: "Uses voter context such as support, turnout, contactability, urgency, and fatigue to prioritize ballot-chase interventions.",
   },
   {
     id: "static_ab",
     label: "Static randomized test",
-    description: "Keeps contacts evenly split across approved message/channel combinations. It is a baseline for comparison against adaptive methods.",
+    description: "Keeps ballot-chase contacts evenly split across approved interventions and channels without adapting allocation.",
   },
   {
     id: "control",
     label: "Control / holdout",
-    description: "Uses generic non-personalized outreach with fixed messaging and no adaptive allocation.",
+    description: "Uses generic non-personalized ballot-return reminders with fixed timing and no adaptive allocation.",
   },
 ];
 const strategyDisplayOrder = ["linucb", "static_ab", "control"];
@@ -86,7 +86,7 @@ export default function OverviewTab({ overview }) {
     <div className="tab-panel">
       <section className="panel intro-card">
         <p>
-          A New York Democratic campaign is testing donation outreach before scaling donation outreach. This dashboard compares Control plus two allocation strategies to see which approach allocates limited contacts most effectively across messages, audience segments, and channels. It does not declare one global best message because adaptive campaigns assign different messages to different people. The simulation updates quickly so the tradeoff between learning and scaling is visible during a short demo.
+          A New York Democratic campaign is prioritizing voters who requested mail ballots but have not yet returned them. This dashboard compares Control plus two allocation strategies to see which approach moves the most outstanding ballots across voters, counties, districts, and contact channels. It does not chase every voter equally because adaptive ballot chase focuses on movability: who is most likely to return a ballot because of contact. The simulation updates quickly so the tradeoff between learning and scaling is visible during a short demo.
         </p>
       </section>
 
@@ -133,7 +133,7 @@ export default function OverviewTab({ overview }) {
       />
 
       {!overview ? (
-        <section className="panel loading">Loading campaign donation experiment results...</section>
+        <section className="panel loading">Loading ballot chase experiment results...</section>
       ) : (
         <>
           <StrategyRateChart allocationRows={allocationRows} probabilityBest={probabilityBest} rows={chartRows} strategies={strategies} />
@@ -187,8 +187,8 @@ function StrategyStatusCard({ strategy, isLeader }) {
       </div>
       <p>{strategy.description}</p>
       <div className="strategy-metric-list">
-        <Metric label="Net donation value per contact" value={formatMaybeMoney(strategy.net_expected_value)} />
-        <Metric label="Donation conversion rate" value={formatMaybePercent(strategy.conversion_rate)} />
+        <Metric label="Estimated additional returns" value={formatMaybeMoney(strategy.net_expected_value)} />
+        <Metric label="Ballot return rate" value={formatMaybePercent(strategy.conversion_rate)} />
         <Metric
           label="Fatigue risk"
           value={formatMaybePercent(strategy.fatigue_risk)}
@@ -248,9 +248,9 @@ function CurrentReadout({ readout, paused, onTogglePaused, lastUpdated, nextUpda
             <strong>{readout.leading_strategy.label}</strong>
           </article>
           <div className="readout-grid compact">
-            <ReadoutMetric label="Net donation value per contact" value={formatMoney(readout.leading_strategy.net_expected_value)} />
-            <ReadoutMetric label="Donation conversion rate" value={formatPercent(readout.leading_strategy.conversion_rate)} />
-            <ReadoutMetric label="Average donation amount" value={formatMoney(readout.leading_strategy.expected_donation_amount)} />
+            <ReadoutMetric label="Estimated additional returns" value={formatMoney(readout.leading_strategy.net_expected_value)} />
+            <ReadoutMetric label="Ballot return rate" value={formatPercent(readout.leading_strategy.conversion_rate)} />
+            <ReadoutMetric label="Average uplift" value={formatPercent((readout.leading_strategy.expected_donation_amount ?? 0) / 100)} />
             <ReadoutMetric label="Fatigue risk" value={formatPercent(readout.leading_strategy.fatigue_risk)} />
             <ReadoutMetric label="Contacts assigned to this strategy" value={readout.leading_strategy.contacts_observed.toLocaleString()} />
           </div>
@@ -322,14 +322,14 @@ function StrategyRateChart({ rows, strategies, allocationRows = [], probabilityB
     <section className="panel line-panel">
       <div className="chart-heading">
         <div>
-          <h2>Net donation value per contact over time by allocation strategy</h2>
-          <p>X-axis: dates. Y-axis: net donation value per contact. Line thickness reflects current traffic allocation share.</p>
-          <p className="chart-helper">Thicker lines indicate higher traffic allocation as the experiment shifts outreach toward stronger-performing strategies.</p>
+          <h2>Estimated additional returned ballots over time by allocation strategy</h2>
+          <p>X-axis: dates. Y-axis: estimated additional returned ballots per 100 contacts. Line thickness reflects current traffic allocation share.</p>
+          <p className="chart-helper">Thicker lines indicate higher traffic allocation as the experiment shifts ballot-chase capacity toward stronger-performing strategies.</p>
         </div>
       </div>
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Net donation value per contact over time by allocation strategy">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Estimated additional returned ballots over time by allocation strategy">
         <text className="axis-title" x={padding.left + chartWidth / 2} y={height - 10}>Date</text>
-        <text className="axis-title y-title" x="20" y={padding.top + chartHeight / 2}>Net value</text>
+        <text className="axis-title y-title" x="20" y={padding.top + chartHeight / 2}>Additional returns</text>
         <line x1={padding.left} y1={height - padding.bottom} x2={width - padding.right} y2={height - padding.bottom} className="axis" />
         <line x1={padding.left} y1={padding.top} x2={padding.left} y2={height - padding.bottom} className="axis" />
         {ticks.map((tick) => {
@@ -337,7 +337,7 @@ function StrategyRateChart({ rows, strategies, allocationRows = [], probabilityB
           return (
             <g key={tick}>
               <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} className="grid-line" />
-              <text className="axis-label y-axis-label" x={padding.left - 12} y={y + 4}>{formatMoneyNoDecimals(tick)}</text>
+              <text className="axis-label y-axis-label" x={padding.left - 12} y={y + 4}>{tick}</text>
             </g>
           );
         })}
@@ -380,7 +380,7 @@ function StrategyRateChart({ rows, strategies, allocationRows = [], probabilityB
                   setPointTooltip({
                     x: event.clientX,
                     y: event.clientY,
-                    text: `${point.label}\n${formatAxisDate(row.experiment_date)}\nNet value/contact: ${formatMoney(point.net_expected_value)}\nTraffic allocation: ${formatWholePercent(trafficByDate[row.experiment_date]?.[point.id] ?? trafficByStrategy[point.id] ?? 0)}\nProbability best: ${formatWholePercent(probabilityBest)}`,
+                    text: `${point.label}\n${formatAxisDate(row.experiment_date)}\nAdditional returns/100: ${formatMoney(point.net_expected_value)}\nTraffic allocation: ${formatWholePercent(trafficByDate[row.experiment_date]?.[point.id] ?? trafficByStrategy[point.id] ?? 0)}\nProbability best: ${formatWholePercent(probabilityBest)}`,
                   });
                 }}
                 onMouseLeave={() => {
@@ -436,11 +436,11 @@ function formatPercent(value) {
 }
 
 function formatMoney(value) {
-  return `$${Number(value).toFixed(2)}`;
+  return `${Number(value).toFixed(1)}`;
 }
 
 function formatMoneyNoDecimals(value) {
-  return `$${Number(value).toFixed(0)}`;
+  return `${Number(value).toFixed(0)}`;
 }
 
 function formatMaybePercent(value) {
