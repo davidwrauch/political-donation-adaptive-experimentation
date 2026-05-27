@@ -16,9 +16,9 @@ export default function AboutTab() {
         <div>
           <h3>Research grounding</h3>
           <p>
-            This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy
-            simulation. The research white paper explains why this approach is useful, what assumptions it requires, and
-            why it should be read as decision support rather than causal proof.
+            This prototype is grounded in contextual bandits, adaptive experimentation, OPE-style offline policy
+            simulation, and human oversight with guardrails. The research white paper explains why this approach is
+            useful, what assumptions it requires, and why it should be read as decision support rather than causal proof.
           </p>
         </div>
         <div className="methodology-actions">

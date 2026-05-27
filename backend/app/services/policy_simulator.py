@@ -27,7 +27,11 @@ def simulate_policy(experiment: dict[str, Any], weights: dict[str, float] | None
     baseline = aggregate_metrics(events)
     default_policy = is_default_policy(merged_weights)
     scored_events = [(event, event_score(event, merged_weights)) for event in events]
-    adjusted = baseline if default_policy else weighted_aggregate(scored_events, merged_weights)
+    adjusted = baseline if default_policy else apply_policy_realism(
+        baseline,
+        weighted_aggregate(scored_events, merged_weights),
+        merged_weights,
+    )
     baseline_segment_shares = share_by(events, "segment")
     adjusted_segment_shares = baseline_segment_shares if default_policy else weighted_share_by(scored_events, "segment")
     top_segment = max(
@@ -150,6 +154,23 @@ def donation_focus_conversion_adjustment(weights: dict[str, float]) -> float:
         weights["donation_value_weight"] + weights["high_dollar_donor_weight"] - weights["conversion_weight"] - 2.0,
     )
     return min(0.075, dominance * 0.055)
+
+
+def apply_policy_realism(baseline: dict[str, Any], adjusted: dict[str, Any], weights: dict[str, float]) -> dict[str, Any]:
+    realistic = adjusted.copy()
+    guardrail_cost = max(0, weights["fatigue_penalty"] - DEFAULT_WEIGHTS["fatigue_penalty"]) * 1.4
+    guardrail_cost += max(0, weights["unsubscribe_penalty"] - DEFAULT_WEIGHTS["unsubscribe_penalty"]) * 0.8
+    helpfulness_cost = max(0, weights["negative_urgency_message_penalty"] - DEFAULT_WEIGHTS["negative_urgency_message_penalty"]) * 0.65
+    urgency_tradeoff = max(0, weights["volunteer_conversion_weight"] - 1.0) * 0.35
+    low_uplift_tradeoff = max(0, 0.8 - weights["donation_value_weight"]) * 1.15
+    penalty = guardrail_cost + helpfulness_cost + urgency_tradeoff + low_uplift_tradeoff
+    realistic["estimated_net_value_per_contact"] = round(
+        adjusted["estimated_net_value_per_contact"] - penalty,
+        2,
+    )
+    if penalty > 0.2:
+        realistic["fatigue_risk"] = round(min(adjusted["fatigue_risk"], baseline["fatigue_risk"]), 4)
+    return realistic
 
 
 def propensity_weights(scored_events: list[tuple[dict[str, Any], float]]) -> list[float]:

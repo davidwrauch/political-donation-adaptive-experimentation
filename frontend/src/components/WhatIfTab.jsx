@@ -46,9 +46,9 @@ const presets = {
   },
   "County opportunity": {
     ...defaultWeights,
-    donation_value_weight: 1.15,
+    donation_value_weight: 0.9,
     conversion_weight: 0.85,
-    volunteer_conversion_weight: 1.05,
+    volunteer_conversion_weight: 0.95,
     persuasion_trust_proxy_weight: 1.1,
     local_community_message_boost: 1.05,
     negative_urgency_message_penalty: 1.0,
@@ -57,9 +57,9 @@ const presets = {
   },
   "Urgent returns": {
     ...defaultWeights,
-    donation_value_weight: 0.45,
-    conversion_weight: 0.75,
-    volunteer_conversion_weight: 1.75,
+    donation_value_weight: 0.65,
+    conversion_weight: 0.7,
+    volunteer_conversion_weight: 1.55,
     persuasion_trust_proxy_weight: 1.45,
     local_community_message_boost: 1.45,
     negative_urgency_message_penalty: 1.35,
@@ -87,7 +87,6 @@ const controls = [
   ["fatigue_guardrail", "Contact fatigue guardrail", "Reduce priority for voters likely to feel over-contacted."],
   ["trust_positive_tone", "Voter confidence/helpfulness", "Favor interventions that answer questions and make ballot return easier."],
   ["local_community_message_boost", "Local election relevance", "Favor local election context, county-specific help, and practical ballot-return information."],
-  ["learning_diversity", "County/exploration diversity", "Preserve learning across counties, voters, interventions, and channels."],
 ];
 
 const audienceOptions = [
@@ -216,10 +215,10 @@ export default function WhatIfTab({ apiBase }) {
 
         <article className="projected-impact-card volunteer-impact-card">
           <div>
-            <span><LabelWithHelp label="Projected ballot returns from rate change" help="Estimated additional returned ballots from changing the ballot return rate across the selected audience size." /></span>
+            <span><LabelWithHelp label="Estimated additional ballots returned" help="Estimated additional returned ballots from changing the ballot return rate across the selected audience size." /></span>
             <strong className={impactClass(projectedPriorityMoves)}>{formatSignedWholeNumber(projectedPriorityMoves)}</strong>
             <small>{formatDeltaPercent(deltas?.donation_conversion_rate)} over {audienceSize.toLocaleString()} contacts</small>
-            <p>Estimated returned ballots from the modeled return-rate change.</p>
+            <p>Projected incremental ballot returns from the adjusted outreach strategy across the selected audience.</p>
           </div>
         </article>
       </section>
@@ -249,9 +248,9 @@ export default function WhatIfTab({ apiBase }) {
         <div>
           <h3>Research grounding</h3>
           <p>
-            This prototype is grounded in contextual bandits, adaptive experimentation, and OPE-style offline policy
-            simulation. The research white paper explains why this approach is useful, what assumptions it requires, and
-            why it should be read as decision support rather than causal proof.
+            This prototype is grounded in contextual bandits, adaptive experimentation, OPE-style offline policy
+            simulation, and human oversight with guardrails. The research white paper explains why this approach is
+            useful, what assumptions it requires, and why it should be read as decision support rather than causal proof.
           </p>
         </div>
         <div className="methodology-actions">
@@ -419,7 +418,7 @@ function HelpTooltip({ text }) {
 }
 
 function deltaValueClass(value, comparison) {
-  if (typeof value !== "number" || typeof comparison !== "number" || Math.abs(value - comparison) < 0.0001) return "neutral-value";
+  if (typeof value !== "number" || typeof comparison !== "number" || Math.abs(value - comparison) < 0.002) return "neutral-value";
   return value > comparison ? "positive-value" : "tradeoff-value";
 }
 
