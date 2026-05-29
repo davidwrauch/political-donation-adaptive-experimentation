@@ -569,14 +569,14 @@ def traffic_shares_for_batch(batch: int, total_batches: int) -> dict[str, float]
         progress = clamp((batch - 1) / (total_batches - 1), 0, 1)
     if progress >= 1:
         return {
-            "control": 0.12,
-            "static_ab": 0.18,
-            "linucb": 0.70,
+            "control": 0.16,
+            "static_ab": 0.22,
+            "linucb": 0.62,
         }
     weights = {
-        "control": max(0.12, 0.3 * (1 - progress) ** 1.1),
-        "static_ab": max(0.18, 0.34 * (1 - progress * 0.62)),
-        "linucb": 0.36 + 0.9 * progress ** 1.12,
+        "control": max(0.16, 0.34 * (1 - progress) ** 0.85),
+        "static_ab": max(0.22, 0.36 * (1 - progress * 0.45)),
+        "linucb": 0.30 + 0.58 * progress ** 1.35,
     }
     total = sum(weights.values())
     return {key: round(value / total, 4) for key, value in weights.items()}

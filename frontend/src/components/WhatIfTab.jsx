@@ -86,7 +86,6 @@ const controls = [
   ["volunteer_conversion_weight", "Urgency", "Prioritize voters whose ballots have been outstanding longer."],
   ["fatigue_guardrail", "Contact fatigue guardrail", "Reduce priority for voters likely to feel over-contacted."],
   ["trust_positive_tone", "Voter confidence/helpfulness", "Favor interventions that answer questions and make ballot return easier."],
-  ["local_community_message_boost", "Local election relevance", "Favor local election context, county-specific help, and practical ballot-return information."],
 ];
 
 const audienceOptions = [

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const lineColors = ["#3f6f9f", "#2e8f7f", "#6d7a80"];
+const lineColors = ["#6d7a80", "#c49a55", "#3f6f9f"];
 const helpText = {
   "Current leading strategy": "The strategy with the highest estimated additional returned ballots in this simulated ballot chase.",
   "Estimated additional returns": "Estimated returned ballots caused by contact, expressed per 100 contacted voters.",
@@ -136,7 +136,7 @@ export default function OverviewTab({ overview }) {
         <section className="panel loading">Loading ballot chase experiment results...</section>
       ) : (
         <>
-          <StrategyRateChart allocationRows={allocationRows} probabilityBest={probabilityBest} rows={chartRows} strategies={strategies} />
+          <TrafficAllocationAreaChart allocationRows={allocationRows} probabilityBest={probabilityBest} strategies={strategies} />
         </>
       )}
     </div>
@@ -422,6 +422,166 @@ function StrategyRateChart({ rows, strategies, allocationRows = [], probabilityB
   );
 }
 
+function TrafficAllocationAreaChart({ strategies, allocationRows = [], probabilityBest = 0 }) {
+  const [hoveredId, setHoveredId] = useState("");
+  const [isolatedId, setIsolatedId] = useState("");
+  const [pointTooltip, setPointTooltip] = useState(null);
+  const rows = allocationRows.length ? allocationRows : [
+    {
+      experiment_date: new Date().toISOString().slice(0, 10),
+      series: strategies.map((strategy) => ({
+        id: strategy.id,
+        label: strategy.label,
+        traffic_share: strategy.traffic_share ?? 0,
+      })),
+    },
+  ];
+  const allocationDisplayOrder = ["control", "static_ab", "linucb"];
+  const series = [...(rows[0]?.series ?? [])].sort(
+    (left, right) => allocationDisplayOrder.indexOf(left.id) - allocationDisplayOrder.indexOf(right.id)
+  );
+  const trafficByStrategy = Object.fromEntries(strategies.map((strategy) => [strategy.id, strategy.traffic_share]));
+  const width = 820;
+  const height = 316;
+  const padding = { top: 34, right: 36, bottom: 74, left: 86 };
+  const ticks = [0, 0.25, 0.5, 0.75, 1];
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const stackedRows = rows.map((row, rowIndex) => {
+    const shares = Object.fromEntries(row.series.map((point) => [point.id, point.traffic_share]));
+    const total = series.reduce((sum, point) => sum + (shares[point.id] ?? 0), 0) || 1;
+    let cursor = 0;
+    return {
+      ...row,
+      x: padding.left + (rowIndex / Math.max(1, rows.length - 1)) * chartWidth,
+      segments: series.map((point) => {
+        const share = (shares[point.id] ?? 0) / total;
+        const segment = { ...point, share, y0: cursor, y1: cursor + share };
+        cursor += share;
+        return segment;
+      }),
+    };
+  });
+  const currentTraffic = Object.fromEntries(
+    (rows[rows.length - 1]?.series ?? []).map((point) => [point.id, point.traffic_share])
+  );
+
+  return (
+    <section className="panel line-panel">
+      <div className="chart-heading">
+        <div>
+          <h2>Traffic allocation over time by strategy</h2>
+          <p>100% stacked area chart. X-axis: dates. Y-axis: share of ballot-chase traffic.</p>
+          <p className="chart-helper">Each band shows how the simulation keeps a persistent holdout, preserves static comparison traffic, and gradually shifts more traffic to LinUCB as evidence accumulates.</p>
+        </div>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Traffic allocation over time by strategy">
+        <text className="axis-title" x={padding.left + chartWidth / 2} y={height - 10}>Date</text>
+        <text className="axis-title y-title" x="20" y={padding.top + chartHeight / 2}>Traffic share</text>
+        <line x1={padding.left} y1={height - padding.bottom} x2={width - padding.right} y2={height - padding.bottom} className="axis" />
+        <line x1={padding.left} y1={padding.top} x2={padding.left} y2={height - padding.bottom} className="axis" />
+        {ticks.map((tick) => {
+          const y = height - padding.bottom - tick * chartHeight;
+          return (
+            <g key={tick}>
+              <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} className="grid-line" />
+              <text className="axis-label y-axis-label" x={padding.left - 12} y={y + 4}>{formatWholePercent(tick)}</text>
+            </g>
+          );
+        })}
+        {series.map((item, seriesIndex) => {
+          const topPoints = stackedRows.map((row) => {
+            const segment = row.segments.find((point) => point.id === item.id);
+            return `${row.x},${height - padding.bottom - (segment?.y1 ?? 0) * chartHeight}`;
+          });
+          const bottomPoints = [...stackedRows].reverse().map((row) => {
+            const segment = row.segments.find((point) => point.id === item.id);
+            return `${row.x},${height - padding.bottom - (segment?.y0 ?? 0) * chartHeight}`;
+          });
+          const path = `M ${topPoints.join(" L ")} L ${bottomPoints.join(" L ")} Z`;
+          return (
+            <path
+              className="allocation-area"
+              d={path}
+              fill={lineColors[seriesIndex % lineColors.length]}
+              fillOpacity={areaOpacity(item.id, hoveredId, isolatedId)}
+              key={item.id}
+              onMouseEnter={() => setHoveredId(item.id)}
+              onMouseLeave={() => setHoveredId("")}
+              stroke={lineColors[seriesIndex % lineColors.length]}
+              strokeOpacity={lineOpacity(item.id, hoveredId, isolatedId)}
+              strokeWidth={hoveredId === item.id ? 2.2 : 1.2}
+            />
+          );
+        })}
+        {stackedRows.flatMap((row) =>
+          row.segments.map((point) => {
+            const step = chartWidth / Math.max(1, rows.length - 1);
+            const yTop = height - padding.bottom - point.y1 * chartHeight;
+            const yBottom = height - padding.bottom - point.y0 * chartHeight;
+            return (
+              <rect
+                className="chart-point allocation-hit-area"
+                fill="transparent"
+                height={Math.max(1, yBottom - yTop)}
+                key={`${point.id}-${row.experiment_date}`}
+                onMouseMove={(event) => {
+                  setHoveredId(point.id);
+                  setPointTooltip({
+                    x: event.clientX,
+                    y: event.clientY,
+                    text: `${point.label}\n${formatAxisDate(row.experiment_date)}\nTraffic allocation: ${formatWholePercent(point.share)}\nProbability best: ${formatWholePercent(probabilityBest)}`,
+                  });
+                }}
+                onMouseEnter={(event) => {
+                  setHoveredId(point.id);
+                  setPointTooltip({
+                    x: event.clientX,
+                    y: event.clientY,
+                    text: `${point.label}\n${formatAxisDate(row.experiment_date)}\nTraffic allocation: ${formatWholePercent(point.share)}\nProbability best: ${formatWholePercent(probabilityBest)}`,
+                  });
+                }}
+                onMouseLeave={() => {
+                  setHoveredId("");
+                  setPointTooltip(null);
+                }}
+                opacity={lineOpacity(point.id, hoveredId, isolatedId)}
+                width={Math.max(10, step)}
+                x={Math.max(padding.left, row.x - step / 2)}
+                y={yTop}
+              />
+            );
+          })
+        )}
+        {rows.map((row, index) => {
+          const x = padding.left + (index / Math.max(1, rows.length - 1)) * chartWidth;
+          return (
+            <text className="axis-label x-axis-label" key={row.experiment_date} transform={`translate(${x}, ${height - 32}) rotate(-38)`}>
+              {formatAxisDate(row.experiment_date)}
+            </text>
+          );
+        })}
+      </svg>
+      <div className="legend">
+        {series.map((item, index) => (
+          <button
+            className={isolatedId === item.id ? "legend-item active" : "legend-item"}
+            key={item.id}
+            onClick={() => setIsolatedId((current) => (current === item.id ? "" : item.id))}
+            onMouseEnter={() => setHoveredId(item.id)}
+            onMouseLeave={() => setHoveredId("")}
+            type="button"
+          >
+            <i style={{ background: lineColors[index % lineColors.length] }} />
+            {item.label} - {formatPercent(currentTraffic[item.id] ?? trafficByStrategy[item.id] ?? 0)} traffic
+          </button>
+        ))}
+      </div>
+      {pointTooltip && <div className="chart-tooltip" style={chartTooltipStyle(pointTooltip)}>{pointTooltip.text}</div>}
+    </section>
+  );
+}
+
 function Metric({ label, value, help, className = "" }) {
   return (
     <div className={className}>
@@ -496,6 +656,16 @@ function lineOpacity(id, hoveredId, isolatedId) {
 function lineWidth(trafficShare, isHovered) {
   const base = 1.5 + Math.min(trafficShare, 1) * 3.5;
   return Math.min(5, base + (isHovered ? 0.55 : 0)).toFixed(2);
+}
+
+function areaOpacity(id, hoveredId, isolatedId) {
+  if (isolatedId) {
+    return isolatedId === id ? 0.78 : 0.18;
+  }
+  if (hoveredId) {
+    return hoveredId === id ? 0.78 : 0.32;
+  }
+  return 0.62;
 }
 
 function chartTooltipStyle(point) {

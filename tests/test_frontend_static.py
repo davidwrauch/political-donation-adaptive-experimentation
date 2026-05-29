@@ -53,8 +53,9 @@ def test_overview_is_ballot_chase_not_donation_dashboard():
         "Estimated additional returns",
         "Ballot return rate",
         "Average uplift",
-        "Estimated additional returned ballots over time by allocation strategy",
-        "Additional returns/100:",
+        "Traffic allocation over time by strategy",
+        "100% stacked area chart",
+        "Traffic allocation:",
         "Control / holdout",
         "Static randomized test",
         "LinUCB",
@@ -105,7 +106,6 @@ def test_what_if_tab_is_reframed_for_turnout_priorities():
         "Ballot return uplift",
         "Support score",
         "Contactability",
-        "Local election relevance",
         "Projected additional returned ballots",
         "Estimated additional ballots returned",
         "Projected incremental ballot returns from the adjusted outreach strategy across the selected audience.",
@@ -121,9 +121,18 @@ def test_what_if_tab_is_reframed_for_turnout_priorities():
         "Volunteer conversion",
         "Net value/contact",
         "County/exploration diversity",
+        "Local election relevance",
         "Projected ballot returns from rate change",
     ]:
         assert removed not in what_if
+
+
+def test_frontend_has_basic_favicon():
+    index = read("frontend/index.html")
+    favicon = read("frontend/public/favicon.svg")
+
+    assert 'href="/favicon.svg"' in index
+    assert "<svg" in favicon
 
 
 def test_experiment_design_describes_ballot_chase_operations():

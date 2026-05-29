@@ -832,9 +832,13 @@ button {
 }
 
 .what-if-hero-right {
+  align-content: center;
+  align-self: center;
   display: grid;
   gap: 8px;
+  height: 100%;
   justify-items: center;
+  justify-content: center;
   text-align: center;
 }
 
@@ -2053,12 +2057,17 @@ button {
 }
 
 .chart-line,
+.allocation-area,
 .chart-point,
 .legend-item {
-  transition: opacity 0.24s ease, stroke-width 0.24s ease, transform 0.24s ease;
+  transition: fill-opacity 0.24s ease, opacity 0.24s ease, stroke-width 0.24s ease, transform 0.24s ease;
 }
 
 .chart-point {
+  cursor: pointer;
+}
+
+.allocation-hit-area {
   cursor: pointer;
 }
 

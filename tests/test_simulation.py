@@ -57,9 +57,9 @@ def test_summary_has_ballot_chase_metrics():
     assert summary["current_readout"]["estimated_additional_contacts_needed"] == 0
     assert summary["strategy_rate_timeline"][0]["experiment_date"] == "2026-02-01"
     final_shares = {row["id"]: row["traffic_share"] for row in summary["traffic_allocation_timeline"][-1]["series"]}
-    assert final_shares["linucb"] < 0.75
-    assert final_shares["control"] >= 0.1
-    assert final_shares["static_ab"] >= 0.15
+    assert 0.55 <= final_shares["linucb"] <= 0.7
+    assert final_shares["control"] >= 0.14
+    assert final_shares["static_ab"] >= 0.2
     assert summary["latest_decision"]["assignment_probability"] > 0
     for field in [
         "voter_id",
