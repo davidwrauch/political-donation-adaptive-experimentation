@@ -44,13 +44,6 @@ export default function App() {
             <HeroMetricTooltip />
           </strong>
           <small>Secondary metrics: ballot return rate, average uplift, contact fatigue risk, and traffic allocation.</small>
-          <div className="hero-metric-explainer">
-            <span>Hero metric: additional returned ballots versus static randomized allocation.</span>
-            <span>Ballot return rate = percentage of contacted voters returning ballots.</span>
-            <span>Average uplift = estimated improvement versus static randomized allocation.</span>
-            <span>Contact fatigue risk = concentration of outreach burden.</span>
-            <span>Traffic allocation = share of outreach assigned to each strategy.</span>
-          </div>
           <div className={overview ? "hero-live-status ready" : "hero-live-status"}>
             <strong>{overview ? "Live data ready" : "Loading simulated campaign results, usually 10-15 seconds"}</strong>
             <span>
