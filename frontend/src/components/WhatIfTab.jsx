@@ -15,68 +15,48 @@ const defaultWeights = {
 };
 
 const presets = {
-  "Current chase policy": defaultWeights,
-  "Prioritize high-uplift ballot returns": {
+  "Current policy": defaultWeights,
+  "Prioritize governor's race": {
     ...defaultWeights,
-    donation_value_weight: 1.75,
-    conversion_weight: 0.35,
-    volunteer_conversion_weight: 0.05,
-    high_dollar_donor_weight: 1.65,
-    persuasion_trust_proxy_weight: 0.15,
-    fatigue_penalty: 0.55,
-    unsubscribe_penalty: 0.55,
-    negative_urgency_message_penalty: 0.2,
-    local_community_message_boost: 0.05,
-    exploration_diversity_weight: 0.08,
-    fairness_audience_diversity_weight: 0.08,
+    donation_value_weight: 1.35,
+    conversion_weight: 1.1,
+    high_dollar_donor_weight: 1.2,
+    fatigue_penalty: 0.8,
+    unsubscribe_penalty: 0.75,
+    exploration_diversity_weight: 0.18,
+    fairness_audience_diversity_weight: 0.22,
   },
-  "Prioritize high-support voters": {
+  "Prioritize local elections": {
     ...defaultWeights,
-    donation_value_weight: 0.55,
-    conversion_weight: 1.45,
-    persuasion_trust_proxy_weight: 0.9,
-    local_community_message_boost: 1.0,
-    negative_urgency_message_penalty: 1.0,
-  },
-  "Reduce contact fatigue": {
-    ...defaultWeights,
-    persuasion_trust_proxy_weight: 1.25,
-    local_community_message_boost: 1.1,
-    negative_urgency_message_penalty: 1.35,
-  },
-  "County opportunity": {
-    ...defaultWeights,
-    donation_value_weight: 0.9,
+    donation_value_weight: 0.85,
     conversion_weight: 0.85,
-    volunteer_conversion_weight: 0.95,
-    persuasion_trust_proxy_weight: 1.1,
-    local_community_message_boost: 1.05,
-    negative_urgency_message_penalty: 1.0,
-    fatigue_penalty: 0.9,
-    unsubscribe_penalty: 0.85,
-  },
-  "Urgent returns": {
-    ...defaultWeights,
-    donation_value_weight: 0.65,
-    conversion_weight: 0.7,
-    volunteer_conversion_weight: 1.55,
-    persuasion_trust_proxy_weight: 1.45,
+    volunteer_conversion_weight: 0.65,
+    persuasion_trust_proxy_weight: 1.15,
     local_community_message_boost: 1.45,
-    negative_urgency_message_penalty: 1.35,
-    fatigue_penalty: 1.1,
-    unsubscribe_penalty: 1.05,
-    exploration_diversity_weight: 0.75,
-    fairness_audience_diversity_weight: 0.8,
+    fatigue_penalty: 0.85,
+    unsubscribe_penalty: 0.85,
+    exploration_diversity_weight: 0.45,
+    fairness_audience_diversity_weight: 0.75,
+  },
+  "Prioritize federal races": {
+    ...defaultWeights,
+    donation_value_weight: 1.15,
+    conversion_weight: 1.25,
+    high_dollar_donor_weight: 1.15,
+    persuasion_trust_proxy_weight: 0.55,
+    local_community_message_boost: 0.35,
+    fatigue_penalty: 0.65,
+    unsubscribe_penalty: 0.65,
+    exploration_diversity_weight: 0.22,
+    fairness_audience_diversity_weight: 0.18,
   },
 };
 
 const presetExplanations = {
-  "Current chase policy": "Uses the same reward settings as the current logged ballot-chase policy: optimize expected additional returned ballots while applying guardrails for fatigue, exploration, and county coverage.",
-  "Prioritize high-uplift ballot returns": "Increases weight on voters most likely to return a ballot because of contact. This may raise impact, but can concentrate outreach among a narrower movable audience.",
-  "Prioritize high-support voters": "Raises the value of high-support and high-priority voters. This may protect campaign priorities, but can miss lower-propensity voters who are more movable.",
-  "Reduce contact fatigue": "Penalizes voters who have already received repeated outreach. This protects voter experience, but may reduce near-term returned-ballot volume.",
-  "County opportunity": "Raises weight on county-level opportunity and local election relevance. This can shift resources toward places where more outstanding ballots remain.",
-  "Urgent returns": "Prioritizes voters whose ballots have been outstanding longer and may need immediate help returning them.",
+  "Current policy": "Balanced allocation reflecting the current chase strategy.",
+  "Prioritize governor's race": "Favor overall turnout volume and likely supporters while respecting fatigue guardrails.",
+  "Prioritize local elections": "Favor local-election relevance, county-level opportunity, and under-contacted voters.",
+  "Prioritize federal races": "Favor broad turnout generation, larger audiences, and likely supporters.",
 };
 
 const controls = [
@@ -98,7 +78,7 @@ const audienceOptions = [
 
 export default function WhatIfTab({ apiBase }) {
   const [weights, setWeights] = useState(defaultWeights);
-  const [activePreset, setActivePreset] = useState("Current chase policy");
+  const [activePreset, setActivePreset] = useState("Current policy");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -184,7 +164,7 @@ export default function WhatIfTab({ apiBase }) {
         <span>{presetExplanations[activePreset] ?? "Custom policy settings. Compare the adjusted estimate against the current logged policy."}</span>
       </section>
 
-      <p className="console-note">Hover over each control to see what it changes.</p>
+      <p className="console-note">Use the controls to tune the chase policy priorities.</p>
       <section className="strategy-console" aria-label="Policy weight controls">
         {controls.map(([key, label, description]) => (
           <Knob
@@ -290,7 +270,7 @@ function Knob({ label, description, value, onChange }) {
   const angle = value * 135 - 135;
   return (
     <label className="strategy-knob">
-      <span><LabelWithHelp label={label} help={description} /></span>
+      <span>{label}</span>
       <input
         aria-label={label}
         max="2"
@@ -313,8 +293,8 @@ function PolicySummaryCard({ title, metrics, baseline, reliabilityNeedsMore = fa
       <span><LabelWithHelp label={title} help={title === "Current chase policy" ? "The logged ballot-chase policy used as the comparison baseline." : "The estimated result after applying the selected priority weights."} /></span>
       <div className="summary-metric-layout">
         <div className="summary-primary">
-          <small><LabelWithHelp label="Additional returns/contact" help="Estimated additional ballot-return impact per contacted voter after accounting for uplift and fatigue." /></small>
-          <strong className={deltaValueClass(metrics?.estimated_net_value_per_contact, baseline?.estimated_net_value_per_contact)}>{formatMoney(metrics?.estimated_net_value_per_contact)}</strong>
+          <small><LabelWithHelp label="Additional returned ballots vs static randomized allocation" help="Estimated incremental ballots generated by adaptive allocation compared with a traditional randomized allocation strategy serving the same audience." /></small>
+          <strong className={deltaValueClass(metrics?.estimated_net_value_per_contact, baseline?.estimated_net_value_per_contact)}>{formatBallotImpact(metrics?.estimated_net_value_per_contact)}</strong>
         </div>
         <div className="summary-secondary">
           <span>Secondary metrics</span>
@@ -424,6 +404,11 @@ function deltaValueClass(value, comparison) {
 function formatMoney(value) {
   if (typeof value !== "number") return "Loading";
   return value.toFixed(2);
+}
+
+function formatBallotImpact(value) {
+  if (typeof value !== "number") return "Loading";
+  return `${value.toFixed(1)} per 100 contacts`;
 }
 
 function signedMoney(value) {

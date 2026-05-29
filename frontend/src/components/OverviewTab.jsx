@@ -322,12 +322,12 @@ function StrategyRateChart({ rows, strategies, allocationRows = [], probabilityB
     <section className="panel line-panel">
       <div className="chart-heading">
         <div>
-          <h2>Estimated additional returned ballots over time by allocation strategy</h2>
-          <p>X-axis: dates. Y-axis: estimated additional returned ballots per 100 contacts. Line thickness reflects current traffic allocation share.</p>
+          <h2>Traffic allocation over time by strategy</h2>
+          <p>X-axis: dates. Y-axis: share of ballot-chase traffic.</p>
           <p className="chart-helper">Thicker lines indicate higher traffic allocation as the experiment shifts ballot-chase capacity toward stronger-performing strategies.</p>
         </div>
       </div>
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Estimated additional returned ballots over time by allocation strategy">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Traffic allocation over time by strategy">
         <text className="axis-title" x={padding.left + chartWidth / 2} y={height - 10}>Date</text>
         <text className="axis-title y-title" x="20" y={padding.top + chartHeight / 2}>Additional returns</text>
         <line x1={padding.left} y1={height - padding.bottom} x2={width - padding.right} y2={height - padding.bottom} className="axis" />
@@ -380,7 +380,7 @@ function StrategyRateChart({ rows, strategies, allocationRows = [], probabilityB
                   setPointTooltip({
                     x: event.clientX,
                     y: event.clientY,
-                    text: `${point.label}\n${formatAxisDate(row.experiment_date)}\nAdditional returns/100: ${formatMoney(point.net_expected_value)}\nTraffic allocation: ${formatWholePercent(trafficByDate[row.experiment_date]?.[point.id] ?? trafficByStrategy[point.id] ?? 0)}\nProbability best: ${formatWholePercent(probabilityBest)}`,
+                    text: `${point.label}\n${formatAxisDate(row.experiment_date)}\nTraffic allocation: ${formatWholePercent(trafficByDate[row.experiment_date]?.[point.id] ?? trafficByStrategy[point.id] ?? 0)}\nProbability best: ${formatWholePercent(probabilityBest)}`,
                   });
                 }}
                 onMouseLeave={() => {
@@ -596,7 +596,7 @@ function formatPercent(value) {
 }
 
 function formatMoney(value) {
-  return `${Number(value).toFixed(1)}`;
+  return `${Number(value).toFixed(1)} / 100 contacts`;
 }
 
 function formatMoneyNoDecimals(value) {

@@ -123,21 +123,13 @@ button {
 }
 
 .hero-tooltip {
-  bottom: calc(100% + 10px);
   box-shadow: 0 18px 40px rgba(25, 54, 59, 0.2);
-  display: none;
   font-size: 0.98rem;
   font-weight: 650;
-  left: 50%;
   line-height: 1.55;
   max-width: min(390px, calc(100vw - 48px));
-  transform: translateX(-50%);
+  position: fixed;
   width: 370px;
-}
-
-.hero-help-wrap:hover .hero-tooltip,
-.hero-help-wrap:focus-within .hero-tooltip {
-  display: block;
 }
 
 .hero-live-status {
@@ -183,41 +175,36 @@ button {
   padding: 0.48rem 0.78rem;
 }
 
-.benchmark-strip {
+.hero-proof-strip,
+.hero-metric-explainer {
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(220, 232, 225, 0.34);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.54);
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 18px 0 24px;
+  gap: 6px;
+  margin-top: 13px;
+  padding: 12px;
 }
 
-.benchmark-strip article {
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(218, 227, 222, 0.36);
-  border-radius: 18px;
-  box-shadow: 0 18px 46px rgba(34, 48, 45, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  padding: 14px 16px;
-}
-
-.benchmark-strip span {
-  color: #6d7a80;
-  display: block;
+.hero-proof-strip span,
+.hero-metric-explainer span {
+  color: #526165;
   font-size: 0.76rem;
-  font-weight: 720;
-  margin-bottom: 7px;
-}
-
-.benchmark-strip strong {
-  color: #14282c;
-  display: block;
-  font-size: clamp(1rem, 1.6vw, 1.3rem);
-  letter-spacing: -0.035em;
-}
-
-.benchmark-strip p {
-  color: #627175;
-  font-size: 0.8rem;
+  font-weight: 760;
   line-height: 1.35;
-  margin: 6px 0 0;
+}
+
+.hero-proof-strip p {
+  color: #344247;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.hero-proof-strip strong {
+  color: #14282c;
+  font-weight: 850;
 }
 
 .eyebrow {
@@ -944,7 +931,7 @@ button {
   box-shadow: 0 24px 64px rgba(37, 54, 50, 0.065), inset 0 1px 0 rgba(255, 255, 255, 0.78);
   display: grid;
   gap: 6px;
-  grid-template-columns: repeat(7, minmax(78px, 1fr));
+  grid-template-columns: repeat(6, minmax(78px, 1fr));
   padding: 7px;
 }
 
@@ -2397,7 +2384,6 @@ button {
 
 @media (max-width: 780px) {
   .hero,
-  .benchmark-strip,
   .what-if-hero,
   .simulator-layout,
   .comparison-surface,

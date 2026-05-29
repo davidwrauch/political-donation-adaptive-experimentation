@@ -358,8 +358,10 @@ def score_outcome(supporter: dict, frame: dict, channel: str, rng: random.Random
     contact_uplift = clamp(float(supporter["uplift_score"]) * intervention_multiplier, 0, 0.15)
     if strategy["id"] == "control":
         contact_uplift *= 0.35
-    if strategy["id"] == "linucb":
+    if strategy["id"] == "static_ab":
         contact_uplift *= 1.18
+    if strategy["id"] == "linucb":
+        contact_uplift *= 1.01
     if frame["id"] == "suppress":
         contact_uplift = 0
     return_probability = clamp(baseline + contact_uplift + (0.025 if channel_match else 0), 0.03, 0.98)
@@ -673,10 +675,13 @@ def simulated_bayesian_confidence(strategy_rows: list[dict], leading_strategy_id
     leader = ordered[0]
     runner_up = ordered[1] if len(ordered) > 1 else ordered[0]
     gap = max(0.0, leader["net_expected_value"] - runner_up["net_expected_value"])
-    progress_bonus = max(0, leader.get("traffic_share", 0) - 0.2) * 0.24
-    probability = clamp(0.52 + gap * 0.08 + progress_bonus, 0.52, 0.89)
-    if leader["id"] == "linucb" and leader.get("traffic_share", 0) >= 0.85:
-        probability = 0.88
+    linucb_share = next((row.get("traffic_share", 0) for row in strategy_rows if row["id"] == "linucb"), 0.3)
+    evidence_progress = clamp((linucb_share - 0.3) / 0.32, 0, 1)
+    gap_bonus = min(gap * 0.018, 0.045)
+    probability = 0.51 + evidence_progress * 0.39 + gap_bonus
+    if leader["id"] != "linucb":
+        probability = min(probability, 0.6)
+    probability = clamp(probability, 0.45, 0.84)
     return {
         "strategy_id": leading_strategy_id,
         "strategy_label": leader["label"],

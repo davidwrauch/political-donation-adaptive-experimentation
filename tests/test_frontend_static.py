@@ -17,6 +17,8 @@ def test_app_shell_uses_ballot_chase_positioning():
     assert "Prioritize voters who requested mail ballots" in app
     assert "Estimated additional returned ballots" in app
     assert "ballot chase allocation strategies" in app
+    assert "Grounded in deployed adaptive systems" in app
+    assert "Hero metric: additional returned ballots versus static randomized allocation." in app
     for text in [
         "Yahoo/LinUCB contextual bandit",
         "12.5% click lift",
@@ -98,16 +100,12 @@ def test_what_if_tab_is_reframed_for_turnout_priorities():
         "Explore how changing turnout priorities reshapes ballot returns",
         "Current chase policy",
         "Adjusted chase policy",
-        "Prioritize high-uplift ballot returns",
-        "Prioritize high-support voters",
-        "Reduce contact fatigue",
-        "County opportunity",
-        "Urgent returns",
         "Ballot return uplift",
         "Support score",
         "Contactability",
         "Projected additional returned ballots",
         "Estimated additional ballots returned",
+        "Additional returned ballots vs static randomized allocation",
         "Projected incremental ballot returns from the adjusted outreach strategy across the selected audience.",
         "The goal is not to chase every outstanding ballot equally.",
         "human oversight with guardrails",
@@ -116,15 +114,29 @@ def test_what_if_tab_is_reframed_for_turnout_priorities():
     for removed in [
         "Prioritize big donations",
         "Prioritize small donations",
+        "Prioritize high-uplift ballot returns",
+        "Prioritize high-support voters",
+        "Reduce contact fatigue",
+        "County opportunity",
+        "Urgent returns",
         "Projected volunteer signups",
         "Donation value",
         "Volunteer conversion",
         "Net value/contact",
         "County/exploration diversity",
         "Local election relevance",
+        "Additional returns/contact",
         "Projected ballot returns from rate change",
     ]:
         assert removed not in what_if
+
+    for text in [
+        "Current policy",
+        "Prioritize governor's race",
+        "Prioritize local elections",
+        "Prioritize federal races",
+    ]:
+        assert text in what_if
 
 
 def test_frontend_has_basic_favicon():

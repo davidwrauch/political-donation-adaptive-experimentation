@@ -55,11 +55,23 @@ def test_summary_has_ballot_chase_metrics():
     assert summary["current_readout"]["leading_strategy"]["label"] == "LinUCB"
     assert summary["current_readout"]["recommendation_status"] == "Ready to scale"
     assert summary["current_readout"]["estimated_additional_contacts_needed"] == 0
+    assert 0.78 <= summary["current_readout"]["bayesian_confidence"]["probability_best"] <= 0.85
     assert summary["strategy_rate_timeline"][0]["experiment_date"] == "2026-02-01"
     final_shares = {row["id"]: row["traffic_share"] for row in summary["traffic_allocation_timeline"][-1]["series"]}
     assert 0.55 <= final_shares["linucb"] <= 0.7
     assert final_shares["control"] >= 0.14
     assert final_shares["static_ab"] >= 0.2
+    static_row = next(row for row in summary["strategy_performance"] if row["id"] == "static_ab")
+    relative_lift = summary["adaptive_vs_static_estimated_lift"] / static_row["net_expected_value"]
+    assert 0.03 <= relative_lift <= 0.12
+    confidence_by_day = [
+        summary["strategy_status_timeline"][index]["current_readout"]["bayesian_confidence"]["probability_best"]
+        for index in [0, 2, 4, 6]
+    ]
+    assert 0.45 <= confidence_by_day[0] <= 0.55
+    assert 0.55 <= confidence_by_day[1] <= 0.65
+    assert 0.60 <= confidence_by_day[2] <= 0.70
+    assert 0.65 <= confidence_by_day[3] <= 0.75
     assert summary["latest_decision"]["assignment_probability"] > 0
     for field in [
         "voter_id",
