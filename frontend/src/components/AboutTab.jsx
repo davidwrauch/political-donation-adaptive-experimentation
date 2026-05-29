@@ -99,8 +99,8 @@ export default function AboutTab() {
           <strong>David Rauch</strong> - Product-focused data scientist working on experimentation,
           causal inference, adaptive decision systems, and public-interest technology.
         </p>
-        <a href="https://github.com/davidwrauch/political-donation-adaptive-experimentation" target="_blank" rel="noreferrer">
-          GitHub: https://github.com/davidwrauch/political-donation-adaptive-experimentation
+        <a href="https://github.com/davidwrauch/adaptive-political-experimentation" target="_blank" rel="noreferrer">
+          GitHub: https://github.com/davidwrauch/adaptive-political-experimentation
         </a>
         <a href="https://www.linkedin.com/in/davidwrauch/" target="_blank" rel="noreferrer">
           LinkedIn: https://www.linkedin.com/in/davidwrauch/
