@@ -59,13 +59,7 @@ export default function App() {
             </span>
             <button className="briefing-button" onClick={() => setShowBriefing(true)} type="button">Project briefing</button>
           </div>
-          <div className="hero-proof-strip" aria-label="Grounded in deployed adaptive systems">
-            <span>Grounded in deployed adaptive systems</span>
-            <p><strong>Yahoo/LinUCB contextual bandit:</strong> 12.5% click lift over non-contextual baseline</p>
-            <p><strong>Spotify contextual bandits:</strong> &gt;25% improvement in expected stream rate from improved reward definitions</p>
-            <p><strong>Optimizely contextual bandits:</strong> 13.62% higher engagement and 20.79% validation improvement</p>
           </div>
-        </div>
       </header>
 
       {showBriefing && (
@@ -80,6 +74,16 @@ export default function App() {
               <p>
                 The goal is not to chase every outstanding ballot equally. The goal is to identify where contact is most likely to change behavior while preserving capacity, monitoring fatigue, and keeping human review in the loop.
               </p>
+	      <p>
+		Adaptive ballot chase applies contextual bandit experimentation to voter
+outreach, continuously reallocating contact effort toward strategies that
+generate more returned ballots while preserving exploration and operational
+guardrails. Similar adaptive approaches have produced measurable gains in
+deployed systems, including a 12.5% click lift in Yahoo's LinUCB contextual
+bandit work, more than 25% improvement in expected stream rate at Spotify
+through improved reward optimization, and 13.62% higher engagement with a
+20.79% improvement in validation outcomes in Optimizely experiments.
+</p>
             </div>
             <div className="briefing-actions">
               <button className={overview ? "ready-action" : ""} onClick={() => setShowBriefing(false)} type="button">
