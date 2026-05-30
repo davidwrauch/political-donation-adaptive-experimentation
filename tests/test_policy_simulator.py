@@ -37,6 +37,58 @@ def test_policy_simulator_weights_change_adjusted_estimate():
     assert value_first["default_matches_current_policy"] is False
 
 
+def test_policy_simulator_models_race_priority_tradeoffs():
+    experiment = generate_experiment(seed=37, n=420)
+    current = simulate_policy(experiment, DEFAULT_WEIGHTS)["adjusted_policy"]
+    governor = simulate_policy(
+        experiment,
+        {
+            "donation_value_weight": 1.35,
+            "conversion_weight": 1.15,
+            "high_dollar_donor_weight": 1.45,
+            "fatigue_penalty": 0.75,
+            "unsubscribe_penalty": 0.7,
+            "local_community_message_boost": 0.1,
+            "fairness_audience_diversity_weight": 0.14,
+        },
+    )["adjusted_policy"]
+    local = simulate_policy(
+        experiment,
+        {
+            "donation_value_weight": 0.82,
+            "conversion_weight": 0.82,
+            "volunteer_conversion_weight": 0.65,
+            "persuasion_trust_proxy_weight": 1.15,
+            "local_community_message_boost": 1.5,
+            "fatigue_penalty": 0.85,
+            "unsubscribe_penalty": 0.85,
+            "exploration_diversity_weight": 0.42,
+            "fairness_audience_diversity_weight": 0.9,
+        },
+    )["adjusted_policy"]
+    federal = simulate_policy(
+        experiment,
+        {
+            "donation_value_weight": 1.1,
+            "conversion_weight": 1.35,
+            "high_dollar_donor_weight": 1.15,
+            "persuasion_trust_proxy_weight": 0.55,
+            "local_community_message_boost": 0.28,
+            "fatigue_penalty": 0.65,
+            "unsubscribe_penalty": 0.65,
+            "exploration_diversity_weight": 0.18,
+            "fairness_audience_diversity_weight": 0.16,
+        },
+    )["adjusted_policy"]
+
+    assert governor["governor_race_lift"] > current["governor_race_lift"]
+    assert governor["local_election_lift"] < current["local_election_lift"]
+    assert local["local_election_lift"] > current["local_election_lift"]
+    assert local["federal_race_lift"] < current["federal_race_lift"]
+    assert federal["federal_race_lift"] > current["federal_race_lift"]
+    assert federal["local_election_lift"] < current["local_election_lift"]
+
+
 def test_policy_simulator_models_volunteer_tradeoff():
     experiment = generate_experiment(seed=35, n=420)
     donation_first = simulate_policy(

@@ -43,9 +43,10 @@ export default function ExperimentDesignTab() {
           effects.
         </p>
         <p>
-          Control / holdout uses generic non-personalized ballot-return reminders. Static randomized test splits
-          contacts across approved intervention/channel combinations but does not adapt allocation based on results.
-          LinUCB uses voter context to adapt intervention and channel allocation while keeping the comparison transparent.
+          Control / holdout uses generic non-personalized ballot-return reminders. Static randomized test keeps the
+          campaign's existing static targeting rules in place. Different audiences can still receive different approved
+          interventions, but allocation does not adapt based on live ballot-return feedback. LinUCB uses voter context to
+          adapt intervention and channel allocation while keeping the comparison transparent.
         </p>
         <div className="design-grid">
           {designItems.map(([label, value]) => (

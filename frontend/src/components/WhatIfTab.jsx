@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const defaultWeights = {
   donation_value_weight: 1.0,
@@ -14,59 +14,59 @@ const defaultWeights = {
   fairness_audience_diversity_weight: 0.2,
 };
 
-const presets = {
-  "Current policy": defaultWeights,
+const scenarios = {
+  "Current policy": {
+    weights: defaultWeights,
+    explanation: "Balances governor, local, and federal race priorities using the campaign's current allocation logic.",
+    summary: "Balanced chase logic keeps statewide, local, and federal priorities in tension instead of optimizing one race lane in isolation.",
+  },
   "Prioritize governor's race": {
-    ...defaultWeights,
-    donation_value_weight: 1.35,
-    conversion_weight: 1.1,
-    high_dollar_donor_weight: 1.2,
-    fatigue_penalty: 0.8,
-    unsubscribe_penalty: 0.75,
-    exploration_diversity_weight: 0.18,
-    fairness_audience_diversity_weight: 0.22,
+    weights: {
+      ...defaultWeights,
+      donation_value_weight: 1.35,
+      conversion_weight: 1.15,
+      high_dollar_donor_weight: 1.45,
+      fatigue_penalty: 0.75,
+      unsubscribe_penalty: 0.7,
+      local_community_message_boost: 0.1,
+      fairness_audience_diversity_weight: 0.14,
+    },
+    explanation: "Shifts more contact priority toward voters most likely to affect the governor's race. This may improve governor-race ballot returns, but can reduce local or federal efficiency.",
+    summary: "The governor-focused policy concentrates effort around likely supportive voters and broader turnout volume, trading away some local coverage.",
   },
   "Prioritize local elections": {
-    ...defaultWeights,
-    donation_value_weight: 0.85,
-    conversion_weight: 0.85,
-    volunteer_conversion_weight: 0.65,
-    persuasion_trust_proxy_weight: 1.15,
-    local_community_message_boost: 1.45,
-    fatigue_penalty: 0.85,
-    unsubscribe_penalty: 0.85,
-    exploration_diversity_weight: 0.45,
-    fairness_audience_diversity_weight: 0.75,
+    weights: {
+      ...defaultWeights,
+      donation_value_weight: 0.82,
+      conversion_weight: 0.82,
+      volunteer_conversion_weight: 0.65,
+      persuasion_trust_proxy_weight: 1.15,
+      local_community_message_boost: 1.5,
+      fatigue_penalty: 0.85,
+      unsubscribe_penalty: 0.85,
+      exploration_diversity_weight: 0.42,
+      fairness_audience_diversity_weight: 0.9,
+    },
+    explanation: "Shifts more contact priority toward voters relevant to local contests. This may improve local-race opportunity, but can reduce statewide or federal optimization.",
+    summary: "The local-election policy broadens county and local-contest coverage, accepting lower statewide efficiency when local opportunity matters more.",
   },
   "Prioritize federal races": {
-    ...defaultWeights,
-    donation_value_weight: 1.15,
-    conversion_weight: 1.25,
-    high_dollar_donor_weight: 1.15,
-    persuasion_trust_proxy_weight: 0.55,
-    local_community_message_boost: 0.35,
-    fatigue_penalty: 0.65,
-    unsubscribe_penalty: 0.65,
-    exploration_diversity_weight: 0.22,
-    fairness_audience_diversity_weight: 0.18,
+    weights: {
+      ...defaultWeights,
+      donation_value_weight: 1.1,
+      conversion_weight: 1.35,
+      high_dollar_donor_weight: 1.15,
+      persuasion_trust_proxy_weight: 0.55,
+      local_community_message_boost: 0.28,
+      fatigue_penalty: 0.65,
+      unsubscribe_penalty: 0.65,
+      exploration_diversity_weight: 0.18,
+      fairness_audience_diversity_weight: 0.16,
+    },
+    explanation: "Shifts more contact priority toward voters most relevant to federal contests. This may improve federal-race ballot returns, but can reduce local coverage or balanced turnout goals.",
+    summary: "The federal-race policy leans into larger-audience turnout generation, which can outperform on federal opportunity while narrowing local coverage.",
   },
 };
-
-const presetExplanations = {
-  "Current policy": "Balanced allocation reflecting the current chase strategy.",
-  "Prioritize governor's race": "Favor overall turnout volume and likely supporters while respecting fatigue guardrails.",
-  "Prioritize local elections": "Favor local-election relevance, county-level opportunity, and under-contacted voters.",
-  "Prioritize federal races": "Favor broad turnout generation, larger audiences, and likely supporters.",
-};
-
-const controls = [
-  ["donation_value_weight", "Ballot return uplift", "Prioritize voters most likely to return a ballot because of contact."],
-  ["high_dollar_donor_weight", "Support score", "Prioritize high-support or high-priority voters."],
-  ["conversion_weight", "Contactability", "Prioritize voters who can likely be reached through available channels."],
-  ["volunteer_conversion_weight", "Urgency", "Prioritize voters whose ballots have been outstanding longer."],
-  ["fatigue_guardrail", "Contact fatigue guardrail", "Reduce priority for voters likely to feel over-contacted."],
-  ["trust_positive_tone", "Voter confidence/helpfulness", "Favor interventions that answer questions and make ballot return easier."],
-];
 
 const audienceOptions = [
   ["50000", "50k"],
@@ -77,13 +77,12 @@ const audienceOptions = [
 ];
 
 export default function WhatIfTab({ apiBase }) {
-  const [weights, setWeights] = useState(defaultWeights);
-  const [activePreset, setActivePreset] = useState("Current policy");
+  const [activeScenario, setActiveScenario] = useState("Current policy");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [audienceSize, setAudienceSize] = useState(250000);
-  const requestKey = useMemo(() => JSON.stringify(weights), [weights]);
+  const scenario = scenarios[activeScenario];
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -92,7 +91,7 @@ export default function WhatIfTab({ apiBase }) {
       fetch(`${apiBase}/api/policy-simulator`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(weights),
+        body: JSON.stringify(scenario.weights),
       })
         .then((response) => {
           if (!response.ok) throw new Error(`Unable to load policy simulator from ${apiBase}/api/policy-simulator (${response.status}).`);
@@ -103,31 +102,23 @@ export default function WhatIfTab({ apiBase }) {
         .finally(() => setLoading(false));
     }, 160);
     return () => window.clearTimeout(timeout);
-  }, [apiBase, requestKey, weights]);
-
-  function applyPreset(name) {
-    setActivePreset(name);
-    setWeights(presets[name]);
-  }
-
-  function updateWeight(key, value) {
-    setActivePreset("Custom");
-    setWeights((current) => applyControlValue(current, key, Number(value)));
-  }
+  }, [apiBase, scenario.weights]);
 
   const adjusted = result?.adjusted_policy;
   const baseline = result?.baseline_policy;
-  const deltas = result?.deltas;
-  const reliabilityNeedsMore = result?.overlap?.warning;
-  const projectedImpact = ((deltas?.estimated_net_value_per_contact ?? 0) / 100) * audienceSize;
-  const projectedPriorityMoves = (deltas?.donation_conversion_rate ?? 0) * audienceSize;
+  const deltas = result?.deltas ?? {};
+  const projectedReturnedBallots = ((deltas.overall_ballot_return_value ?? 0) / 100) * audienceSize;
+  const governorOpportunity = (deltas.governor_race_lift ?? 0) * audienceSize;
+  const localOpportunity = (deltas.local_election_lift ?? 0) * audienceSize;
+  const federalOpportunity = (deltas.federal_race_lift ?? 0) * audienceSize;
+  const fatigueChange = deltas.fatigue_risk ?? 0;
 
   return (
     <div className="tab-panel what-if-tab">
       <section className="what-if-hero compact">
         <div className="what-if-hero-left">
           <p className="eyebrow">Strategy mixing board</p>
-          <h2><LabelWithHelp label="What If?" help="This tab lets campaign leadership test alternative reward priorities before changing allocation logic." /></h2>
+          <h2><LabelWithHelp label="What If?" help="This tab lets campaign leadership test alternative race-priority strategies before changing allocation logic." /></h2>
           <small className="quiet-caveat">
             <LabelWithHelp
               label="Offline estimate, not proof."
@@ -151,53 +142,54 @@ export default function WhatIfTab({ apiBase }) {
 
       {error && <div className="alert">{error}</div>}
 
-      <section className="preset-row" aria-label="Policy simulator presets">
-        {Object.keys(presets).map((name) => (
-          <button className={activePreset === name ? "active" : ""} key={name} onClick={() => applyPreset(name)} type="button">
-            <LabelWithHelp label={name} help={presetExplanations[name]} />
+      <section className="preset-row" aria-label="Policy simulator scenarios">
+        {Object.keys(scenarios).map((name) => (
+          <button className={activeScenario === name ? "active" : ""} key={name} onClick={() => setActiveScenario(name)} type="button">
+            {name}
           </button>
         ))}
       </section>
 
       <section className="scenario-note">
-        <strong>{activePreset}</strong>
-        <span>{presetExplanations[activePreset] ?? "Custom policy settings. Compare the adjusted estimate against the current logged policy."}</span>
+        <strong>{activeScenario}</strong>
+        <span>{scenario.explanation}</span>
       </section>
 
-      <p className="console-note">Use the controls to tune the chase policy priorities.</p>
-      <section className="strategy-console" aria-label="Policy weight controls">
-        {controls.map(([key, label, description]) => (
-          <Knob
-            description={description}
-            key={key}
-            label={label}
-            onChange={(value) => updateWeight(key, value)}
-            value={controlValue(weights, key)}
-          />
-        ))}
-      </section>
-
-      <section className="compact-policy-grid">
-        <PolicySummaryCard title="Current chase policy" metrics={baseline} />
-        <PolicySummaryCard baseline={baseline} metrics={adjusted} reliabilityNeedsMore={reliabilityNeedsMore} title="Adjusted chase policy" />
-      </section>
-
-      <section className="impact-row">
-        <article className="projected-impact-card">
-          <div>
-            <span><LabelWithHelp label="Projected additional returned ballots" help="This extrapolates the estimated per-contact change across a larger ballot-chase universe. Real-world results would vary." /></span>
-            <strong className={impactClass(projectedImpact)}>{formatImpactMoney(projectedImpact)}</strong>
-            <small>{signedMoney(deltas?.estimated_net_value_per_contact ?? 0)} per 100 contacts over {audienceSize.toLocaleString()} voters</small>
-            <p>Estimated returned-ballot difference if this chase policy had been used across the selected outreach volume.</p>
+      <section className="scenario-card-grid">
+        <article className="scenario-card selected-scenario-card">
+          <span>Selected scenario</span>
+          <h3>{activeScenario}</h3>
+          <p>{scenario.summary}</p>
+          <div className="scenario-metric-grid">
+            <ScenarioMetric label="Overall ballot-return value" value={formatBallotImpact(adjusted?.overall_ballot_return_value)} />
+            <ScenarioMetric label="Governor-race lift" value={formatPercent(adjusted?.governor_race_lift)} />
+            <ScenarioMetric label="Local-election lift" value={formatPercent(adjusted?.local_election_lift)} />
+            <ScenarioMetric label="Federal-race lift" value={formatPercent(adjusted?.federal_race_lift)} />
+            <ScenarioMetric label="Contact fatigue" value={formatPercent(adjusted?.fatigue_risk)} />
+            <ScenarioMetric label="Coverage balance" value={formatPercent(adjusted?.coverage_balance)} />
           </div>
         </article>
 
-        <article className="projected-impact-card volunteer-impact-card">
-          <div>
-            <span><LabelWithHelp label="Estimated additional ballots returned" help="Estimated additional returned ballots from changing the ballot return rate across the selected audience size." /></span>
-            <strong className={impactClass(projectedPriorityMoves)}>{formatSignedWholeNumber(projectedPriorityMoves)}</strong>
-            <small>{formatDeltaPercent(deltas?.donation_conversion_rate)} over {audienceSize.toLocaleString()} contacts</small>
-            <p>Projected incremental ballot returns from the adjusted outreach strategy across the selected audience.</p>
+        <article className="scenario-card projected-scenario-card">
+          <span>Projected impact</span>
+          <strong className={impactClass(projectedReturnedBallots)}>{formatSignedWholeNumber(projectedReturnedBallots)}</strong>
+          <small>projected additional returned ballots over {audienceSize.toLocaleString()} voters</small>
+          <div className="impact-breakdown">
+            <ScenarioDelta label="Governor-race opportunity" value={governorOpportunity} />
+            <ScenarioDelta label="Local-race opportunity" value={localOpportunity} />
+            <ScenarioDelta label="Federal-race opportunity" value={federalOpportunity} />
+            <ScenarioDelta label="Fatigue change" value={fatigueChange} percent />
+          </div>
+        </article>
+
+        <article className="scenario-card tradeoff-card">
+          <span>Tradeoff summary</span>
+          <h3>{tradeoffHeadline(activeScenario)}</h3>
+          <p>{tradeoffCopy(activeScenario)}</p>
+          <div className="tradeoff-scale">
+            <ScenarioMetric label="Current balanced value" value={formatBallotImpact(baseline?.overall_ballot_return_value)} />
+            <ScenarioMetric label="Scenario value" value={formatBallotImpact(adjusted?.overall_ballot_return_value)} />
+            <ScenarioMetric label="Fatigue delta" value={formatDeltaPercent(fatigueChange, true)} />
           </div>
         </article>
       </section>
@@ -206,18 +198,15 @@ export default function WhatIfTab({ apiBase }) {
         <article className="meaning-panel">
           <h3>What this means</h3>
           <p>
-            The goal is not to chase every outstanding ballot equally. The goal is to identify where contact is most
-            likely to change behavior. Humans define the reward, constraints, and tradeoffs; the adaptive system learns
-            how those priorities shift returned ballots, urgency, fatigue, and county coverage.
+            Race-priority choices are not free improvements. Optimizing governor, local, or federal contests changes
+            which voters the adaptive system favors, how much fatigue it tolerates, and whether coverage remains balanced.
           </p>
         </article>
         <article className="meaning-panel quiet-method">
           <h3>Why this works</h3>
           <p>
             Because the simulated campaign logs the action shown, the outcome, and the probability of assignment, we
-            can estimate how a different policy might have performed. This is the basic idea behind offline policy
-            evaluation. It is not perfect causal proof, but it is much stronger than guessing from ordinary
-            observational data.
+            can estimate how a different policy might have performed. This is offline policy simulation, not causal proof.
           </p>
           {loading && <small>Updating estimate...</small>}
         </article>
@@ -242,101 +231,20 @@ export default function WhatIfTab({ apiBase }) {
   );
 }
 
-function controlValue(weights, key) {
-  if (key === "fatigue_guardrail") return average(weights.fatigue_penalty, weights.unsubscribe_penalty);
-  if (key === "trust_positive_tone") return average(weights.persuasion_trust_proxy_weight, weights.negative_urgency_message_penalty);
-  if (key === "learning_diversity") return average(weights.exploration_diversity_weight, weights.fairness_audience_diversity_weight);
-  return weights[key];
-}
-
-function applyControlValue(current, key, value) {
-  if (key === "fatigue_guardrail") {
-    return { ...current, fatigue_penalty: value, unsubscribe_penalty: value };
-  }
-  if (key === "trust_positive_tone") {
-    return { ...current, persuasion_trust_proxy_weight: value, negative_urgency_message_penalty: value };
-  }
-  if (key === "learning_diversity") {
-    return { ...current, exploration_diversity_weight: value, fairness_audience_diversity_weight: value };
-  }
-  return { ...current, [key]: value };
-}
-
-function average(left, right) {
-  return (left + right) / 2;
-}
-
-function Knob({ label, description, value, onChange }) {
-  const angle = value * 135 - 135;
+function ScenarioMetric({ label, value }) {
   return (
-    <label className="strategy-knob">
+    <div>
       <span>{label}</span>
-      <input
-        aria-label={label}
-        max="2"
-        min="0"
-        onChange={(event) => onChange(event.target.value)}
-        step="0.25"
-        type="range"
-        value={value}
-      />
-      <i style={{ "--angle": `${angle}deg`, "--fill": `${value / 2}` }} />
-      <strong>{value.toFixed(2)}</strong>
-      <small>{description}</small>
-    </label>
+      <strong>{value}</strong>
+    </div>
   );
 }
 
-function PolicySummaryCard({ title, metrics, baseline, reliabilityNeedsMore = false }) {
+function ScenarioDelta({ label, value, percent = false }) {
   return (
-    <article className="policy-summary compact">
-      <span><LabelWithHelp label={title} help={title === "Current chase policy" ? "The logged ballot-chase policy used as the comparison baseline." : "The estimated result after applying the selected priority weights."} /></span>
-      <div className="summary-metric-layout">
-        <div className="summary-primary">
-          <small><LabelWithHelp label="Additional returned ballots vs static randomized allocation" help="Estimated incremental ballots generated by adaptive allocation compared with a traditional randomized allocation strategy serving the same audience." /></small>
-          <strong className={deltaValueClass(metrics?.estimated_net_value_per_contact, baseline?.estimated_net_value_per_contact)}>{formatBallotImpact(metrics?.estimated_net_value_per_contact)}</strong>
-        </div>
-        <div className="summary-secondary">
-          <span>Secondary metrics</span>
-          <div className="summary-secondary-metrics">
-            <SummaryMiniMetric
-              label="Ballot return rate"
-              help="Share of contacted voters expected to return their mail ballot."
-              value={formatPercent(metrics?.donation_conversion_rate)}
-              valueClass={deltaValueClass(metrics?.donation_conversion_rate, baseline?.donation_conversion_rate)}
-            />
-            <SummaryMiniMetric
-              label="Average uplift"
-              help="Estimated increase in ballot return probability caused by contact."
-              value={formatPercent(metrics?.volunteer_conversion_rate)}
-              valueClass={deltaValueClass(metrics?.volunteer_conversion_rate, baseline?.volunteer_conversion_rate)}
-            />
-            <SummaryMiniMetric
-              label="Fatigue"
-              help="Estimated risk that outreach reduces future response or increases opt-outs."
-              value={formatPercent(metrics?.fatigue_risk)}
-              valueClass={deltaValueClass(baseline?.fatigue_risk, metrics?.fatigue_risk)}
-            />
-          </div>
-        </div>
-      </div>
-      {title === "Adjusted chase policy" && (
-        <p className={reliabilityNeedsMore ? "summary-reliability warning" : "summary-reliability good"}>
-          <LabelWithHelp
-            label={`Reliable demo estimate? ${reliabilityNeedsMore ? "No" : "Yes"}`}
-            help="This is the OPE-style overlap idea. Counterfactual estimates are more trustworthy when the historical policy sometimes tried the same kinds of actions the adjusted policy now prefers."
-          />
-        </p>
-      )}
-    </article>
-  );
-}
-
-function SummaryMiniMetric({ label, help, value, valueClass }) {
-  return (
-    <div className="summary-mini-metric">
-      <span><LabelWithHelp label={label} help={help} /></span>
-      <strong className={valueClass}>{value}</strong>
+    <div>
+      <span>{label}</span>
+      <strong className={impactClass(value)}>{percent ? formatDeltaPercent(value, true) : formatSignedWholeNumber(value)}</strong>
     </div>
   );
 }
@@ -396,35 +304,29 @@ function HelpTooltip({ text }) {
   );
 }
 
-function deltaValueClass(value, comparison) {
-  if (typeof value !== "number" || typeof comparison !== "number" || Math.abs(value - comparison) < 0.002) return "neutral-value";
-  return value > comparison ? "positive-value" : "tradeoff-value";
+function tradeoffHeadline(scenario) {
+  if (scenario === "Prioritize governor's race") return "Statewide lift, narrower balance";
+  if (scenario === "Prioritize local elections") return "Local opportunity, lower broad efficiency";
+  if (scenario === "Prioritize federal races") return "Federal scale, less local coverage";
+  return "Balanced across race priorities";
 }
 
-function formatMoney(value) {
-  if (typeof value !== "number") return "Loading";
-  return value.toFixed(2);
+function tradeoffCopy(scenario) {
+  if (scenario === "Prioritize governor's race") {
+    return "The model shifts contact priority toward likely supporters and statewide turnout volume, which can reduce local-race balance.";
+  }
+  if (scenario === "Prioritize local elections") {
+    return "The model gives more credit to county-level opportunity and under-contacted voters, which can reduce statewide or federal optimization.";
+  }
+  if (scenario === "Prioritize federal races") {
+    return "The model favors broad turnout generation for larger federal audiences, which can leave some local opportunity under-covered.";
+  }
+  return "The current policy preserves coverage across governor, local, and federal priorities while avoiding excessive contact fatigue.";
 }
 
 function formatBallotImpact(value) {
   if (typeof value !== "number") return "Loading";
   return `${value.toFixed(1)} per 100 contacts`;
-}
-
-function signedMoney(value) {
-  if (typeof value !== "number") return "Calculating";
-  if (Math.abs(value) < 0.005) return "0.00";
-  const sign = value >= 0 ? "+" : "";
-  return `${sign}${value.toFixed(2)}`;
-}
-
-function formatImpactMoney(value) {
-  if (typeof value !== "number") return "Calculating";
-  const rounded = Math.round(value);
-  const absolute = Math.abs(rounded).toLocaleString();
-  if (rounded < 0) return `-${absolute}`;
-  if (rounded > 0) return `+${absolute}`;
-  return "0";
 }
 
 function formatSignedWholeNumber(value) {

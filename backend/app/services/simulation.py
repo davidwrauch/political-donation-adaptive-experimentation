@@ -23,7 +23,7 @@ STRATEGIES = [
     {
         "id": "static_ab",
         "label": "Static randomized test",
-        "description": "Keeps ballot-chase contacts evenly split across approved interventions and channels without adapting allocation.",
+        "description": "Keeps the campaign's existing static targeting rules in place. Different audiences can still receive different approved interventions, but allocation does not adapt based on live ballot-return feedback.",
         "exploration_rate": 1.0,
     },
     {

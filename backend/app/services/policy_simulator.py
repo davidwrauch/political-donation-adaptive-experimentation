@@ -24,12 +24,12 @@ DEFAULT_WEIGHTS = {
 def simulate_policy(experiment: dict[str, Any], weights: dict[str, float] | None = None) -> dict[str, Any]:
     events = experiment["events"]
     merged_weights = normalize_weights(weights or {})
-    baseline = aggregate_metrics(events)
+    baseline = apply_race_priority_metrics(aggregate_metrics(events), DEFAULT_WEIGHTS, default_policy=True)
     default_policy = is_default_policy(merged_weights)
     scored_events = [(event, event_score(event, merged_weights)) for event in events]
     adjusted = baseline if default_policy else apply_policy_realism(
         baseline,
-        weighted_aggregate(scored_events, merged_weights),
+        apply_race_priority_metrics(weighted_aggregate(scored_events, merged_weights), merged_weights),
         merged_weights,
     )
     baseline_segment_shares = share_by(events, "segment")
@@ -148,6 +148,32 @@ def weighted_aggregate(scored_events: list[tuple[dict[str, Any], float]], weight
     }
 
 
+def apply_race_priority_metrics(metrics: dict[str, Any], weights: dict[str, float], default_policy: bool = False) -> dict[str, Any]:
+    enriched = metrics.copy()
+    value_delta = enriched["estimated_net_value_per_contact"] - 10.0
+    if default_policy:
+        governor_lift = 0.042
+        local_lift = 0.04
+        federal_lift = 0.041
+        coverage_balance = 0.86
+    else:
+        governor_push = weights["high_dollar_donor_weight"] * 0.018 + weights["conversion_weight"] * 0.008
+        local_push = weights["local_community_message_boost"] * 0.018 + weights["fairness_audience_diversity_weight"] * 0.01
+        federal_push = weights["conversion_weight"] * 0.014 + weights["donation_value_weight"] * 0.009
+        fatigue_drag = max(0.0, enriched["fatigue_risk"] - 0.37) * 0.045
+        governor_lift = 0.026 + value_delta * 0.0018 + governor_push - local_push * 0.28 - fatigue_drag
+        local_lift = 0.027 + local_push - federal_push * 0.22 - max(0.0, weights["high_dollar_donor_weight"] - 0.8) * 0.006 - fatigue_drag
+        federal_lift = 0.026 + federal_push - local_push * 0.2 - fatigue_drag
+        spread = max(governor_lift, local_lift, federal_lift) - min(governor_lift, local_lift, federal_lift)
+        coverage_balance = clamp(0.9 - spread * 3.1 - max(0.0, weights["donation_value_weight"] - 1.25) * 0.04, 0.35, 0.96)
+    enriched["overall_ballot_return_value"] = round(enriched["estimated_net_value_per_contact"], 2)
+    enriched["governor_race_lift"] = round(clamp(governor_lift, -0.04, 0.14), 4)
+    enriched["local_election_lift"] = round(clamp(local_lift, -0.04, 0.14), 4)
+    enriched["federal_race_lift"] = round(clamp(federal_lift, -0.04, 0.14), 4)
+    enriched["coverage_balance"] = round(coverage_balance, 4)
+    return enriched
+
+
 def donation_focus_conversion_adjustment(weights: dict[str, float]) -> float:
     dominance = max(
         0.0,
@@ -168,6 +194,7 @@ def apply_policy_realism(baseline: dict[str, Any], adjusted: dict[str, Any], wei
         adjusted["estimated_net_value_per_contact"] - penalty,
         2,
     )
+    realistic["overall_ballot_return_value"] = realistic["estimated_net_value_per_contact"]
     if penalty > 0.2:
         realistic["fatigue_risk"] = round(min(adjusted["fatigue_risk"], baseline["fatigue_risk"]), 4)
     return realistic

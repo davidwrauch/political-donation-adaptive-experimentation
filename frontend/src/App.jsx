@@ -67,16 +67,15 @@ export default function App() {
               <p>
                 The goal is not to chase every outstanding ballot equally. The goal is to identify where contact is most likely to change behavior while preserving capacity, monitoring fatigue, and keeping human review in the loop.
               </p>
-	      <p>
-		Adaptive ballot chase applies contextual bandit experimentation to voter
-outreach, continuously reallocating contact effort toward strategies that
-generate more returned ballots while preserving exploration and operational
-guardrails. Similar adaptive approaches have produced measurable gains in
-deployed systems, including a 12.5% click lift in Yahoo's LinUCB contextual
-bandit work, more than 25% improvement in expected stream rate at Spotify
-through improved reward optimization, and 13.62% higher engagement with a
-20.79% improvement in validation outcomes in Optimizely experiments.
-</p>
+              <p>
+                Adaptive ballot chase applies contextual bandit experimentation to voter outreach, continuously
+                reallocating contact effort toward strategies that generate more returned ballots while preserving
+                exploration and operational guardrails. Similar adaptive approaches have produced measurable gains in
+                deployed systems, including a <strong>12.5% click lift</strong> in Yahoo's LinUCB contextual bandit
+                work, <strong>more than 25% improvement in expected stream rate</strong> at Spotify through improved
+                reward optimization, and <strong>13.62% higher engagement</strong> with a <strong>20.79% improvement
+                in validation outcomes</strong> in Optimizely experiments.
+              </p>
             </div>
             <div className="briefing-actions">
               <button className={overview ? "ready-action" : ""} onClick={() => setShowBriefing(false)} type="button">
