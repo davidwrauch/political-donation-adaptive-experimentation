@@ -172,13 +172,13 @@ export default function WhatIfTab({ apiBase }) {
 
         <article className="scenario-card projected-scenario-card">
           <span>Projected impact</span>
-          <strong className={impactClass(projectedReturnedBallots)}>{formatSignedWholeNumber(projectedReturnedBallots)}</strong>
+          <strong className={semanticImpactClass(projectedReturnedBallots)}>{formatSignedWholeNumber(projectedReturnedBallots)}</strong>
           <small>projected additional returned ballots over {audienceSize.toLocaleString()} voters</small>
           <div className="impact-breakdown">
             <ScenarioDelta label="Governor-race opportunity" value={governorOpportunity} />
             <ScenarioDelta label="Local-race opportunity" value={localOpportunity} />
             <ScenarioDelta label="Federal-race opportunity" value={federalOpportunity} />
-            <ScenarioDelta label="Fatigue change" value={fatigueChange} percent />
+            <ScenarioDelta label="Fatigue change" value={fatigueChange} percent lowerIsBetter />
           </div>
         </article>
 
@@ -189,7 +189,11 @@ export default function WhatIfTab({ apiBase }) {
           <div className="tradeoff-scale">
             <ScenarioMetric label="Current balanced value" value={formatBallotImpact(baseline?.overall_ballot_return_value)} />
             <ScenarioMetric label="Scenario value" value={formatBallotImpact(adjusted?.overall_ballot_return_value)} />
-            <ScenarioMetric label="Fatigue delta" value={formatDeltaPercent(fatigueChange, true)} />
+            <ScenarioMetric
+              label="Fatigue delta"
+              value={formatDeltaPercent(fatigueChange, true)}
+              valueClassName={semanticImpactClass(fatigueChange, { lowerIsBetter: true })}
+            />
           </div>
         </article>
       </section>
@@ -231,20 +235,22 @@ export default function WhatIfTab({ apiBase }) {
   );
 }
 
-function ScenarioMetric({ label, value }) {
+function ScenarioMetric({ label, value, valueClassName = "" }) {
   return (
     <div>
       <span>{label}</span>
-      <strong>{value}</strong>
+      <strong className={valueClassName}>{value}</strong>
     </div>
   );
 }
 
-function ScenarioDelta({ label, value, percent = false }) {
+function ScenarioDelta({ label, value, percent = false, lowerIsBetter = false }) {
   return (
     <div>
       <span>{label}</span>
-      <strong className={impactClass(value)}>{percent ? formatDeltaPercent(value, true) : formatSignedWholeNumber(value)}</strong>
+      <strong className={semanticImpactClass(value, { lowerIsBetter })}>
+        {percent ? formatDeltaPercent(value, lowerIsBetter) : formatSignedWholeNumber(value)}
+      </strong>
     </div>
   );
 }
@@ -347,11 +353,12 @@ function formatDeltaPercent(value, lowerIsBetter = false) {
   if (typeof value !== "number") return "Calculating";
   if (Math.abs(value) < 0.0001) return "0.0 pts";
   const sign = value >= 0 ? "+" : "";
-  const direction = lowerIsBetter ? (value <= 0 ? " better" : " higher") : "";
+  const direction = lowerIsBetter ? (value <= 0 ? " better" : " worse") : "";
   return `${sign}${(value * 100).toFixed(1)} pts${direction}`;
 }
 
-function impactClass(value) {
-  if (typeof value !== "number" || Math.abs(value) < 0.5) return "impact-neutral";
-  return value > 0 ? "impact-positive" : "impact-negative";
+function semanticImpactClass(value, { lowerIsBetter = false } = {}) {
+  if (typeof value !== "number" || Math.abs(value) < 0.0001) return "impact-neutral";
+  const isPositiveImpact = lowerIsBetter ? value < 0 : value > 0;
+  return isPositiveImpact ? "impact-positive" : "impact-negative";
 }

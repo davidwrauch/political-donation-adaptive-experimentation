@@ -95,6 +95,8 @@ def test_what_if_tab_is_reframed_for_turnout_priorities():
         "Explore how changing turnout priorities reshapes ballot returns",
         "Selected scenario",
         "Projected impact",
+        "semanticImpactClass",
+        "lowerIsBetter",
         "Tradeoff summary",
         "Overall ballot-return value",
         "Governor-race lift",
@@ -107,6 +109,9 @@ def test_what_if_tab_is_reframed_for_turnout_priorities():
         "human oversight with guardrails",
     ]:
         assert text in what_if
+    assert 'ScenarioDelta label="Fatigue change" value={fatigueChange} percent lowerIsBetter' in what_if
+    assert 'valueClassName={semanticImpactClass(fatigueChange, { lowerIsBetter: true })}' in what_if
+    assert "function impactClass" not in what_if
     for removed in [
         "Prioritize big donations",
         "Prioritize small donations",

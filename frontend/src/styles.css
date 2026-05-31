@@ -1008,6 +1008,18 @@ button {
   letter-spacing: -0.02em;
 }
 
+.scenario-card strong.impact-positive {
+  color: #17694f;
+}
+
+.scenario-card strong.impact-negative {
+  color: #b23a2e;
+}
+
+.scenario-card strong.impact-neutral {
+  color: #18282b;
+}
+
 .console-note {
   color: #6b787c;
   font-size: 0.72rem;
