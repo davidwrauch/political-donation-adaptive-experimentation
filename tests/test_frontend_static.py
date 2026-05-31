@@ -92,7 +92,8 @@ def test_what_if_tab_is_reframed_for_turnout_priorities():
     assert "/api/policy-simulator" in main
     for text in [
         "What If?",
-        "Explore how changing turnout priorities reshapes ballot returns",
+        "Explore how different turnout strategies would reshape ballot returns",
+        "Simulation based on historical campaign behavior, not a prediction of future results.",
         "Selected scenario",
         "Projected impact",
         "semanticImpactClass",

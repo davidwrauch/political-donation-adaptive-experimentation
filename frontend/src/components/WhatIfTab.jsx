@@ -121,14 +121,14 @@ export default function WhatIfTab({ apiBase }) {
           <h2><LabelWithHelp label="What If?" help="This tab lets campaign leadership test alternative race-priority strategies before changing allocation logic." /></h2>
           <small className="quiet-caveat">
             <LabelWithHelp
-              label="Offline estimate, not proof."
+              label="Simulation based on historical campaign behavior, not a prediction of future results."
               help="This uses the simulated campaign log to estimate what might have happened under different priorities. It is most reliable when the historical experiment explored similar actions often enough to compare them."
             />
           </small>
         </div>
         <div className="what-if-hero-right">
-          <p>Explore how changing turnout priorities reshapes ballot returns, contact fatigue, and county-level opportunity.</p>
-          <p>Use this as a strategy mixing board: shift the reward settings, compare the result to the current chase policy, and see the tradeoffs before changing how outreach is allocated.</p>
+          <p>Explore how different turnout strategies would reshape ballot returns, voter fatigue, and electoral opportunity.</p>
+          <p>Compare a balanced chase policy against approaches that prioritize gubernatorial, local, or federal objectives, and see the tradeoffs before changing how outreach is allocated.</p>
         </div>
         <label className="hero-audience-select">
           Audience size
